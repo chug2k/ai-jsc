@@ -103,12 +103,15 @@ interface SessionState {
   loadSessionHistory: (sessionId: string) => Promise<Message[]>;
 }
 
-function ensureFacilitator(ids: string[]): string[] {
-  return ids.includes('facilitator') ? ids : ['facilitator', ...ids];
-}
-
 function allMembers(customMembers: Member[]): Member[] {
   return [...(ARCHETYPES as Member[]), ...(REAL_PEOPLE as Member[]), ...(FOUNDERS_CIRCLE as Member[]), ...customMembers];
+}
+
+/** Ensure facilitator is included and strip any IDs that don't exist in the roster. */
+function ensureFacilitator(ids: string[], customMembers: Member[] = []): string[] {
+  const validIds = new Set(allMembers(customMembers).map(m => m.id));
+  const cleaned = ids.filter(id => validIds.has(id));
+  return cleaned.includes('facilitator') ? cleaned : ['facilitator', ...cleaned];
 }
 
 function memberById(id: string, customMembers: Member[]): Member | undefined {
@@ -168,7 +171,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         authUser: userData.authUser,
         limits: userData.limits,
         usage: userData.usage,
-        selectedIds: ensureFacilitator(councilData.selected_ids || ['facilitator', 'strategist', 'operator']),
+        selectedIds: ensureFacilitator(councilData.selected_ids || ['facilitator', 'strategist', 'operator'], councilData.custom_members || []),
         customMembers: councilData.custom_members || [],
         councilConfigId: councilData.id || null,
         pastSessions: sessions,

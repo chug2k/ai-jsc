@@ -16,6 +16,7 @@ export interface Member {
   challenge: string;
   real?: boolean;
   founders_circle?: boolean;
+  moderator?: boolean;
 }
 
 export interface Commitment {
@@ -102,6 +103,10 @@ interface SessionState {
   loadSessionHistory: (sessionId: string) => Promise<Message[]>;
 }
 
+function ensureFacilitator(ids: string[]): string[] {
+  return ids.includes('facilitator') ? ids : ['facilitator', ...ids];
+}
+
 function allMembers(customMembers: Member[]): Member[] {
   return [...(ARCHETYPES as Member[]), ...(REAL_PEOPLE as Member[]), ...(FOUNDERS_CIRCLE as Member[]), ...customMembers];
 }
@@ -163,7 +168,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         authUser: userData.authUser,
         limits: userData.limits,
         usage: userData.usage,
-        selectedIds: councilData.selected_ids || ['facilitator', 'strategist', 'operator'],
+        selectedIds: ensureFacilitator(councilData.selected_ids || ['facilitator', 'strategist', 'operator']),
         customMembers: councilData.custom_members || [],
         councilConfigId: councilData.id || null,
         pastSessions: sessions,
@@ -177,14 +182,18 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setView: (view) => set({ view }),
 
   toggleMember: (id) => {
+    // Facilitator is always in the session — can't be removed
+    if (id === 'facilitator') return false;
     const { selectedIds, limits } = get();
     const idx = selectedIds.indexOf(id);
     let newIds: string[];
     if (idx >= 0) {
       newIds = selectedIds.filter(x => x !== id);
     } else {
+      // Max count excludes the facilitator (they're always there)
+      const nonModeratorCount = selectedIds.filter(x => x !== 'facilitator').length;
       const max = limits?.max_council_members ?? 5;
-      if (selectedIds.length >= max) return false;
+      if (nonModeratorCount >= max) return false;
       newIds = [...selectedIds, id];
     }
     set({ selectedIds: newIds });
@@ -239,8 +248,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return;
     }
 
-    // Create new session
-    const memberIds = [...selectedIds];
+    // Create new session — facilitator is always included
+    const memberIds = selectedIds.includes('facilitator')
+      ? [...selectedIds]
+      : ['facilitator', ...selectedIds];
     const sessionNumber = pastSessions.length;
 
     try {

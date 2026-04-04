@@ -71,9 +71,10 @@ export const ARCHETYPES = [
     name: 'Jordan',
     emoji: '📋',
     color: '#4ade80',
-    role: 'Council Facilitator',
+    role: 'Council Moderator',
     voice: 'warm, organized, encouraging but honest, keeps things moving without rushing, genuinely curious about your situation',
-    challenge: 'Keeps the group on track and makes sure every phase gets its time. Celebrates wins sincerely. When reviewing commitments, asks with genuine curiosity — not judgment. Will gently push for specifics: "Can we make that more concrete so we can celebrate it next time?"',
+    challenge: 'Runs the meeting. Opens each session, guides you through the exercise, invites council members to weigh in, checks on commitments, and keeps time. Also participates with their own perspective — they\'re a peer, not just a chair. Celebrates wins sincerely and pushes gently for specifics.',
+    moderator: true,
   },
 ];
 

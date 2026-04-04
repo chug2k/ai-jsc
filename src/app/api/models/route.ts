@@ -1,35 +1,37 @@
 import { NextResponse } from 'next/server';
 
-const ENDPOINT = process.env.LLM_ENDPOINT || 'https://api.openai.com/v1/chat/completions';
-const API_KEY = process.env.LLM_API_KEY || process.env.OPENAI_API_KEY || '';
+const LOCAL_ENDPOINT = process.env.LLM_ENDPOINT || '';
+const DEFAULT_MODEL = process.env.DEFAULT_LLM_MODEL || 'openai:gpt-5.4-nano';
+
+/** Available cloud models. */
+const CLOUD_MODELS = [
+  { id: 'openai:gpt-5.4-nano', name: 'GPT-5.4 Nano', provider: 'openai' },
+  { id: 'openai:gpt-5.4-mini', name: 'GPT-5.4 Mini', provider: 'openai' },
+  { id: 'openai:gpt-5.4', name: 'GPT-5.4', provider: 'openai' },
+  { id: 'gemini:gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite', provider: 'gemini' },
+];
 
 export async function GET() {
-  // Only available in dev
-  if (process.env.NODE_ENV !== 'development') {
-    return NextResponse.json({ error: 'Not available' }, { status: 404 });
+  const models = [...CLOUD_MODELS];
+
+  // In dev, also fetch local models from LM Studio
+  if (process.env.NODE_ENV === 'development' && LOCAL_ENDPOINT) {
+    try {
+      const baseUrl = LOCAL_ENDPOINT.replace('/chat/completions', '/models');
+      const res = await fetch(baseUrl);
+      const data = await res.json();
+      const localModels = (data.data || [])
+        .map((m: { id: string }) => m.id)
+        .filter((id: string) => !id.includes('embedding'))
+        .map((id: string) => ({ id: `local:${id}`, name: id, provider: 'local' }));
+      models.push(...localModels);
+    } catch {
+      // Local models unavailable, that's fine
+    }
   }
 
-  const baseUrl = ENDPOINT.replace('/chat/completions', '/models');
-  const headers: Record<string, string> = {};
-  if (API_KEY) headers['Authorization'] = `Bearer ${API_KEY}`;
-
-  try {
-    const res = await fetch(baseUrl, { headers });
-    const data = await res.json();
-    const models = (data.data || [])
-      .map((m: { id: string }) => m.id)
-      .filter((id: string) => !id.includes('embedding'));
-    return NextResponse.json({
-      endpoint: ENDPOINT,
-      current: process.env.LLM_MODEL || 'gpt-4.1',
-      models,
-    });
-  } catch {
-    return NextResponse.json({
-      endpoint: ENDPOINT,
-      current: process.env.LLM_MODEL || 'gpt-4.1',
-      models: [],
-      error: 'Could not fetch models',
-    });
-  }
+  return NextResponse.json({
+    default: DEFAULT_MODEL,
+    models,
+  });
 }

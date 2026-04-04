@@ -46,12 +46,11 @@ describe('/api/chat route', () => {
     expect(res.body.text).toBe('Hello from AI');
   });
 
-  it('handles thinking model fallback', async () => {
+  it('parses model provider prefix', async () => {
+    // Test that the route handles provider:model format
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        choices: [{ message: { content: '', reasoning_content: 'Thinking... The answer is 42.' } }],
-      }),
+      json: async () => ({ choices: [{ message: { content: 'OpenAI response' } }] }),
     });
 
     const { POST } = await import('@/app/api/chat/route');
@@ -59,9 +58,10 @@ describe('/api/chat route', () => {
       json: async () => ({
         system: 'sys',
         messages: [{ role: 'user', content: 'q' }],
+        model: 'openai:gpt-5.4-nano',
       }),
     };
     const res = await POST(request);
-    expect(res.body.text).toContain('42');
+    expect(res.body.text).toBe('OpenAI response');
   });
 });

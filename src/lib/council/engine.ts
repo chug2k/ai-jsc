@@ -116,8 +116,9 @@ async function evaluateAgent(
   try {
     const systemPrompt = agent.buildSystemPrompt();
     const text = await llm(systemPrompt, messages);
+    console.log(`[engine] ${agent.name}: raw response = "${String(text).substring(0, 80)}"`);
     if (!text || isSkip(text)) {
-      console.log(`[engine] ${agent.name}: SKIP (${text ? 'explicit' : 'empty'})`);
+      console.log(`[engine] ${agent.name}: SKIP (${text ? 'explicit' : 'empty/null'})`);
       return null;
     }
     console.log(`[engine] ${agent.name}: responded (${text.length} chars)`);

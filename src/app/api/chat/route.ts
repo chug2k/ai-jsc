@@ -62,11 +62,14 @@ async function callGemini(modelId: string, system: string, messages: ChatMessage
   // (Gemini thinks all "model" messages are its own). Instead, we present
   // the full conversation transcript and ask the agent to respond.
   const transcript = messages
-    .map(m => {
+    .map((m: ChatMessage & { memberName?: string }) => {
       if (m.role === 'user') return `[User]: ${m.content}`;
-      return m.content; // assistant messages already have member attribution
+      const name = m.memberName || 'Council Member';
+      return `[${name}]: ${m.content}`;
     })
     .join('\n\n');
+
+  console.log(`[gemini] calling ${modelId}, system: ${system.substring(0, 80)}..., transcript: ${transcript.length} chars`);
 
   const response = await ai.models.generateContent({
     model: modelId,
@@ -77,6 +80,7 @@ async function callGemini(modelId: string, system: string, messages: ChatMessage
     },
   });
 
+  console.log(`[gemini] response: ${response.text ? response.text.substring(0, 100) : 'EMPTY'}`);
   return response.text || '';
 }
 

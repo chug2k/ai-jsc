@@ -42,7 +42,7 @@ export default function ChatBubble({ message, index, onReply, onScrollTo }: Chat
     if (message.memberName) {
       member = members.find(m => m.name === message.memberName);
     }
-    displayText = displayText.replace(/^\[.*?\]\s*/g, '');
+    displayText = displayText.replace(/^\[.*?\]\s*:?\s*/g, '');
     displayText = stripCommitmentBlock(displayText);
     if (hasCommitmentBlock(message.content)) {
       displayText += '\n\n✅ Commitments saved.';

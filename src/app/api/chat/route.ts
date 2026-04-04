@@ -24,15 +24,12 @@ export async function POST(request: NextRequest) {
     { role: 'developer', content: system },
     ...messages.map((m: { role: string; content: string; memberName?: string; replyTo?: { memberName: string | null; content: string } }) => {
       let content = m.content;
-      // Include reply context for agents to see
       if (m.replyTo) {
         content = `[replying to ${m.replyTo.memberName || 'User'}: "${m.replyTo.content.substring(0, 80)}"]\n${content}`;
       }
-      // Label assistant messages with member name so agents know who said what
-      if (m.role === 'assistant' && m.memberName) {
-        content = `[${m.memberName}]: ${content}`;
-      }
-      return { role: m.role, content };
+      // Use OpenAI's name field to identify who said what without polluting content
+      const name = m.memberName?.replace(/[^a-zA-Z0-9_-]/g, '_') || undefined;
+      return { role: m.role, content, ...(name ? { name } : {}) };
     }),
   ];
 

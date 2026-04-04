@@ -87,6 +87,7 @@ interface SessionState {
 
   // UI
   isLoading: boolean;
+  error: string | null;
   view: 'council' | 'session' | 'learn' | 'settings';
 
   // Actions
@@ -145,6 +146,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   pastSessions: [],
   commitments: [],
   isLoading: false,
+  error: null,
   view: 'council',
 
   init: async () => {
@@ -211,31 +213,62 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   startSession: async () => {
     const { selectedIds, pastSessions } = get();
+    set({ error: null });
+
+    // Check for an unfinished session (phase !== 'done')
+    const unfinished = pastSessions.find(s => s.phase !== 'done');
+    if (unfinished) {
+      // Resume it
+      const messages = await api(`/api/messages?sessionId=${unfinished.id}`);
+      const sessionIndex = pastSessions.indexOf(unfinished);
+      set({
+        currentSession: {
+          dbId: unfinished.id,
+          phase: unfinished.phase || 'checkin',
+          messages: (messages || []).map((m: { role: string; content: string; member_name?: string }) => ({
+            role: m.role,
+            content: m.content,
+            memberName: m.member_name || null,
+          })),
+          memberIds: unfinished.member_ids || selectedIds,
+          hotSeatReady: false,
+          sessionNumber: sessionIndex,
+        },
+        view: 'session',
+      });
+      return;
+    }
+
+    // Create new session
     const memberIds = [...selectedIds];
     const sessionNumber = pastSessions.length;
 
-    const session = await api('/api/sessions', {
-      method: 'POST',
-      body: JSON.stringify({ memberIds }),
-    });
-    const sessionId = session.id;
+    try {
+      const session = await api('/api/sessions', {
+        method: 'POST',
+        body: JSON.stringify({ memberIds }),
+      });
+      const sessionId = session.id;
 
-    set({
-      currentSession: {
-        dbId: sessionId,
-        phase: 'checkin',
-        messages: [],
-        memberIds,
-        hotSeatReady: false,
-        sessionNumber,
-      },
-      view: 'session',
-    });
+      set({
+        currentSession: {
+          dbId: sessionId,
+          phase: 'checkin',
+          messages: [],
+          memberIds,
+          hotSeatReady: false,
+          sessionNumber,
+        },
+        view: 'session',
+      });
 
-    track('session_started', { member_count: memberIds.length, member_ids: memberIds });
+      track('session_started', { member_count: memberIds.length, member_ids: memberIds });
 
-    // Send initial AI message
-    await get().sendMessage('__INIT__');
+      // Send initial AI message
+      await get().sendMessage('__INIT__');
+    } catch (err) {
+      set({ error: (err as Error).message });
+    }
   },
 
   sendMessage: async (text) => {

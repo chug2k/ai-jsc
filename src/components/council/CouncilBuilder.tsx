@@ -7,7 +7,8 @@ import type { Member } from '@/stores/session-store';
 import MemberCard from './MemberCard';
 
 export default function CouncilBuilder() {
-  const { selectedIds, customMembers, setView, user } = useSessionStore();
+  const { selectedIds, customMembers, setView, user, error, pastSessions } = useSessionStore();
+  const hasUnfinished = pastSessions.some(s => s.phase !== 'done');
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [customName, setCustomName] = useState('');
   const [customRole, setCustomRole] = useState('');
@@ -60,8 +61,13 @@ export default function CouncilBuilder() {
             )}
           </div>
           <button onClick={() => store.startSession()} className="btn btn-primary btn-lg w-full">
-            Start Council Session →
+            {hasUnfinished ? 'Resume Session →' : 'Start Council Session →'}
           </button>
+          {error && (
+            <p className="text-center text-xs mt-2 px-3 py-2 rounded-lg" style={{ color: 'var(--danger)', background: '#ef444411', border: '1px solid #ef444433' }}>
+              {error}
+            </p>
+          )}
           <p className="text-center text-xs mt-2" style={{ color: 'var(--muted)' }}>
             10-session curriculum · ~30 min per session
           </p>

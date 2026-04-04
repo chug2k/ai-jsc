@@ -1,16 +1,17 @@
 /**
- * Council Engine — multi-agent reactive conversation.
+ * Council Engine — multi-agent reactive conversation with tool calling.
  *
- * All agents evaluate independently. Before an agent's response is
- * accepted, we check if the message store changed underneath them.
- * If it did, the response is stale — we re-evaluate with the stale
- * response as context so the agent can decide if it's still relevant.
+ * Agents use tools (send_message, reply_to, stay_silent, etc.) to take
+ * actions. The moderator gets additional tools (move_to_phase, call_on, etc.)
  */
+
+import { getToolsForAgent, parseToolCall, type AgentAction, type ToolCall } from './tools';
 
 export interface AgentMessage {
   role: 'user' | 'assistant';
   content: string;
   memberName?: string | null;
+  replyTo?: { memberName: string | null; content: string; index: number } | null;
 }
 
 export interface CouncilAgent {
@@ -21,25 +22,26 @@ export interface CouncilAgent {
   buildSystemPrompt: () => string;
 }
 
+export interface EngineCallbacks {
+  onMessage: (msg: AgentMessage) => void;
+  onPhaseChange: (phase: string, message: string) => void;
+  onCommitment: (text: string, deadline?: string) => void;
+  onCallOn: (memberName: string, prompt: string) => void;
+  onEndSession: (message: string) => void;
+}
+
 export interface CouncilEngineConfig {
   agents: CouncilAgent[];
   messages: AgentMessage[];
-  onMessage: (msg: AgentMessage) => void;
-  llm: (systemPrompt: string, messages: AgentMessage[], model?: string) => Promise<string>;
+  callbacks: EngineCallbacks;
+  llm: (systemPrompt: string, messages: AgentMessage[], model?: string, tools?: unknown[]) => Promise<{ toolCalls?: ToolCall[]; text?: string }>;
   maxResponses?: number;
   moderatorOnly?: boolean;
-  /** If the user replied to a specific member, that member evaluates first. */
   replyToMember?: string;
 }
 
-const SKIP_TOKEN = 'SKIP';
-
-function isSkip(text: string): boolean {
-  return text.trim().toUpperCase() === SKIP_TOKEN;
-}
-
 export async function runReactionLoop(config: CouncilEngineConfig): Promise<AgentMessage[]> {
-  const { agents, onMessage, llm, maxResponses = 8, moderatorOnly = false, replyToMember } = config;
+  const { agents, callbacks, llm, maxResponses = 8, moderatorOnly = false, replyToMember } = config;
   const messages = [...config.messages];
   const activeAgents = moderatorOnly ? agents.filter(a => a.isModerator) : agents;
   const allNewMessages: AgentMessage[] = [];
@@ -51,14 +53,13 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
   if (replyToMember && pending.has(replyToMember)) {
     const agent = activeAgents.find(a => a.id === replyToMember);
     if (agent) {
-      const text = await evaluateAgent(agent, messages, llm, undefined, true);
+      const action = await evaluateAgent(agent, messages, llm, undefined, true);
       pending.delete(agent.id);
-      if (text) {
-        const msg: AgentMessage = { role: 'assistant', content: text, memberName: agent.name };
+      const msg = processAction(action, agent, callbacks);
+      if (msg) {
         messages.push(msg);
         allNewMessages.push(msg);
-        onMessage(msg);
-        console.log(`[engine] ${agent.name}: replied first (${text.length} chars)`);
+        console.log(`[engine] ${agent.name}: replied first (${action.type})`);
       }
     }
   }
@@ -69,36 +70,35 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
     const evaluations = [...pending].map(async (agentId) => {
       const agent = activeAgents.find(a => a.id === agentId)!;
       const staleDraft = staleDrafts.get(agentId);
-      const text = await evaluateAgent(agent, messages, llm, staleDraft);
-      return { agent, text, snapshotLength };
+      const action = await evaluateAgent(agent, messages, llm, staleDraft);
+      return { agent, action, snapshotLength };
     });
 
     let anyAccepted = false;
     for (const evalPromise of evaluations) {
-      const { agent, text, snapshotLength: evalSnapshot } = await evalPromise;
-
+      const { agent, action, snapshotLength: evalSnapshot } = await evalPromise;
       pending.delete(agent.id);
       staleDrafts.delete(agent.id);
 
-      if (!text) continue;
-
-      if (messages.length !== evalSnapshot) {
-        console.log(`[engine] ${agent.name}: stale (messages changed ${evalSnapshot} → ${messages.length}), re-queuing with draft`);
-        pending.add(agent.id);
-        staleDrafts.set(agent.id, text); // Save what they were going to say
+      if (action.type === 'silent') {
+        console.log(`[engine] ${agent.name}: stay_silent`);
         continue;
       }
 
-      const msg: AgentMessage = {
-        role: 'assistant',
-        content: text,
-        memberName: agent.name,
-      };
-      messages.push(msg);
-      allNewMessages.push(msg);
-      onMessage(msg);
-      anyAccepted = true;
-      console.log(`[engine] ${agent.name}: responded (${text.length} chars)`);
+      if (messages.length !== evalSnapshot) {
+        console.log(`[engine] ${agent.name}: stale, re-queuing`);
+        pending.add(agent.id);
+        if (action.text) staleDrafts.set(agent.id, action.text);
+        continue;
+      }
+
+      const msg = processAction(action, agent, callbacks);
+      if (msg) {
+        messages.push(msg);
+        allNewMessages.push(msg);
+        anyAccepted = true;
+        console.log(`[engine] ${agent.name}: ${action.type} (${msg.content.length} chars)`);
+      }
 
       if (allNewMessages.length >= maxResponses) break;
     }
@@ -109,32 +109,107 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
   return allNewMessages;
 }
 
+/** Process an agent action and return a message (if applicable) */
+function processAction(action: AgentAction, agent: CouncilAgent, callbacks: EngineCallbacks): AgentMessage | null {
+  switch (action.type) {
+    case 'message':
+      if (!action.text) return null;
+      const msg: AgentMessage = { role: 'assistant', content: action.text, memberName: agent.name };
+      callbacks.onMessage(msg);
+      return msg;
+
+    case 'reply':
+      if (!action.text) return null;
+      const replyMsg: AgentMessage = {
+        role: 'assistant',
+        content: action.text,
+        memberName: agent.name,
+        replyTo: action.member ? { memberName: action.member, content: action.quote || '', index: -1 } : null,
+      };
+      callbacks.onMessage(replyMsg);
+      return replyMsg;
+
+    case 'move_phase':
+      if (action.text) {
+        const phaseMsg: AgentMessage = { role: 'assistant', content: action.text, memberName: agent.name };
+        callbacks.onMessage(phaseMsg);
+        if (action.phase) callbacks.onPhaseChange(action.phase, action.text);
+        return phaseMsg;
+      }
+      if (action.phase) callbacks.onPhaseChange(action.phase, '');
+      return null;
+
+    case 'commitment':
+      if (action.text) {
+        callbacks.onCommitment(action.text, action.deadline);
+        const commitMsg: AgentMessage = {
+          role: 'assistant',
+          content: `✅ Commitment recorded: ${action.text}${action.deadline ? ` (by ${action.deadline})` : ''}`,
+          memberName: agent.name,
+        };
+        callbacks.onMessage(commitMsg);
+        return commitMsg;
+      }
+      return null;
+
+    case 'call_on':
+      if (action.member && action.text) {
+        const callMsg: AgentMessage = { role: 'assistant', content: action.text, memberName: agent.name };
+        callbacks.onMessage(callMsg);
+        callbacks.onCallOn(action.member, action.text);
+        return callMsg;
+      }
+      return null;
+
+    case 'end_session':
+      if (action.text) {
+        const endMsg: AgentMessage = { role: 'assistant', content: action.text, memberName: agent.name };
+        callbacks.onMessage(endMsg);
+        callbacks.onEndSession(action.text);
+        return endMsg;
+      }
+      callbacks.onEndSession('');
+      return null;
+
+    case 'silent':
+    default:
+      return null;
+  }
+}
+
 async function evaluateAgent(
   agent: CouncilAgent,
   messages: AgentMessage[],
-  llm: (systemPrompt: string, messages: AgentMessage[], model?: string) => Promise<string>,
+  llm: (systemPrompt: string, messages: AgentMessage[], model?: string, tools?: unknown[]) => Promise<{ toolCalls?: ToolCall[]; text?: string }>,
   staleDraft?: string,
   isRepliedTo?: boolean,
-): Promise<string | null> {
+): Promise<AgentAction> {
   try {
     let systemPrompt = agent.buildSystemPrompt();
 
     if (isRepliedTo) {
-      systemPrompt += `\n\nIMPORTANT: The user replied directly to YOUR message. You MUST respond — do not SKIP.`;
+      systemPrompt += `\n\nIMPORTANT: The user replied directly to YOUR message. You MUST respond using send_message or reply_to — do not use stay_silent.`;
     }
 
     if (staleDraft) {
-      systemPrompt += `\n\nNOTE: You were about to say: "${staleDraft}" — but new messages arrived before you could speak. Look at the latest messages. If your point is still relevant and hasn't been covered, you can say it (reworded if needed). If someone else already covered it, say SKIP.`;
+      systemPrompt += `\n\nNOTE: You were about to say: "${staleDraft}" — but new messages arrived. If your point is still relevant, send it (reworded if needed). If someone covered it, use stay_silent.`;
     }
 
-    const text = await llm(systemPrompt, messages, agent.model);
-    if (!text || isSkip(text)) {
-      console.log(`[engine] ${agent.name}: SKIP`);
-      return null;
+    const tools = getToolsForAgent(agent.isModerator);
+    const result = await llm(systemPrompt, messages, agent.model, tools);
+
+    if (result.toolCalls && result.toolCalls.length > 0) {
+      return parseToolCall(result.toolCalls[0]);
     }
-    return text;
+
+    // Fallback: plain text (shouldn't happen with tool_choice: required)
+    if (result.text) {
+      return { type: 'message', text: result.text };
+    }
+
+    return { type: 'silent' };
   } catch (err) {
     console.warn(`[engine] ${agent.name} failed:`, err);
-    return null;
+    return { type: 'silent' };
   }
 }

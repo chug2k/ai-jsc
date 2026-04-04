@@ -6,130 +6,117 @@ function makeAgent(id, name, isModerator = false) {
     id,
     name,
     isModerator,
+    model: 'test-model',
     buildSystemPrompt: () => `You are ${name}.`,
   };
 }
 
+const noopCallbacks = {
+  onMessage: () => {},
+  onPhaseChange: () => {},
+  onCommitment: () => {},
+  onCallOn: () => {},
+  onEndSession: () => {},
+};
+
 describe('runReactionLoop', () => {
-  it('moderator speaks first', async () => {
-    const order = [];
-    const agents = [
-      makeAgent('mod', 'Maude', true),
-      makeAgent('strat', 'The Strategist'),
-    ];
-
-    const llm = vi.fn(async (system) => {
-      const name = system.includes('Maude') ? 'Maude' : 'Strategist';
-      order.push(name);
-      return `Response from ${name}`;
-    });
-
-    await runReactionLoop({
-      agents,
-      messages: [{ role: 'user', content: 'Hello' }],
-      onMessage: () => {},
-      llm,
-    });
-
-    expect(order[0]).toBe('Maude');
-  });
-
-  it('filters SKIP responses', async () => {
+  it('processes send_message tool calls', async () => {
     const received = [];
-    let round = 0;
+    const agents = [makeAgent('mod', 'Maude', true)];
+
+    const llm = vi.fn(async () => ({
+      toolCalls: [{ name: 'send_message', args: { text: 'Hello!' } }],
+    }));
+
+    await runReactionLoop({
+      agents,
+      messages: [{ role: 'user', content: 'Hi' }],
+      callbacks: { ...noopCallbacks, onMessage: (msg) => received.push(msg) },
+      llm,
+    });
+
+    expect(received.length).toBe(1);
+    expect(received[0].content).toBe('Hello!');
+    expect(received[0].memberName).toBe('Maude');
+  });
+
+  it('processes stay_silent tool calls', async () => {
+    const received = [];
     const agents = [
       makeAgent('mod', 'Maude', true),
       makeAgent('strat', 'The Strategist'),
-      makeAgent('op', 'The Operator'),
     ];
 
     const llm = vi.fn(async (system) => {
-      // Only first round produces real responses
-      if (received.length >= 2) return 'SKIP';
-      if (system.includes('Maude')) return 'Welcome!';
-      if (system.includes('Strategist')) return 'SKIP';
-      return 'I have a thought.';
+      if (system.includes('Maude')) return { toolCalls: [{ name: 'send_message', args: { text: 'Welcome' } }] };
+      return { toolCalls: [{ name: 'stay_silent', args: {} }] };
     });
 
     await runReactionLoop({
       agents,
-      messages: [{ role: 'user', content: 'Hello' }],
-      onMessage: (msg) => received.push(msg),
+      messages: [{ role: 'user', content: 'Hi' }],
+      callbacks: { ...noopCallbacks, onMessage: (msg) => received.push(msg) },
       llm,
     });
 
-    expect(received.length).toBe(2); // Maude + Operator, Strategist skipped
+    expect(received.length).toBe(1);
     expect(received[0].memberName).toBe('Maude');
-    expect(received[0].content).not.toContain('[Maude]');
-    expect(received[1].memberName).toBe('The Operator');
   });
 
-  it('stops when nobody has anything to say', async () => {
-    let callCount = 0;
-    const agents = [
-      makeAgent('mod', 'Maude', true),
-      makeAgent('strat', 'The Strategist'),
-    ];
+  it('processes move_to_phase tool calls', async () => {
+    let newPhase = null;
+    const agents = [makeAgent('mod', 'Maude', true)];
 
-    const llm = vi.fn(async () => {
-      callCount++;
-      // First two calls respond, rest SKIP
-      if (callCount <= 2) return 'Something to say';
-      return 'SKIP';
-    });
+    const llm = vi.fn(async () => ({
+      toolCalls: [{ name: 'move_to_phase', args: { phase: 'exercise', transition_message: 'Moving on!' } }],
+    }));
 
-    const result = await runReactionLoop({
+    await runReactionLoop({
       agents,
-      messages: [{ role: 'user', content: 'Hello' }],
-      onMessage: () => {},
+      messages: [{ role: 'user', content: 'Ready' }],
+      callbacks: { ...noopCallbacks, onMessage: () => {}, onPhaseChange: (p) => { newPhase = p; } },
       llm,
     });
 
-    // At least 1 message, at most 2 (depends on timing/stale checks)
-    expect(result.length).toBeGreaterThanOrEqual(1);
-    expect(result.length).toBeLessThanOrEqual(2);
+    expect(newPhase).toBe('exercise');
   });
 
-  it('respects maxResponses cap', async () => {
-    const agents = [
-      makeAgent('mod', 'Maude', true),
-      makeAgent('a', 'Agent A'),
-      makeAgent('b', 'Agent B'),
-    ];
+  it('processes call_on tool calls', async () => {
+    let calledMember = null;
+    const agents = [makeAgent('mod', 'Maude', true)];
 
-    const llm = vi.fn(async () => 'I always have something to say!');
+    const llm = vi.fn(async () => ({
+      toolCalls: [{ name: 'call_on', args: { member: 'The Connector', prompt: 'What do you think?' } }],
+    }));
 
-    const result = await runReactionLoop({
+    await runReactionLoop({
       agents,
-      messages: [{ role: 'user', content: 'Hello' }],
-      onMessage: () => {},
-      llm,
-      maxResponses: 4,
-    });
-
-    expect(result.length).toBeLessThanOrEqual(4);
-  });
-
-  it('terminates if only moderator speaks', async () => {
-    const agents = [
-      makeAgent('mod', 'Maude', true),
-      makeAgent('strat', 'The Strategist'),
-    ];
-
-    const llm = vi.fn(async (system) => {
-      if (system.includes('Maude')) return 'I have thoughts';
-      return 'SKIP';
-    });
-
-    const result = await runReactionLoop({
-      agents,
-      messages: [{ role: 'user', content: 'Hello' }],
-      onMessage: () => {},
+      messages: [{ role: 'user', content: 'Hmm' }],
+      callbacks: { ...noopCallbacks, onMessage: () => {}, onCallOn: (m) => { calledMember = m; } },
       llm,
     });
 
-    // Maude speaks once, nobody else has anything, loop ends
-    expect(result.length).toBe(1);
-    expect(result[0].memberName).toBe('Maude');
+    expect(calledMember).toBe('The Connector');
+  });
+
+  it('passes tools to llm callback', async () => {
+    const agents = [makeAgent('mod', 'Maude', true)];
+
+    const llm = vi.fn(async (_sys, _msgs, _model, tools) => {
+      // Moderator should get extra tools
+      const toolNames = tools.map(t => t.function.name);
+      expect(toolNames).toContain('send_message');
+      expect(toolNames).toContain('stay_silent');
+      expect(toolNames).toContain('move_to_phase');
+      expect(toolNames).toContain('call_on');
+      return { toolCalls: [{ name: 'stay_silent', args: {} }] };
+    });
+
+    await runReactionLoop({
+      agents,
+      messages: [{ role: 'user', content: 'Hi' }],
+      callbacks: noopCallbacks,
+      llm,
+    });
   });
 });

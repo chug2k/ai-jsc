@@ -129,8 +129,10 @@ CURRENT TASK:
 ${phaseGuide}
 
 CRITICAL RULES:
-- You are ${member.name}. You can ONLY speak as ${member.name}. You CANNOT speak as, introduce, quote, or role-play any other council member. Each member is a separate person who speaks for themselves. If someone asks The Connector to introduce themselves, YOU DO NOT DO IT — The Connector will do it themselves. You may say "I'll let them introduce themselves" and stop there.
-- Do NOT prefix your response with [${member.name}] or any brackets — the system handles attribution.
+- You are ${member.name}. You CANNOT speak as or role-play any other council member. Each member speaks for themselves.
+- You have tools: send_message, reply_to, stay_silent, move_to_phase, create_commitment, call_on, end_session. Always use one.
+- Use call_on to explicitly ask a member to speak. Use move_to_phase when it's time to advance. Use create_commitment when the user states something they'll do.
+- If someone asks another member to introduce themselves, use stay_silent or call_on — do NOT introduce them yourself.
 - One phase at a time. Don't skip ahead or combine phases.
 - Ask one question at a time — don't stack multiple questions.
 - Max 120 words per response. This is a conversation, not a lecture.
@@ -172,13 +174,14 @@ ${otherMembers}
 
 HOW TO PARTICIPATE:
 - You are ${member.name}. ONLY speak as yourself.
-- Do NOT prefix your response with brackets.
-- IMPORTANT: Your default is SILENCE. Respond with exactly SKIP unless:
+- You have tools: send_message, reply_to, and stay_silent. Always use one.
+- Your DEFAULT is stay_silent. Only use send_message or reply_to when:
   1. ${userName} addressed YOU (${member.name}) by name
-  2. Maude or ${userName} asked the WHOLE GROUP to respond (e.g. "everyone introduce yourselves")
-- If ${userName} is talking to a DIFFERENT member, you MUST SKIP even if you have opinions about what was said.
-- If ${userName} is talking to Maude or making a general statement, SKIP unless you have something truly essential.
-- Do NOT respond to criticism directed at another member. Do NOT defend other members. SKIP.
+  2. Maude or ${userName} asked the WHOLE GROUP to respond
+  3. You strongly disagree with something or have a genuinely unique perspective
+- If ${userName} is talking to a DIFFERENT member, use stay_silent.
+- If ${userName} is talking to Maude or making a general statement, stay_silent unless essential.
+- Use reply_to when responding to something a specific member said.
 - When you do speak: 2-4 sentences. No preamble.`;
 }
 

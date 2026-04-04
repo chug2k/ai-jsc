@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { ARCHETYPES, REAL_PEOPLE, FOUNDERS_CIRCLE } from '@/lib/council/roster';
-import { detectPhaseTransition } from '@/lib/council/phases';
 import { track } from '@/lib/posthog';
-import { extractCommitments } from '@/lib/commitments';
 
 // @ts-nocheck — roster files are untyped JS ports
 
@@ -131,13 +129,13 @@ async function api(path: string, options?: RequestInit) {
   return res.json();
 }
 
-/** Call /api/chat. Model can be overridden per-call or via DevToolbar. */
-async function chatApi(system: string, messages: unknown[], model?: string) {
+/** Call /api/chat. Model and tools can be overridden per-call. */
+async function chatApi(system: string, messages: unknown[], model?: string, tools?: unknown[]) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const devModel = (useSessionStore.getState() as any)._devModel as string | undefined;
   return api('/api/chat', {
     method: 'POST',
-    body: JSON.stringify({ system, messages, model: devModel || model }),
+    body: JSON.stringify({ system, messages, model: devModel || model, ...(tools ? { tools } : {}) }),
   });
 }
 
@@ -346,46 +344,80 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     }));
 
     try {
-      // Find the agent ID if replying to a specific member
       const replyToMemberId = replyTo?.memberName
         ? members.find(m => m.name === replyTo.memberName)?.id
         : undefined;
+
+      const appendMessage = (msg: Message) => {
+        set((s) => ({
+          currentSession: s.currentSession ? {
+            ...s.currentSession,
+            messages: [...s.currentSession.messages, msg],
+          } : null,
+        }));
+        if (currentSession.dbId) {
+          api('/api/messages', {
+            method: 'POST',
+            body: JSON.stringify({
+              sessionId: currentSession.dbId,
+              role: msg.role,
+              content: msg.content,
+              memberName: msg.memberName,
+              phase: get().currentSession?.phase,
+            }),
+          }).catch(console.warn);
+        }
+      };
 
       await runReactionLoop({
         agents,
         messages: get().currentSession?.messages.slice(-30) || [],
         moderatorOnly: isInit,
         replyToMember: replyToMemberId,
-        onMessage: (msg) => {
-          // Append to local state
-          set((s) => ({
-            currentSession: s.currentSession ? {
-              ...s.currentSession,
-              messages: [...s.currentSession.messages, msg],
-            } : null,
-          }));
-          // Persist to DB
-          if (currentSession.dbId) {
-            api('/api/messages', {
+        callbacks: {
+          onMessage: appendMessage,
+          onPhaseChange: (newPhase, _message) => {
+            track('phase_advanced', { from: get().currentSession?.phase, to: newPhase });
+            set((s) => ({
+              currentSession: s.currentSession ? { ...s.currentSession, phase: newPhase } : null,
+            }));
+            if (currentSession.dbId) {
+              api('/api/sessions', {
+                method: 'PATCH',
+                body: JSON.stringify({ id: currentSession.dbId, phase: newPhase }),
+              }).catch(console.warn);
+            }
+          },
+          onCommitment: (text, deadline) => {
+            api('/api/commitments', {
               method: 'POST',
-              body: JSON.stringify({
-                sessionId: currentSession.dbId,
-                role: 'assistant',
-                content: msg.content,
-                memberName: msg.memberName,
-                phase: get().currentSession?.phase,
-              }),
+              body: JSON.stringify({ texts: [`${text}${deadline ? ` (by ${deadline})` : ''}`], sessionId: currentSession.dbId }),
+            }).then((newCommitments) => {
+              set((s) => ({ commitments: [...newCommitments, ...s.commitments] }));
             }).catch(console.warn);
-          }
-          // Check for phase transitions on every agent message
-          advancePhase(msg.content, get, set);
+          },
+          onCallOn: (memberName, _prompt) => {
+            // The call_on action already sent a message. The called member
+            // will see their name in the latest message and respond naturally
+            // in the next evaluation round. No extra logic needed — the engine
+            // handles it via the existing mention detection in prompts.
+            console.log(`[engine] Maude called on ${memberName}`);
+          },
+          onEndSession: (_message) => {
+            set((s) => ({
+              currentSession: s.currentSession ? { ...s.currentSession, phase: 'done' } : null,
+            }));
+            if (currentSession.dbId) {
+              api('/api/sessions', {
+                method: 'PATCH',
+                body: JSON.stringify({ id: currentSession.dbId, phase: 'done' }),
+              }).catch(console.warn);
+            }
+          },
         },
-        llm: async (system, messages, model) => {
-          const result = await chatApi(system, messages, model);
-          if (!result.text) {
-            console.warn('[llm] empty text from API:', JSON.stringify(result));
-          }
-          return result.text || '';
+        llm: async (system, messages, model, tools) => {
+          const result = await chatApi(system, messages, model, tools);
+          return result;
         },
       });
     } catch (err) {
@@ -416,46 +448,5 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     return messages;
   },
 }));
-
-function advancePhase(
-  aiText: string,
-  get: () => SessionState,
-  set: (fn: (s: SessionState) => Partial<SessionState>) => void
-) {
-  const session = get().currentSession;
-  if (!session) return;
-  const userMsgCount = session.messages.filter(m => m.role === 'user').length;
-  const next = detectPhaseTransition(session.phase, aiText, userMsgCount);
-  if (next !== session.phase) {
-    track('phase_advanced', { from: session.phase, to: next });
-    set((s) => ({
-      currentSession: s.currentSession ? {
-        ...s.currentSession,
-        phase: next,
-        hotSeatReady: next === 'hot_seat' ? false : s.currentSession.hotSeatReady,
-      } : null,
-    }));
-    // Sync phase to server
-    if (session.dbId) {
-      api(`/api/sessions`, {
-        method: 'PATCH',
-        body: JSON.stringify({ id: session.dbId, phase: next }),
-      }).catch(console.warn);
-    }
-  }
-
-  // Extract commitments from AI text
-  const texts = extractCommitments(aiText);
-  {
-    if (texts.length) {
-      api('/api/commitments', {
-        method: 'POST',
-        body: JSON.stringify({ texts, sessionId: session.dbId }),
-      }).then((newCommitments) => {
-        set((s) => ({ commitments: [...newCommitments, ...s.commitments] }));
-      }).catch(console.warn);
-    }
-  }
-}
 
 export { allMembers, memberById };

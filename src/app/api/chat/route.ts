@@ -57,35 +57,39 @@ async function callOpenAI(modelId: string, system: string, messages: ChatMessage
 async function callGemini(modelId: string, system: string, messages: ChatMessage[]): Promise<string> {
   const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-  // Format the conversation as a single user prompt.
-  // Multi-turn with Gemini is tricky when multiple AI agents share a history
-  // (Gemini thinks all "model" messages are its own). Instead, we present
-  // the full conversation transcript and ask the agent to respond.
-  const transcript = messages
-    .map((m: ChatMessage & { memberName?: string }) => {
-      if (m.role === 'user') return `[User]: ${m.content}`;
-      const name = m.memberName || 'Council Member';
-      return `[${name}]: ${m.content}`;
-    })
-    .join('\n\n');
+  // Build the full conversation as a single user message with transcript.
+  // Each agent has a different persona (system prompt) but sees the same conversation.
+  // We put the transcript + instruction in one user turn to avoid Gemini's
+  // multi-turn "I already responded" issue.
+  const lines: string[] = [];
+  for (const m of messages) {
+    if (m.role === 'user') {
+      lines.push(`[User]: ${m.content}`);
+    } else {
+      const name = (m as ChatMessage & { memberName?: string }).memberName || 'Council Member';
+      lines.push(`[${name}]: ${m.content}`);
+    }
+  }
 
-  console.log(`[gemini] calling ${modelId}, system length: ${system.length}, transcript length: ${transcript.length}, messages: ${messages.length}`);
+  const prompt = lines.length > 0
+    ? `Here is the group conversation so far:\n\n${lines.join('\n\n')}\n\nBased on the conversation above and your role, respond now. If you have nothing to add, say exactly: SKIP`
+    : 'The session is starting. Respond according to your system instructions.';
 
-  const response = await ai.models.generateContent({
-    model: modelId,
-    contents: `Here is the conversation so far:\n\n${transcript}\n\nNow respond according to your system instructions.`,
-    config: {
-      systemInstruction: system,
-      maxOutputTokens: 4096,
-      thinkingConfig: { thinkingBudget: 0 },
-    },
-  });
-
-  // Check candidates directly — response.text can be empty even when content exists
-  const candidate = response.candidates?.[0];
-  const parts = candidate?.content?.parts || [];
-  const text = parts.map((p: { text?: string }) => p.text || '').join('').trim();
-  return text;
+  try {
+    const response = await ai.models.generateContent({
+      model: modelId,
+      contents: prompt,
+      config: {
+        systemInstruction: system,
+        maxOutputTokens: 512,
+        thinkingConfig: { thinkingBudget: 0 },
+      },
+    });
+    return response.text || '';
+  } catch (err) {
+    console.error(`[gemini] error:`, err);
+    return '';
+  }
 }
 
 async function callLocal(modelId: string, system: string, messages: ChatMessage[]): Promise<string> {
@@ -136,7 +140,7 @@ export async function POST(request: NextRequest) {
         break;
     }
 
-    return NextResponse.json({ text, _debug: process.env.NODE_ENV === 'development' ? { provider, modelId } : undefined });
+    return NextResponse.json({ text });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 502 });

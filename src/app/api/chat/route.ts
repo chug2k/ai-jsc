@@ -20,7 +20,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const LOCAL_ENDPOINT = process.env.LLM_ENDPOINT || '';
 const LOCAL_MODEL = process.env.LLM_MODEL || '';
 
-const DEFAULT_MODEL = process.env.DEFAULT_LLM_MODEL || 'gemini:gemini-3.1-flash-lite-preview';
+const DEFAULT_MODEL = process.env.DEFAULT_LLM_MODEL || 'openai:gpt-5.4-mini';
 
 interface ChatMessage {
   role: string;
@@ -75,11 +75,27 @@ async function callGemini(modelId: string, system: string, messages: ChatMessage
   const lastMsg = lines.pop() || '';
   const history = lines.join('\n\n');
 
+  // Extract participant names from messages
+  const participants = new Set<string>();
+  participants.add('User');
+  for (const m of messages) {
+    const name = (m as ChatMessage & { memberName?: string }).memberName;
+    if (name) participants.add(name);
+  }
+
   let prompt: string;
   if (history) {
-    prompt = `CONVERSATION HISTORY:\n${history}\n\nLATEST MESSAGE:\n${lastMsg}\n\nYou are in this conversation. What is YOUR response to the latest message? Speak as yourself only. If you have nothing to add, say exactly: SKIP`;
+    prompt = `PARTICIPANTS IN THIS CONVERSATION: ${[...participants].join(', ')}
+
+CONVERSATION HISTORY:
+${history}
+
+LATEST MESSAGE:
+${lastMsg}
+
+You are in this conversation. What is YOUR response to the latest message? Speak as yourself only. If you have nothing to add, say exactly: SKIP`;
   } else {
-    prompt = `${lastMsg}\n\nRespond as yourself.`;
+    prompt = `PARTICIPANTS: ${[...participants].join(', ')}\n\n${lastMsg}\n\nRespond as yourself.`;
   }
 
   try {

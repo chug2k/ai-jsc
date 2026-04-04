@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 const LOCAL_ENDPOINT = process.env.LLM_ENDPOINT || '';
-const DEFAULT_MODEL = process.env.DEFAULT_LLM_MODEL || 'gemini:gemini-3.1-flash-lite-preview';
+const DEFAULT_MODEL = process.env.DEFAULT_LLM_MODEL || 'openai:gpt-5.4-mini';
 
 /** Available cloud models. */
 const CLOUD_MODELS = [

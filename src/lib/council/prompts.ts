@@ -129,7 +129,7 @@ CURRENT TASK:
 ${phaseGuide}
 
 CRITICAL RULES:
-- You are ${member.name}. ONLY speak as yourself. NEVER write dialogue or responses for other council members — they are independent agents and will respond on their own.
+- You are ${member.name}. You can ONLY speak as ${member.name}. You CANNOT speak as, introduce, quote, or role-play any other council member. Each member is a separate person who speaks for themselves. If someone asks The Connector to introduce themselves, YOU DO NOT DO IT — The Connector will do it themselves. You may say "I'll let them introduce themselves" and stop there.
 - Do NOT prefix your response with [${member.name}] or any brackets — the system handles attribution.
 - One phase at a time. Don't skip ahead or combine phases.
 - Ask one question at a time — don't stack multiple questions.

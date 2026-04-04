@@ -69,7 +69,10 @@ async function callGemini(modelId: string, system: string, messages: ChatMessage
     })
     .join('\n\n');
 
-  console.log(`[gemini] calling ${modelId}, system: ${system.substring(0, 80)}..., transcript: ${transcript.length} chars`);
+  console.log(`[gemini] calling ${modelId}`);
+  console.log(`[gemini] system (first 120): ${system.substring(0, 120)}`);
+  console.log(`[gemini] transcript (first 200): ${transcript.substring(0, 200)}`);
+  console.log(`[gemini] messages count: ${messages.length}`);
 
   const response = await ai.models.generateContent({
     model: modelId,
@@ -80,8 +83,12 @@ async function callGemini(modelId: string, system: string, messages: ChatMessage
     },
   });
 
-  console.log(`[gemini] response: ${response.text ? response.text.substring(0, 100) : 'EMPTY'}`);
-  return response.text || '';
+  const text = response.text || '';
+  console.log(`[gemini] response (${text.length} chars): ${text ? text.substring(0, 100) : 'EMPTY'}`);
+  if (!text) {
+    console.log(`[gemini] full response object:`, JSON.stringify(response).substring(0, 500));
+  }
+  return text;
 }
 
 async function callLocal(modelId: string, system: string, messages: ChatMessage[]): Promise<string> {

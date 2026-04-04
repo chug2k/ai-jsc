@@ -58,10 +58,23 @@ async function callGemini(modelId: string, system: string, messages: ChatMessage
   const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
   // Convert OpenAI-style messages to Gemini format
-  const contents = messages.map(m => ({
-    role: m.role === 'assistant' ? 'model' as const : 'user' as const,
-    parts: [{ text: m.content }],
-  }));
+  // Gemini requires alternating user/model turns — merge consecutive same-role messages
+  const contents: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
+  for (const m of messages) {
+    const role = m.role === 'assistant' ? 'model' as const : 'user' as const;
+    const last = contents[contents.length - 1];
+    if (last && last.role === role) {
+      // Merge consecutive same-role messages
+      last.parts[0].text += '\n\n' + m.content;
+    } else {
+      contents.push({ role, parts: [{ text: m.content }] });
+    }
+  }
+
+  // Gemini requires the conversation to start with a user message
+  if (contents.length > 0 && contents[0].role === 'model') {
+    contents.unshift({ role: 'user', parts: [{ text: '(session started)' }] });
+  }
 
   const response = await ai.models.generateContent({
     model: modelId,

@@ -63,3 +63,22 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json(data);
 }
+
+export async function PATCH(request: NextRequest) {
+  const auth = await authenticateApiRoute();
+  if ('error' in auth) return auth.error;
+  const { supabase, jscUser } = auth;
+
+  const body = await request.json();
+  const { id, phase } = body;
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+
+  const { error } = await supabase
+    .from('jsc_sessions')
+    .update({ phase, ...(phase === 'done' ? { ended_at: new Date().toISOString() } : {}) })
+    .eq('id', id)
+    .eq('user_id', jscUser.id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  return NextResponse.json({ ok: true });
+}

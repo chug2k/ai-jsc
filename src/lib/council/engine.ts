@@ -3,7 +3,8 @@
  *
  * All agents evaluate independently. Before an agent's response is
  * accepted, we check if the message store changed underneath them.
- * If it did, the response is stale — discard it and re-evaluate.
+ * If it did, the response is stale — we re-evaluate with the stale
+ * response as context so the agent can decide if it's still relevant.
  */
 
 export interface AgentMessage {
@@ -40,39 +41,36 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
   const activeAgents = moderatorOnly ? agents.filter(a => a.isModerator) : agents;
   const allNewMessages: AgentMessage[] = [];
 
-  // Track which agents still need to evaluate
+  // Track pending agents and their stale drafts
   const pending = new Set(activeAgents.map(a => a.id));
+  const staleDrafts = new Map<string, string>(); // agentId → their discarded response
 
   while (pending.size > 0 && allNewMessages.length < maxResponses) {
-    // Snapshot the current message count — agents evaluate against this state
     const snapshotLength = messages.length;
 
-    // Fire all pending agents
     const evaluations = [...pending].map(async (agentId) => {
       const agent = activeAgents.find(a => a.id === agentId)!;
-      const text = await evaluateAgent(agent, messages, llm);
+      const staleDraft = staleDrafts.get(agentId);
+      const text = await evaluateAgent(agent, messages, llm, staleDraft);
       return { agent, text, snapshotLength };
     });
 
-    // Process results as they arrive
     let anyAccepted = false;
     for (const evalPromise of evaluations) {
       const { agent, text, snapshotLength: evalSnapshot } = await evalPromise;
 
-      // Remove from pending regardless — they've had their chance
       pending.delete(agent.id);
+      staleDrafts.delete(agent.id);
 
-      if (!text) continue; // SKIPped
+      if (!text) continue;
 
-      // Check if messages changed since this agent started evaluating
       if (messages.length !== evalSnapshot) {
-        // Context changed — this response is stale. Re-queue for another round.
-        console.log(`[engine] ${agent.name}: stale (messages changed ${evalSnapshot} → ${messages.length}), re-queuing`);
+        console.log(`[engine] ${agent.name}: stale (messages changed ${evalSnapshot} → ${messages.length}), re-queuing with draft`);
         pending.add(agent.id);
+        staleDrafts.set(agent.id, text); // Save what they were going to say
         continue;
       }
 
-      // Accept the response
       const msg: AgentMessage = {
         role: 'assistant',
         content: text,
@@ -82,13 +80,11 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
       allNewMessages.push(msg);
       onMessage(msg);
       anyAccepted = true;
-
       console.log(`[engine] ${agent.name}: responded (${text.length} chars)`);
 
       if (allNewMessages.length >= maxResponses) break;
     }
 
-    // If nobody was accepted or re-queued, we're done
     if (!anyAccepted && pending.size === 0) break;
   }
 
@@ -99,9 +95,16 @@ async function evaluateAgent(
   agent: CouncilAgent,
   messages: AgentMessage[],
   llm: (systemPrompt: string, messages: AgentMessage[]) => Promise<string>,
+  staleDraft?: string,
 ): Promise<string | null> {
   try {
-    const systemPrompt = agent.buildSystemPrompt();
+    let systemPrompt = agent.buildSystemPrompt();
+
+    // If this is a re-evaluation after a stale check, give context
+    if (staleDraft) {
+      systemPrompt += `\n\nNOTE: You were about to say: "${staleDraft}" — but new messages arrived before you could speak. Look at the latest messages. If your point is still relevant and hasn't been covered, you can say it (reworded if needed). If someone else already covered it, say SKIP.`;
+    }
+
     const text = await llm(systemPrompt, messages);
     if (!text || isSkip(text)) {
       console.log(`[engine] ${agent.name}: SKIP`);

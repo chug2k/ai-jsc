@@ -69,10 +69,7 @@ async function callGemini(modelId: string, system: string, messages: ChatMessage
     })
     .join('\n\n');
 
-  console.log(`[gemini] calling ${modelId}`);
-  console.log(`[gemini] system (first 120): ${system.substring(0, 120)}`);
-  console.log(`[gemini] transcript (first 200): ${transcript.substring(0, 200)}`);
-  console.log(`[gemini] messages count: ${messages.length}`);
+  console.log(`[gemini] calling ${modelId}, system length: ${system.length}, transcript length: ${transcript.length}, messages: ${messages.length}`);
 
   const response = await ai.models.generateContent({
     model: modelId,
@@ -80,14 +77,14 @@ async function callGemini(modelId: string, system: string, messages: ChatMessage
     config: {
       systemInstruction: system,
       maxOutputTokens: 4096,
+      thinkingConfig: { thinkingBudget: 0 },
     },
   });
 
-  const text = response.text || '';
-  console.log(`[gemini] response (${text.length} chars): ${text ? text.substring(0, 100) : 'EMPTY'}`);
-  if (!text) {
-    console.log(`[gemini] full response object:`, JSON.stringify(response).substring(0, 500));
-  }
+  // Check candidates directly — response.text can be empty even when content exists
+  const candidate = response.candidates?.[0];
+  const parts = candidate?.content?.parts || [];
+  const text = parts.map((p: { text?: string }) => p.text || '').join('').trim();
   return text;
 }
 
@@ -139,7 +136,7 @@ export async function POST(request: NextRequest) {
         break;
     }
 
-    return NextResponse.json({ text });
+    return NextResponse.json({ text, _debug: process.env.NODE_ENV === 'development' ? { provider, modelId } : undefined });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 502 });

@@ -20,7 +20,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const LOCAL_ENDPOINT = process.env.LLM_ENDPOINT || '';
 const LOCAL_MODEL = process.env.LLM_MODEL || '';
 
-const DEFAULT_MODEL = process.env.DEFAULT_LLM_MODEL || 'openai:gpt-5.4-nano';
+const DEFAULT_MODEL = process.env.DEFAULT_LLM_MODEL || 'gemini:gemini-3.1-flash-lite-preview';
 
 interface ChatMessage {
   role: string;

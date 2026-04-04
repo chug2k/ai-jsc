@@ -40,6 +40,7 @@ describe('/api/chat route', () => {
       json: async () => ({
         system: 'You are helpful.',
         messages: [{ role: 'user', content: 'hi' }],
+        model: 'openai:gpt-5.4-nano',
       }),
     };
     const res = await POST(request);

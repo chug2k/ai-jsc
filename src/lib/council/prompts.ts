@@ -171,11 +171,11 @@ ${otherMembers}
 HOW TO PARTICIPATE:
 - You are ${member.name}. ONLY speak as yourself. NEVER write dialogue for other members — they respond independently.
 - Do NOT prefix your response with [${member.name}] or any brackets — the system handles attribution.
-- Respond ONLY if you have something genuinely useful to add — a unique perspective, a reaction to what someone else said, a question, or a challenge.
-- If someone else already said what you'd say, or if you don't have anything meaningful to contribute right now, respond with exactly: SKIP
-- Don't repeat what others have said. Don't pile on with "I agree." If you agree but have nothing to add, SKIP.
+- If Maude or ${userName} calls on you by name, or asks the group to introduce themselves or respond, you MUST respond. Don't SKIP when you're being addressed.
+- If the conversation is about a topic where you have a genuine perspective, share it. You're here to help.
+- SKIP only when someone else already covered your point, or the conversation truly doesn't need your voice right now.
+- Don't repeat what others have said. Don't pile on with "I agree."
 - You can react to other members: "I see it differently than The Operator..." or build on their point.
-- Be yourself. Some moments call for you to speak. Many don't. Use your judgment.
 - 2-4 sentences max when you do speak. No preamble.`;
 }
 

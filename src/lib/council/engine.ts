@@ -1,8 +1,9 @@
 /**
  * Council Engine — multi-agent reactive conversation.
  *
- * All agents evaluate independently and their responses stream
- * to the UI as they arrive — no batching, no waiting for everyone.
+ * All agents evaluate independently. Before an agent's response is
+ * accepted, we check if the message store changed underneath them.
+ * If it did, the response is stale — discard it and re-evaluate.
  */
 
 export interface AgentMessage {
@@ -37,34 +38,58 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
   const { agents, onMessage, llm, maxResponses = 8, moderatorOnly = false } = config;
   const messages = [...config.messages];
   const activeAgents = moderatorOnly ? agents.filter(a => a.isModerator) : agents;
-  let totalResponses = 0;
   const allNewMessages: AgentMessage[] = [];
 
-  while (totalResponses < maxResponses) {
-    let anyoneSpoke = false;
+  // Track which agents still need to evaluate
+  const pending = new Set(activeAgents.map(a => a.id));
 
-    // Fire all agents independently — each resolves on its own time
-    const promises = activeAgents.map(async (agent) => {
+  while (pending.size > 0 && allNewMessages.length < maxResponses) {
+    // Snapshot the current message count — agents evaluate against this state
+    const snapshotLength = messages.length;
+
+    // Fire all pending agents
+    const evaluations = [...pending].map(async (agentId) => {
+      const agent = activeAgents.find(a => a.id === agentId)!;
       const text = await evaluateAgent(agent, messages, llm);
-      if (text && totalResponses < maxResponses) {
-        const msg: AgentMessage = {
-          role: 'assistant',
-          content: text,
-          memberName: agent.name,
-        };
-        // Immediately push to UI as this agent resolves
-        messages.push(msg);
-        allNewMessages.push(msg);
-        onMessage(msg);
-        totalResponses++;
-        anyoneSpoke = true;
-      }
+      return { agent, text, snapshotLength };
     });
 
-    await Promise.all(promises);
+    // Process results as they arrive
+    let anyAccepted = false;
+    for (const evalPromise of evaluations) {
+      const { agent, text, snapshotLength: evalSnapshot } = await evalPromise;
 
-    // One round per user message. Agents react to what's there, then we wait for the user.
-    break;
+      // Remove from pending regardless — they've had their chance
+      pending.delete(agent.id);
+
+      if (!text) continue; // SKIPped
+
+      // Check if messages changed since this agent started evaluating
+      if (messages.length !== evalSnapshot) {
+        // Context changed — this response is stale. Re-queue for another round.
+        console.log(`[engine] ${agent.name}: stale (messages changed ${evalSnapshot} → ${messages.length}), re-queuing`);
+        pending.add(agent.id);
+        continue;
+      }
+
+      // Accept the response
+      const msg: AgentMessage = {
+        role: 'assistant',
+        content: text,
+        memberName: agent.name,
+      };
+      messages.push(msg);
+      allNewMessages.push(msg);
+      onMessage(msg);
+      anyAccepted = true;
+
+      console.log(`[engine] ${agent.name}: responded (${text.length} chars)`);
+
+      if (allNewMessages.length >= maxResponses) break;
+    }
+
+    // If nobody was accepted or re-queued, we're done
+    if (!anyAccepted && pending.size === 0) break;
   }
 
   return allNewMessages;
@@ -82,7 +107,6 @@ async function evaluateAgent(
       console.log(`[engine] ${agent.name}: SKIP`);
       return null;
     }
-    console.log(`[engine] ${agent.name}: responded (${text.length} chars)`);
     return text;
   } catch (err) {
     console.warn(`[engine] ${agent.name} failed:`, err);

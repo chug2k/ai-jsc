@@ -1,10 +1,10 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { useSessionStore } from '@/stores/session-store';
 import { getSessionTheme } from '@/lib/council/phases';
 import ChatBubble from './ChatBubble';
-import ChatInput from './ChatInput';
+import ChatInput, { type ReplyTarget } from './ChatInput';
 import Sidebar from './Sidebar';
 
 function LoadingDots({ color = 'var(--accent)', emoji = '📋' }: { color?: string; emoji?: string }) {
@@ -48,31 +48,39 @@ function SessionAgendaBanner({ sessionNumber }: { sessionNumber: number }) {
 export default function SessionView() {
   const { currentSession, isLoading } = useSessionStore();
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [currentSession?.messages.length, isLoading]);
 
+  const handleReply = useCallback((index: number) => {
+    const msg = currentSession?.messages[index];
+    if (!msg) return;
+    setReplyTo({
+      memberName: msg.memberName || null,
+      content: msg.content.replace(/^\[.*?\]\s*/g, ''),
+      index,
+    });
+  }, [currentSession?.messages]);
+
   if (!currentSession) return null;
+
+  const visibleMessages = currentSession.messages.filter(m => m.content !== 'Begin the JSC session.');
 
   return (
     <div className="flex h-full">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Chat messages */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4" style={{ scrollBehavior: 'smooth' }}>
           <SessionAgendaBanner sessionNumber={currentSession.sessionNumber} />
-          {currentSession.messages
-            .filter(m => m.content !== 'Begin the JSC session.')
-            .map((msg, i) => (
-              <ChatBubble key={i} message={msg} />
-            ))}
+          {visibleMessages.map((msg, i) => (
+            <ChatBubble key={i} message={msg} index={i} onReply={handleReply} />
+          ))}
           {isLoading && <LoadingDots />}
           <div ref={chatEndRef} />
         </div>
-
-        {/* Input */}
-        <ChatInput />
+        <ChatInput replyTo={replyTo} onClearReply={() => setReplyTo(null)} />
       </div>
     </div>
   );

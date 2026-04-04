@@ -1,0 +1,10 @@
+node_modules/
+.vercel/
+.next/
+.playwright-mcp/
+tests/screenshots/
+*.log
+.env
+.env.local
+_old/
+.vercel

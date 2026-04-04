@@ -8,3 +8,6 @@ tests/screenshots/
 .env.local
 _old/
 .vercel
+
+.DS_Store
+.mcp.json

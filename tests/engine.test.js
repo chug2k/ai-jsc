@@ -60,6 +60,7 @@ describe('runReactionLoop', () => {
 
     expect(received.length).toBe(2); // Maude + Operator, Strategist skipped
     expect(received[0].memberName).toBe('Maude');
+    expect(received[0].content).not.toContain('[Maude]');
     expect(received[1].memberName).toBe('The Operator');
   });
 

@@ -18,16 +18,16 @@ export default function ChatBubble({ message }: { message: Message }) {
   const { customMembers, user } = useSessionStore();
   const members = allMembers(customMembers);
 
-  // Parse member from [Name] prefix
   let member: Member | undefined;
   let displayText = message.content;
 
   if (message.role === 'assistant') {
-    const match = message.content.match(/^\[(.+?)\] ([\s\S]*)$/);
-    if (match) {
-      member = members.find(m => m.name === match[1]);
-      displayText = match[2];
+    // Use memberName field for attribution
+    if (message.memberName) {
+      member = members.find(m => m.name === message.memberName);
     }
+    // Strip any [Name] prefix the model may have added in content
+    displayText = displayText.replace(/^\[.*?\]\s*/g, '');
     displayText = stripCommitmentBlock(displayText);
     if (hasCommitmentBlock(message.content)) {
       displayText += '\n\n✅ Commitments saved.';
@@ -51,7 +51,7 @@ export default function ChatBubble({ message }: { message: Message }) {
   }
 
   const color = member?.color || 'var(--accent)';
-  const emoji = member?.emoji || '🥔';
+  const emoji = member?.emoji || '💬';
 
   return (
     <div className="max-w-4xl mx-auto">

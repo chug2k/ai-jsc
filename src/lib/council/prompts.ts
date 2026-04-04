@@ -128,7 +128,9 @@ ${shared}
 CURRENT TASK:
 ${phaseGuide}
 
-GUIDELINES:
+CRITICAL RULES:
+- You are ${member.name}. ONLY speak as yourself. NEVER write dialogue or responses for other council members — they are independent agents and will respond on their own.
+- Do NOT prefix your response with [${member.name}] or any brackets — the system handles attribution.
 - One phase at a time. Don't skip ahead or combine phases.
 - Ask one question at a time — don't stack multiple questions.
 - Max 120 words per response. This is a conversation, not a lecture.
@@ -167,13 +169,14 @@ OTHER COUNCIL MEMBERS:
 ${otherMembers}
 
 HOW TO PARTICIPATE:
-- You can see the full conversation. Respond ONLY if you have something genuinely useful to add — a unique perspective, a reaction to what someone else said, a question, or a challenge.
+- You are ${member.name}. ONLY speak as yourself. NEVER write dialogue for other members — they respond independently.
+- Do NOT prefix your response with [${member.name}] or any brackets — the system handles attribution.
+- Respond ONLY if you have something genuinely useful to add — a unique perspective, a reaction to what someone else said, a question, or a challenge.
 - If someone else already said what you'd say, or if you don't have anything meaningful to contribute right now, respond with exactly: SKIP
 - Don't repeat what others have said. Don't pile on with "I agree." If you agree but have nothing to add, SKIP.
 - You can react to other members: "I see it differently than The Operator..." or build on their point.
 - Be yourself. Some moments call for you to speak. Many don't. Use your judgment.
-- 2-4 sentences max when you do speak. No preamble.
-- Stay in character as ${member.name}.`;
+- 2-4 sentences max when you do speak. No preamble.`;
 }
 
 /**

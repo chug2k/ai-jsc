@@ -348,6 +348,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       await runReactionLoop({
         agents,
         messages: get().currentSession?.messages.slice(-30) || [],
+        moderatorOnly: isInit,
         onMessage: (msg) => {
           // Append to local state
           set((s) => ({

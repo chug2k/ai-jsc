@@ -31,6 +31,8 @@ export interface CouncilEngineConfig {
   llm: (systemPrompt: string, messages: AgentMessage[]) => Promise<string>;
   /** Max total agent messages per user message. Safety valve. Default 8. */
   maxResponses?: number;
+  /** Only let the moderator speak (used for session init). */
+  moderatorOnly?: boolean;
 }
 
 const SKIP_TOKEN = 'SKIP';
@@ -39,21 +41,19 @@ function isSkip(text: string): boolean {
   return text.trim().toUpperCase() === SKIP_TOKEN;
 }
 
+
 /**
  * Run one reaction cycle: a user (or agent) message just landed.
  * Moderator evaluates first, then all others in parallel.
  * Repeat until nobody has anything to say (or we hit the cap).
  */
 export async function runReactionLoop(config: CouncilEngineConfig): Promise<AgentMessage[]> {
-  const { agents, onMessage, llm, maxResponses = 8 } = config;
+  const { agents, onMessage, llm, maxResponses = 8, moderatorOnly = false } = config;
   const messages = [...config.messages];
   const moderator = agents.find(a => a.isModerator);
-  const members = agents.filter(a => !a.isModerator);
+  const members = moderatorOnly ? [] : agents.filter(a => !a.isModerator);
   let totalResponses = 0;
   const allNewMessages: AgentMessage[] = [];
-
-  // Track who spoke this cycle so agents have natural awareness
-  const spokeThisCycle = new Set<string>();
 
   while (totalResponses < maxResponses) {
     const roundMessages: AgentMessage[] = [];
@@ -62,13 +62,12 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
     if (moderator && totalResponses < maxResponses) {
       const text = await evaluateAgent(moderator, messages, llm);
       if (text) {
-        const msg: AgentMessage = { role: 'assistant', content: `[${moderator.name}] ${text}`, memberName: moderator.name };
+        const msg: AgentMessage = { role: 'assistant', content: text, memberName: moderator.name };
         messages.push(msg);
         roundMessages.push(msg);
         allNewMessages.push(msg);
         onMessage(msg);
         totalResponses++;
-        spokeThisCycle.add(moderator.id);
       }
     }
 
@@ -86,7 +85,7 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
         if (result && totalResponses < maxResponses) {
           const msg: AgentMessage = {
             role: 'assistant',
-            content: `[${result.agent.name}] ${result.text}`,
+            content: result.text,
             memberName: result.agent.name,
           };
           messages.push(msg);
@@ -94,7 +93,6 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
           allNewMessages.push(msg);
           onMessage(msg);
           totalResponses++;
-          spokeThisCycle.add(result.agent.id);
         }
       }
     }

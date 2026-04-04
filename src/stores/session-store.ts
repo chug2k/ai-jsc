@@ -131,14 +131,13 @@ async function api(path: string, options?: RequestInit) {
   return res.json();
 }
 
-/** Call /api/chat with dev model override if set */
-async function chatApi(system: string, messages: unknown[]) {
-  // Check for dev model override (set by DevToolbar)
+/** Call /api/chat. Model can be overridden per-call or via DevToolbar. */
+async function chatApi(system: string, messages: unknown[], model?: string) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const devModel = (useSessionStore.getState() as any)._devModel as string | undefined;
   return api('/api/chat', {
     method: 'POST',
-    body: JSON.stringify({ system, messages, ...(devModel ? { model: devModel } : {}) }),
+    body: JSON.stringify({ system, messages, model: devModel || model }),
   });
 }
 
@@ -339,6 +338,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       id: member.id,
       name: member.name,
       isModerator: member.id === 'facilitator',
+      model: member.id === 'facilitator' ? 'gpt-5.4' : 'gpt-5.4-mini',
       buildSystemPrompt: () =>
         member.id === 'facilitator'
           ? buildModeratorPrompt(member, members, currentPhase, ctx)
@@ -380,12 +380,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           // Check for phase transitions on every agent message
           advancePhase(msg.content, get, set);
         },
-        llm: async (system, messages) => {
-          const result = await chatApi(system, messages);
+        llm: async (system, messages, model) => {
+          const result = await chatApi(system, messages, model);
           if (!result.text) {
-            console.warn('[llm] empty text from API. Full response:', JSON.stringify(result));
-            console.warn('[llm] system prompt (first 100):', system.substring(0, 100));
-            console.warn('[llm] messages count:', messages.length);
+            console.warn('[llm] empty text from API:', JSON.stringify(result));
           }
           return result.text || '';
         },

@@ -17,6 +17,7 @@ export interface CouncilAgent {
   id: string;
   name: string;
   isModerator: boolean;
+  model?: string;
   buildSystemPrompt: () => string;
 }
 
@@ -24,7 +25,7 @@ export interface CouncilEngineConfig {
   agents: CouncilAgent[];
   messages: AgentMessage[];
   onMessage: (msg: AgentMessage) => void;
-  llm: (systemPrompt: string, messages: AgentMessage[]) => Promise<string>;
+  llm: (systemPrompt: string, messages: AgentMessage[], model?: string) => Promise<string>;
   maxResponses?: number;
   moderatorOnly?: boolean;
   /** If the user replied to a specific member, that member evaluates first. */
@@ -111,7 +112,7 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
 async function evaluateAgent(
   agent: CouncilAgent,
   messages: AgentMessage[],
-  llm: (systemPrompt: string, messages: AgentMessage[]) => Promise<string>,
+  llm: (systemPrompt: string, messages: AgentMessage[], model?: string) => Promise<string>,
   staleDraft?: string,
   isRepliedTo?: boolean,
 ): Promise<string | null> {
@@ -126,7 +127,7 @@ async function evaluateAgent(
       systemPrompt += `\n\nNOTE: You were about to say: "${staleDraft}" — but new messages arrived before you could speak. Look at the latest messages. If your point is still relevant and hasn't been covered, you can say it (reworded if needed). If someone else already covered it, say SKIP.`;
     }
 
-    const text = await llm(systemPrompt, messages);
+    const text = await llm(systemPrompt, messages, agent.model);
     if (!text || isSkip(text)) {
       console.log(`[engine] ${agent.name}: SKIP`);
       return null;

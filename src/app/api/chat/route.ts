@@ -1,138 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { GoogleGenAI } from '@google/genai';
-
-/**
- * Multi-provider LLM proxy.
- *
- * Supported providers:
- *   - openai: GPT-5.4 nano/mini/full (or any OpenAI-compatible endpoint)
- *   - gemini: Google Gemini models via @google/genai SDK
- *   - local: Any OpenAI-compatible local server (LM Studio, Ollama, etc.)
- *
- * The client sends { system, messages, model? }
- * Model format: "provider:model-id" (e.g. "openai:gpt-5.4-nano", "gemini:gemini-3.1-flash-lite-preview")
- * If no prefix, defaults to OpenAI.
- */
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const LOCAL_ENDPOINT = process.env.LLM_ENDPOINT || '';
-const LOCAL_MODEL = process.env.LLM_MODEL || '';
-
-const DEFAULT_MODEL = process.env.DEFAULT_LLM_MODEL || 'openai:gpt-5.4-mini';
-
-interface ChatMessage {
-  role: string;
-  content: string;
-}
-
-function parseModel(model: string): { provider: string; modelId: string } {
-  if (model.includes(':')) {
-    const [provider, ...rest] = model.split(':');
-    return { provider, modelId: rest.join(':') };
-  }
-  // No prefix — guess provider from model name
-  if (model.startsWith('gemini')) return { provider: 'gemini', modelId: model };
-  if (model.startsWith('gpt') || model.startsWith('o1') || model.startsWith('o3') || model.startsWith('o4')) return { provider: 'openai', modelId: model };
-  // Assume local/OpenAI-compatible
-  return { provider: 'local', modelId: model };
-}
-
-async function callOpenAI(modelId: string, system: string, messages: ChatMessage[]): Promise<string> {
-  const endpoint = 'https://api.openai.com/v1/chat/completions';
-  const msgs = [{ role: 'developer', content: system }, ...messages];
-
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
-    body: JSON.stringify({ model: modelId, max_completion_tokens: 4096, messages: msgs }),
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data));
-  return data.choices?.[0]?.message?.content || '';
-}
-
-async function callGemini(modelId: string, system: string, messages: ChatMessage[]): Promise<string> {
-  const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-  // Build the full conversation as a single user message with transcript.
-  // Each agent has a different persona (system prompt) but sees the same conversation.
-  // We put the transcript + instruction in one user turn to avoid Gemini's
-  // multi-turn "I already responded" issue.
-  const lines: string[] = [];
-  for (const m of messages) {
-    const ext = m as ChatMessage & { memberName?: string; replyTo?: { memberName: string | null; content: string } };
-    if (m.role === 'user') {
-      const replyCtx = ext.replyTo ? `[replying to ${ext.replyTo.memberName || 'User'}: "${ext.replyTo.content.substring(0, 80)}"]\n` : '';
-      lines.push(`User: ${replyCtx}${m.content}`);
-    } else {
-      const name = ext.memberName || 'Council Member';
-      lines.push(`${name}: ${m.content}`);
-    }
-  }
-
-  // Separate the last message as the trigger
-  const lastMsg = lines.pop() || '';
-  const history = lines.join('\n\n');
-
-  // Extract participant names from messages
-  const participants = new Set<string>();
-  participants.add('User');
-  for (const m of messages) {
-    const name = (m as ChatMessage & { memberName?: string }).memberName;
-    if (name) participants.add(name);
-  }
-
-  let prompt: string;
-  if (history) {
-    prompt = `PARTICIPANTS IN THIS CONVERSATION: ${[...participants].join(', ')}
-
-CONVERSATION HISTORY:
-${history}
-
-LATEST MESSAGE:
-${lastMsg}
-
-You are in this conversation. What is YOUR response to the latest message? Speak as yourself only. If you have nothing to add, say exactly: SKIP`;
-  } else {
-    prompt = `PARTICIPANTS: ${[...participants].join(', ')}\n\n${lastMsg}\n\nRespond as yourself.`;
-  }
-
-  try {
-    const response = await ai.models.generateContent({
-      model: modelId,
-      contents: prompt,
-      config: {
-        systemInstruction: system,
-        maxOutputTokens: 512,
-        thinkingConfig: { thinkingBudget: 0 },
-      },
-    });
-    return response.text || '';
-  } catch (err) {
-    console.error(`[gemini] error:`, err);
-    return '';
-  }
-}
-
-async function callLocal(modelId: string, system: string, messages: ChatMessage[]): Promise<string> {
-  if (!LOCAL_ENDPOINT) throw new Error('No local LLM endpoint configured (set LLM_ENDPOINT)');
-  const msgs = [{ role: 'developer', content: system }, ...messages];
-
-  const res = await fetch(LOCAL_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: modelId || LOCAL_MODEL, max_tokens: 4096, messages: msgs }),
-  });
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data));
-  const content = data.choices?.[0]?.message?.content || '';
-  const reasoning = data.choices?.[0]?.message?.reasoning_content || '';
-  return content || reasoning.trim();
-}
+const OPENAI_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -148,23 +18,45 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing system or messages' }, { status: 400 });
   }
 
-  const { provider, modelId } = parseModel(model || DEFAULT_MODEL);
+  const modelId = model || 'gpt-5.4-mini';
+
+  const msgs = [
+    { role: 'developer', content: system },
+    ...messages.map((m: { role: string; content: string; memberName?: string; replyTo?: { memberName: string | null; content: string } }) => {
+      let content = m.content;
+      // Include reply context for agents to see
+      if (m.replyTo) {
+        content = `[replying to ${m.replyTo.memberName || 'User'}: "${m.replyTo.content.substring(0, 80)}"]\n${content}`;
+      }
+      // Label assistant messages with member name so agents know who said what
+      if (m.role === 'assistant' && m.memberName) {
+        content = `[${m.memberName}]: ${content}`;
+      }
+      return { role: m.role, content };
+    }),
+  ];
 
   try {
-    let text: string;
-    switch (provider) {
-      case 'gemini':
-        text = await callGemini(modelId, system, messages);
-        break;
-      case 'local':
-        text = await callLocal(modelId, system, messages);
-        break;
-      case 'openai':
-      default:
-        text = await callOpenAI(modelId, system, messages);
-        break;
+    const res = await fetch(OPENAI_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: modelId,
+        max_completion_tokens: 1024,
+        messages: msgs,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = data.error?.message || JSON.stringify(data);
+      return NextResponse.json({ error: msg }, { status: res.status });
     }
 
+    const text = data.choices?.[0]?.message?.content || '';
     return NextResponse.json({ text });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';

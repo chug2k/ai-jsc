@@ -11,7 +11,6 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@google/genai": "^1.48.0",
     "next": "^16.2.2",
     "posthog-js": "^1.364.6",
     "react": "^19.2.4",

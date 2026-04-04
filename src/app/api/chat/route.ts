@@ -64,16 +64,23 @@ async function callGemini(modelId: string, system: string, messages: ChatMessage
   const lines: string[] = [];
   for (const m of messages) {
     if (m.role === 'user') {
-      lines.push(`[User]: ${m.content}`);
+      lines.push(`User: ${m.content}`);
     } else {
       const name = (m as ChatMessage & { memberName?: string }).memberName || 'Council Member';
-      lines.push(`[${name}]: ${m.content}`);
+      lines.push(`${name}: ${m.content}`);
     }
   }
 
-  const prompt = lines.length > 0
-    ? `Here is the group conversation so far:\n\n${lines.join('\n\n')}\n\nBased on the conversation above and your role, respond now. If you have nothing to add, say exactly: SKIP`
-    : 'The session is starting. Respond according to your system instructions.';
+  // Separate the last message as the trigger
+  const lastMsg = lines.pop() || '';
+  const history = lines.join('\n\n');
+
+  let prompt: string;
+  if (history) {
+    prompt = `CONVERSATION HISTORY:\n${history}\n\nLATEST MESSAGE:\n${lastMsg}\n\nYou are in this conversation. What is YOUR response to the latest message? Speak as yourself only. If you have nothing to add, say exactly: SKIP`;
+  } else {
+    prompt = `${lastMsg}\n\nRespond as yourself.`;
+  }
 
   try {
     const response = await ai.models.generateContent({

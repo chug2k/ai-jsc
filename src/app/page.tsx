@@ -276,7 +276,7 @@ export default async function LandingPage() {
             <div className={styles['roster-card']}><div className={styles.emoji}>&#x1F680;</div><div className={styles.name}>The Founder</div><div className={styles.role}>Startup instinct</div></div>
             <div className={styles['roster-card']}><div className={styles.emoji}>&#x1FA9E;</div><div className={styles.name}>The Witness</div><div className={styles.role}>Emotional compass</div></div>
             <div className={styles['roster-card']}><div className={styles.emoji}>&#x1F578;&#xFE0F;</div><div className={styles.name}>The Connector</div><div className={styles.role}>Network activator</div></div>
-            <div className={styles['roster-card']}><div className={styles.emoji}>&#x1F4CB;</div><div className={styles.name}>Jordan</div><div className={styles.role}>Moderator · every session</div></div>
+            <div className={styles['roster-card']}><div className={styles.emoji}>&#x1F4CB;</div><div className={styles.name}>Maude</div><div className={styles.role}>Moderator · every session</div></div>
           </div>
 
           <p className={styles.mono} style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '16px', marginBottom: '4px' }}>Fictional Voices Inspired by Real People</p>

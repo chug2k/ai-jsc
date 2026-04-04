@@ -68,7 +68,7 @@ export const ARCHETYPES = [
   },
   {
     id: 'facilitator',
-    name: 'Jordan',
+    name: 'Maude',
     emoji: '📋',
     color: '#4ade80',
     role: 'Council Moderator',

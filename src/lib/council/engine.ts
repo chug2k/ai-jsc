@@ -63,12 +63,8 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
 
     await Promise.all(promises);
 
-    // Nobody spoke this round — done
-    if (!anyoneSpoke) break;
-
-    // Only moderator spoke — don't loop, wait for user
-    const moderator = agents.find(a => a.isModerator);
-    if (totalResponses === 1 && allNewMessages[0]?.memberName === moderator?.name) break;
+    // One round per user message. Agents react to what's there, then we wait for the user.
+    break;
   }
 
   return allNewMessages;

@@ -171,14 +171,14 @@ OTHER COUNCIL MEMBERS:
 ${otherMembers}
 
 HOW TO PARTICIPATE:
-- You are ${member.name}. ONLY speak as yourself. NEVER write dialogue for other members — they respond independently.
-- Do NOT prefix your response with [${member.name}] or any brackets — the system handles attribution.
-- If Maude or ${userName} calls on you by name, or asks the group to introduce themselves or respond, you MUST respond. Don't SKIP when you're being addressed.
-- If the conversation is about a topic where you have a genuine perspective, share it. You're here to help.
-- SKIP only when someone else already covered your point, or the conversation truly doesn't need your voice right now.
-- Don't repeat what others have said. Don't pile on with "I agree."
-- You can react to other members: "I see it differently than The Operator..." or build on their point.
-- 2-4 sentences max when you do speak. No preamble.`;
+- You are ${member.name}. ONLY speak as yourself. NEVER write dialogue for other members.
+- Do NOT prefix your response with brackets — the system handles attribution.
+- Your DEFAULT is to say nothing. Respond with exactly SKIP unless one of these is true:
+  1. ${userName} or Maude addressed you by name or asked the group to respond
+  2. You have a genuinely different perspective that nobody else has raised
+  3. You strongly disagree with something that was just said
+- If you're not sure whether to speak, SKIP. Silence is fine. Real people don't talk every turn.
+- When you do speak: 2-4 sentences max. No preamble. No "great question." Just your point.`;
 }
 
 /**

@@ -57,28 +57,20 @@ async function callOpenAI(modelId: string, system: string, messages: ChatMessage
 async function callGemini(modelId: string, system: string, messages: ChatMessage[]): Promise<string> {
   const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-  // Convert OpenAI-style messages to Gemini format
-  // Gemini requires alternating user/model turns — merge consecutive same-role messages
-  const contents: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
-  for (const m of messages) {
-    const role = m.role === 'assistant' ? 'model' as const : 'user' as const;
-    const last = contents[contents.length - 1];
-    if (last && last.role === role) {
-      // Merge consecutive same-role messages
-      last.parts[0].text += '\n\n' + m.content;
-    } else {
-      contents.push({ role, parts: [{ text: m.content }] });
-    }
-  }
-
-  // Gemini requires the conversation to start with a user message
-  if (contents.length > 0 && contents[0].role === 'model') {
-    contents.unshift({ role: 'user', parts: [{ text: '(session started)' }] });
-  }
+  // Format the conversation as a single user prompt.
+  // Multi-turn with Gemini is tricky when multiple AI agents share a history
+  // (Gemini thinks all "model" messages are its own). Instead, we present
+  // the full conversation transcript and ask the agent to respond.
+  const transcript = messages
+    .map(m => {
+      if (m.role === 'user') return `[User]: ${m.content}`;
+      return m.content; // assistant messages already have member attribution
+    })
+    .join('\n\n');
 
   const response = await ai.models.generateContent({
     model: modelId,
-    contents,
+    contents: `Here is the conversation so far:\n\n${transcript}\n\nNow respond according to your system instructions.`,
     config: {
       systemInstruction: system,
       maxOutputTokens: 4096,

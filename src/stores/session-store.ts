@@ -80,7 +80,7 @@ interface SessionState {
     phase: string;
     messages: Message[];
     memberIds: string[];
-    hotSeatReady: boolean;
+    hotSeatReady?: boolean;
     sessionNumber: number;
   } | null;
   pastSessions: Session[];
@@ -287,15 +287,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     if (!state.currentSession || state.isLoading) return;
     set({ isLoading: true });
 
-    const { currentSession, selectedIds, customMembers, user } = state;
-    const { phase, messages, memberIds } = currentSession;
+    const { currentSession, customMembers, user } = state;
+    const { phase, memberIds } = currentSession;
     const members = memberIds.map(id => memberById(id, customMembers)).filter(Boolean) as Member[];
-    const lead = members.find(m => m.id === 'facilitator') || members[0];
 
     const isInit = text === '__INIT__';
     const userMsg = isInit ? 'Begin the JSC session.' : text;
 
-    // Add user message to local state (unless init)
+    // Add user message to local state
     if (!isInit) {
       const userMessage: Message = { role: 'user', content: text };
       set((s) => ({
@@ -304,20 +303,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           messages: [...s.currentSession.messages, userMessage],
         } : null,
       }));
-      // Persist user message
       if (currentSession.dbId) {
         api('/api/messages', {
           method: 'POST',
-          body: JSON.stringify({
-            sessionId: currentSession.dbId,
-            role: 'user',
-            content: text,
-            phase,
-          }),
+          body: JSON.stringify({ sessionId: currentSession.dbId, role: 'user', content: text, phase }),
         }).catch(console.warn);
       }
     } else {
-      // Store seed message for history continuity
       set((s) => ({
         currentSession: s.currentSession ? {
           ...s.currentSession,
@@ -326,13 +318,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       }));
     }
 
-    // Build message history for API
-    const currentMessages = get().currentSession?.messages || [];
-
-    // Determine if hot seat multi-member
-    const isHotSeatActive = phase === 'hot_seat' && currentSession.hotSeatReady && !isInit;
-
-    const { buildModeratorPrompt, buildWrapupPrompt, buildMemberPrompt } = await import('@/lib/council/prompts');
+    const { buildModeratorPrompt, buildReactiveMemberPrompt } = await import('@/lib/council/prompts');
+    const { runReactionLoop } = await import('@/lib/council/engine');
 
     const ctx = {
       userName: user?.name || 'Friend',
@@ -342,74 +329,51 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       sessionNumber: currentSession.sessionNumber,
     };
 
+    // Build agents from council members
+    const currentPhase = get().currentSession?.phase || 'checkin';
+    const agents = members.map(member => ({
+      id: member.id,
+      name: member.name,
+      isModerator: member.id === 'facilitator',
+      buildSystemPrompt: () =>
+        member.id === 'facilitator'
+          ? buildModeratorPrompt(member, members, currentPhase, ctx)
+          : buildReactiveMemberPrompt(member, members, currentPhase, ctx),
+    }));
+
     try {
-      if (isHotSeatActive) {
-        // Each member responds
-        for (const member of members) {
-          const sys = buildMemberPrompt(member, members, ctx);
-          const directive = {
-            role: 'user' as const,
-            content: `The user just said on the hot seat: "${userMsg}"\n\nNow respond as ${member.name} — your unique lens only, 2–4 sentences. Don't repeat what other council members have already said. No pleasantries. Get to the point.`,
-          };
-          const history = get().currentSession?.messages.slice(-20) || [];
-          const { text: aiText } = await chatApi(sys, [...history, directive]);
-          if (aiText) {
-            const msg: Message = { role: 'assistant', content: `[${member.name}] ${aiText}`, memberName: member.name };
-            set((s) => ({
-              currentSession: s.currentSession ? {
-                ...s.currentSession,
-                messages: [...s.currentSession.messages, msg],
-              } : null,
-            }));
-            if (currentSession.dbId) {
-              api('/api/messages', {
-                method: 'POST',
-                body: JSON.stringify({ sessionId: currentSession.dbId, role: 'assistant', content: msg.content, memberName: member.name, phase }),
-              }).catch(console.warn);
-            }
-          }
-        }
-        // Moderator wrap-up
-        const wrapSys = buildWrapupPrompt(lead, members, ctx);
-        const history = get().currentSession?.messages.slice(-20) || [];
-        const { text: wrapText } = await chatApi(wrapSys, history);
-        if (wrapText) {
-          const msg: Message = { role: 'assistant', content: `[${lead.name}] ${wrapText}`, memberName: lead.name };
+      await runReactionLoop({
+        agents,
+        messages: get().currentSession?.messages.slice(-30) || [],
+        onMessage: (msg) => {
+          // Append to local state
           set((s) => ({
             currentSession: s.currentSession ? {
               ...s.currentSession,
               messages: [...s.currentSession.messages, msg],
             } : null,
           }));
-          advancePhase(wrapText, get, set);
-        }
-      } else {
-        // Moderator turn
-        const sys = buildModeratorPrompt(lead, members, phase, ctx);
-        const { text: aiText } = await chatApi(sys, currentMessages);
-        if (aiText) {
-          const msg: Message = { role: 'assistant', content: `[${lead.name}] ${aiText}`, memberName: lead.name };
-          set((s) => ({
-            currentSession: s.currentSession ? {
-              ...s.currentSession,
-              messages: [...s.currentSession.messages, msg],
-            } : null,
-          }));
+          // Persist to DB
           if (currentSession.dbId) {
             api('/api/messages', {
               method: 'POST',
-              body: JSON.stringify({ sessionId: currentSession.dbId, role: 'assistant', content: msg.content, memberName: lead.name, phase }),
+              body: JSON.stringify({
+                sessionId: currentSession.dbId,
+                role: 'assistant',
+                content: msg.content,
+                memberName: msg.memberName,
+                phase: get().currentSession?.phase,
+              }),
             }).catch(console.warn);
           }
-          advancePhase(aiText, get, set);
-          // Mark hot seat ready after moderator asks
-          if (phase === 'hot_seat' && !currentSession.hotSeatReady && !isInit) {
-            set((s) => ({
-              currentSession: s.currentSession ? { ...s.currentSession, hotSeatReady: true } : null,
-            }));
-          }
-        }
-      }
+          // Check for phase transitions on every agent message
+          advancePhase(msg.content, get, set);
+        },
+        llm: async (system, messages) => {
+          const { text } = await chatApi(system, messages);
+          return text || '';
+        },
+      });
     } catch (err) {
       console.error('AI call failed:', err);
     }

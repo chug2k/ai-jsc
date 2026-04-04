@@ -32,8 +32,8 @@ export default function ChatInput() {
         <span className="phase-pill">
           {(PHASE_LABELS as Record<string, string>)[phase] || phase}
         </span>
-        {phase === 'hot_seat' && currentSession?.hotSeatReady && (
-          <span className="text-xs" style={{ color: 'var(--muted)' }}>← all members speak</span>
+        {phase === 'hot_seat' && (
+          <span className="text-xs" style={{ color: 'var(--muted)' }}>← council weighs in</span>
         )}
       </div>
 

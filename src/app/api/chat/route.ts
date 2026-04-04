@@ -63,10 +63,12 @@ async function callGemini(modelId: string, system: string, messages: ChatMessage
   // multi-turn "I already responded" issue.
   const lines: string[] = [];
   for (const m of messages) {
+    const ext = m as ChatMessage & { memberName?: string; replyTo?: { memberName: string | null; content: string } };
     if (m.role === 'user') {
-      lines.push(`User: ${m.content}`);
+      const replyCtx = ext.replyTo ? `[replying to ${ext.replyTo.memberName || 'User'}: "${ext.replyTo.content.substring(0, 80)}"]\n` : '';
+      lines.push(`User: ${replyCtx}${m.content}`);
     } else {
-      const name = (m as ChatMessage & { memberName?: string }).memberName || 'Council Member';
+      const name = ext.memberName || 'Council Member';
       lines.push(`${name}: ${m.content}`);
     }
   }

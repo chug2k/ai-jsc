@@ -27,6 +27,8 @@ export interface CouncilEngineConfig {
   llm: (systemPrompt: string, messages: AgentMessage[]) => Promise<string>;
   maxResponses?: number;
   moderatorOnly?: boolean;
+  /** If the user replied to a specific member, that member evaluates first. */
+  replyToMember?: string;
 }
 
 const SKIP_TOKEN = 'SKIP';
@@ -36,14 +38,29 @@ function isSkip(text: string): boolean {
 }
 
 export async function runReactionLoop(config: CouncilEngineConfig): Promise<AgentMessage[]> {
-  const { agents, onMessage, llm, maxResponses = 8, moderatorOnly = false } = config;
+  const { agents, onMessage, llm, maxResponses = 8, moderatorOnly = false, replyToMember } = config;
   const messages = [...config.messages];
   const activeAgents = moderatorOnly ? agents.filter(a => a.isModerator) : agents;
   const allNewMessages: AgentMessage[] = [];
 
-  // Track pending agents and their stale drafts
   const pending = new Set(activeAgents.map(a => a.id));
-  const staleDrafts = new Map<string, string>(); // agentId → their discarded response
+  const staleDrafts = new Map<string, string>();
+
+  // If replying to a specific member, let them go first
+  if (replyToMember && pending.has(replyToMember)) {
+    const agent = activeAgents.find(a => a.id === replyToMember);
+    if (agent) {
+      const text = await evaluateAgent(agent, messages, llm, undefined, true);
+      pending.delete(agent.id);
+      if (text) {
+        const msg: AgentMessage = { role: 'assistant', content: text, memberName: agent.name };
+        messages.push(msg);
+        allNewMessages.push(msg);
+        onMessage(msg);
+        console.log(`[engine] ${agent.name}: replied first (${text.length} chars)`);
+      }
+    }
+  }
 
   while (pending.size > 0 && allNewMessages.length < maxResponses) {
     const snapshotLength = messages.length;
@@ -96,11 +113,15 @@ async function evaluateAgent(
   messages: AgentMessage[],
   llm: (systemPrompt: string, messages: AgentMessage[]) => Promise<string>,
   staleDraft?: string,
+  isRepliedTo?: boolean,
 ): Promise<string | null> {
   try {
     let systemPrompt = agent.buildSystemPrompt();
 
-    // If this is a re-evaluation after a stale check, give context
+    if (isRepliedTo) {
+      systemPrompt += `\n\nIMPORTANT: The user replied directly to YOUR message. You MUST respond — do not SKIP.`;
+    }
+
     if (staleDraft) {
       systemPrompt += `\n\nNOTE: You were about to say: "${staleDraft}" — but new messages arrived before you could speak. Look at the latest messages. If your point is still relevant and hasn't been covered, you can say it (reworded if needed). If someone else already covered it, say SKIP.`;
     }

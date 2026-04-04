@@ -66,6 +66,15 @@ export default function SessionView() {
 
   if (!currentSession) return null;
 
+  const handleScrollTo = useCallback((index: number) => {
+    const el = document.getElementById(`msg-${index}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.background = 'var(--accent-dim)';
+      setTimeout(() => { el.style.background = ''; }, 1500);
+    }
+  }, []);
+
   const visibleMessages = currentSession.messages.filter(m => m.content !== 'Begin the JSC session.');
 
   return (
@@ -75,7 +84,9 @@ export default function SessionView() {
         <div className="flex-1 overflow-y-auto p-5 space-y-4" style={{ scrollBehavior: 'smooth' }}>
           <SessionAgendaBanner sessionNumber={currentSession.sessionNumber} />
           {visibleMessages.map((msg, i) => (
-            <ChatBubble key={i} message={msg} index={i} onReply={handleReply} />
+            <div key={i} id={`msg-${i}`} style={{ transition: 'background 0.3s', borderRadius: '0.75rem' }}>
+              <ChatBubble message={msg} index={i} onReply={handleReply} onScrollTo={handleScrollTo} />
+            </div>
           ))}
           {isLoading && <LoadingDots />}
           <div ref={chatEndRef} />

@@ -21,12 +21,6 @@ function fmt(text: string, members: Member[]) {
     );
   }
 
-  // Render quoted replies
-  html = html.replace(
-    /^&gt; (.+?): &quot;(.+?)&quot;\n\n/,
-    '<div style="border-left:3px solid var(--border);padding:4px 8px;margin-bottom:8px;font-size:0.75rem;color:var(--muted);border-radius:2px"><strong>$1</strong>: $2</div>'
-  );
-
   return html.replace(/\n/g, '<br/>');
 }
 
@@ -34,9 +28,10 @@ interface ChatBubbleProps {
   message: Message;
   index: number;
   onReply?: (index: number) => void;
+  onScrollTo?: (index: number) => void;
 }
 
-export default function ChatBubble({ message, index, onReply }: ChatBubbleProps) {
+export default function ChatBubble({ message, index, onReply, onScrollTo }: ChatBubbleProps) {
   const { customMembers, user } = useSessionStore();
   const members = allMembers(customMembers);
 
@@ -56,11 +51,32 @@ export default function ChatBubble({ message, index, onReply }: ChatBubbleProps)
 
   if (message.role === 'user') {
     const initial = (user?.name || 'You')[0].toUpperCase();
+    const replyMember = message.replyTo?.memberName
+      ? members.find(m => m.name === message.replyTo!.memberName)
+      : null;
     return (
       <div className="max-w-4xl mx-auto">
         <div className="flex gap-3 justify-end">
-          <div className="chat-bubble chat-bubble-user max-w-[85%] sm:max-w-lg"
-            dangerouslySetInnerHTML={{ __html: fmt(displayText, members) }} />
+          <div className="chat-bubble chat-bubble-user max-w-[85%] sm:max-w-lg">
+            {message.replyTo && (
+              <div
+                onClick={() => onScrollTo?.(message.replyTo!.index)}
+                style={{
+                  borderLeft: `3px solid ${replyMember?.color || 'var(--border)'}`,
+                  padding: '4px 8px', marginBottom: 8, fontSize: '0.75rem',
+                  color: 'var(--muted)', borderRadius: 2, cursor: 'pointer',
+                }}
+              >
+                <strong style={{ color: replyMember?.color || 'var(--muted)' }}>
+                  {message.replyTo.memberName || 'You'}
+                </strong>
+                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {message.replyTo.content.substring(0, 120)}
+                </div>
+              </div>
+            )}
+            <div dangerouslySetInnerHTML={{ __html: fmt(displayText, members) }} />
+          </div>
           <div className="avatar mono text-xs mt-0.5"
             style={{ background: 'var(--surface-hover)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
             {initial}

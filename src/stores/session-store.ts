@@ -32,6 +32,7 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   memberName?: string | null;
+  replyTo?: { memberName: string | null; content: string; index: number } | null;
 }
 
 export interface Session {
@@ -98,7 +99,7 @@ interface SessionState {
   addCustomMember: (member: Member) => void;
   updateUser: (fields: Partial<Pick<UserProfile, 'name' | 'search_status' | 'context'>>) => Promise<void>;
   startSession: () => Promise<void>;
-  sendMessage: (text: string) => Promise<void>;
+  sendMessage: (text: string, replyTo?: { memberName: string | null; content: string; index: number } | null) => Promise<void>;
   toggleCommitment: (id: string) => Promise<void>;
   loadSessionHistory: (sessionId: string) => Promise<Message[]>;
 }
@@ -285,7 +286,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     }
   },
 
-  sendMessage: async (text) => {
+  sendMessage: async (text, replyTo) => {
     const state = get();
     if (!state.currentSession || state.isLoading) return;
     set({ isLoading: true });
@@ -299,7 +300,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
     // Add user message to local state
     if (!isInit) {
-      const userMessage: Message = { role: 'user', content: text };
+      const userMessage: Message = { role: 'user', content: text, replyTo: replyTo || null };
       set((s) => ({
         currentSession: s.currentSession ? {
           ...s.currentSession,
@@ -345,10 +346,16 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     }));
 
     try {
+      // Find the agent ID if replying to a specific member
+      const replyToMemberId = replyTo?.memberName
+        ? members.find(m => m.name === replyTo.memberName)?.id
+        : undefined;
+
       await runReactionLoop({
         agents,
         messages: get().currentSession?.messages.slice(-30) || [],
         moderatorOnly: isInit,
+        replyToMember: replyToMemberId,
         onMessage: (msg) => {
           // Append to local state
           set((s) => ({
@@ -374,8 +381,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           advancePhase(msg.content, get, set);
         },
         llm: async (system, messages) => {
-          const { text } = await chatApi(system, messages);
-          return text || '';
+          const result = await chatApi(system, messages);
+          if (!result.text) {
+            console.warn('[llm] empty text from API. Full response:', JSON.stringify(result));
+            console.warn('[llm] system prompt (first 100):', system.substring(0, 100));
+            console.warn('[llm] messages count:', messages.length);
+          }
+          return result.text || '';
         },
       });
     } catch (err) {

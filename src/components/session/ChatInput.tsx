@@ -46,8 +46,7 @@ export default function ChatInput({ replyTo, onClearReply }: { replyTo?: ReplyTa
 
   const handleSend = () => {
     if (!text.trim() || isLoading) return;
-    const prefix = replyTo ? `> ${replyTo.memberName || 'User'}: "${replyTo.content.substring(0, 100)}"\n\n` : '';
-    sendMessage(prefix + text.trim());
+    sendMessage(text.trim(), replyTo);
     setText('');
     setMentionQuery(null);
     onClearReply?.();

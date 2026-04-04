@@ -46,7 +46,7 @@ async function callOpenAI(modelId: string, system: string, messages: ChatMessage
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
-    body: JSON.stringify({ model: modelId, max_tokens: 4096, messages: msgs }),
+    body: JSON.stringify({ model: modelId, max_completion_tokens: 4096, messages: msgs }),
   });
 
   const data = await res.json();

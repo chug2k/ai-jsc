@@ -19,11 +19,23 @@ export interface AgentIdentity {
   background?: string;
   is_fixed: boolean;
   is_moderator: boolean;
+  reasoning_effort?: 'low' | 'medium' | 'high';
 }
 
 /**
  * Default identities for archetypes — used as fallbacks when no DB identity exists.
  * These match the current roster.ts names so the app works without migration.
+ */
+/**
+ * Reasoning effort per archetype:
+ * - Analytical agents (Strategist, DA) get 'medium' — deeper thinking improves insight quality
+ * - Procedural agents (Maude, Operator, Connector) get none — their jobs are tactical, not analytical
+ * - Emotional agents (Witness) get none — observation doesn't benefit from extended reasoning
+ *
+ * Based on A/B testing: medium reasoning on DA/Strategist produced noticeably sharper
+ * insights ("not a rejection of people work, but a rejection of being assigned the least
+ * powerful version of it") at ~2x latency cost, which is acceptable since members respond
+ * after Maude is already on screen.
  */
 export const DEFAULT_IDENTITIES: Record<string, Omit<AgentIdentity, 'id'>> = {
   facilitator: {
@@ -34,6 +46,7 @@ export const DEFAULT_IDENTITIES: Record<string, Omit<AgentIdentity, 'id'>> = {
     role_title: 'Council Moderator',
     is_fixed: true,
     is_moderator: true,
+    // No reasoning — Maude's job is procedural orchestration
   },
   strategist: {
     soul_id: 'strategist',
@@ -43,6 +56,7 @@ export const DEFAULT_IDENTITIES: Record<string, Omit<AgentIdentity, 'id'>> = {
     role_title: 'Career Arc Advisor',
     is_fixed: false,
     is_moderator: false,
+    reasoning_effort: 'medium',  // Analytical — benefits from deeper thinking
   },
   operator: {
     soul_id: 'operator',
@@ -52,6 +66,7 @@ export const DEFAULT_IDENTITIES: Record<string, Omit<AgentIdentity, 'id'>> = {
     role_title: 'Action Partner',
     is_fixed: false,
     is_moderator: false,
+    // No reasoning — tactical action steps don't need extended thinking
   },
   devils_advocate: {
     soul_id: 'devils_advocate',
@@ -61,6 +76,7 @@ export const DEFAULT_IDENTITIES: Record<string, Omit<AgentIdentity, 'id'>> = {
     role_title: 'Assumption Checker',
     is_fixed: false,
     is_moderator: false,
+    reasoning_effort: 'medium',  // Analytical — finding untested assumptions benefits from reasoning
   },
   recruiter: {
     soul_id: 'recruiter',
@@ -70,6 +86,7 @@ export const DEFAULT_IDENTITIES: Record<string, Omit<AgentIdentity, 'id'>> = {
     role_title: 'Outside-In Lens',
     is_fixed: false,
     is_moderator: false,
+    // No reasoning — market reads are pattern-matching, not deep analysis
   },
   founder: {
     soul_id: 'founder',
@@ -79,6 +96,7 @@ export const DEFAULT_IDENTITIES: Record<string, Omit<AgentIdentity, 'id'>> = {
     role_title: 'Startup Instinct',
     is_fixed: false,
     is_moderator: false,
+    // No reasoning — founder instinct is fast, not deliberate
   },
   therapist: {
     soul_id: 'therapist',
@@ -88,6 +106,7 @@ export const DEFAULT_IDENTITIES: Record<string, Omit<AgentIdentity, 'id'>> = {
     role_title: 'Emotional Compass',
     is_fixed: false,
     is_moderator: false,
+    // No reasoning — emotional observation is about noticing, not analyzing
   },
   network: {
     soul_id: 'network',
@@ -97,6 +116,7 @@ export const DEFAULT_IDENTITIES: Record<string, Omit<AgentIdentity, 'id'>> = {
     role_title: 'Network Activator',
     is_fixed: false,
     is_moderator: false,
+    // No reasoning — connection suggestions are tactical
   },
 };
 

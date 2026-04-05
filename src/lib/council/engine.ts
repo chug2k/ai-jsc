@@ -193,7 +193,7 @@ async function evaluateAgent(
     }
 
     const tools = getToolsForAgent(agent.isModerator);
-    const result = await llm(systemPrompt, messages, agent.model, tools);
+    const result = await llm(systemPrompt, messages, agent.model, tools, agent.reasoningEffort ? { reasoningEffort: agent.reasoningEffort } : undefined);
 
     if (result.latencyMs) {
       console.log(`[engine] ${agent.name} inference: ${result.latencyMs}ms`);

@@ -1,10 +1,10 @@
 /**
- * Shared OpenAI calling logic — used by both /api/chat route and simulation script.
+ * Shared OpenAI calling logic — uses the Responses API (/v1/responses).
  *
  * This is the single codepath for all LLM calls. It handles:
- * - Message formatting (developer role, name sanitization, replyTo injection)
+ * - Message formatting (instructions + input items)
  * - Tool calling with tool_choice: required
- * - Response parsing (tool calls or fallback text)
+ * - Response parsing (function_call output items or text)
  * - Reasoning effort per agent
  * - Latency measurement
  */
@@ -29,11 +29,11 @@ export interface LLMResult {
 
 export interface CallOptions {
   reasoningEffort?: 'low' | 'medium' | 'high';
-  maxCompletionTokens?: number;
+  maxOutputTokens?: number;
 }
 
 /**
- * Format messages into OpenAI chat format and call the API.
+ * Format messages and call the OpenAI Responses API.
  */
 export async function callOpenAI(
   apiKey: string,
@@ -45,36 +45,49 @@ export async function callOpenAI(
 ): Promise<LLMResult> {
   const start = Date.now();
 
-  const msgs = [
-    { role: 'developer', content: systemPrompt },
-    ...messages.slice(-30).map((m) => {
-      let content = m.content;
-      if (m.replyTo) {
-        content = `[replying to ${m.replyTo.memberName || 'User'}: "${m.replyTo.content.substring(0, 80)}"]\n${content}`;
-      }
-      const name = m.role === 'assistant' && m.memberName
-        ? m.memberName.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 64)
-        : undefined;
-      return { role: m.role, content, ...(name ? { name } : {}) };
-    }),
-  ];
+  // Build input items from message history
+  const input = messages.slice(-30).map((m) => {
+    let content = m.content;
+    if (m.replyTo) {
+      content = `[replying to ${m.replyTo.memberName || 'User'}: "${m.replyTo.content.substring(0, 80)}"]\n${content}`;
+    }
+    // For assistant messages, prefix with member name so the model knows who said what
+    if (m.role === 'assistant' && m.memberName) {
+      content = `[${m.memberName}] ${content}`;
+    }
+    return { role: m.role, content };
+  });
 
   const payload: Record<string, unknown> = {
     model,
-    max_completion_tokens: options?.maxCompletionTokens ?? 1024,
-    messages: msgs,
+    instructions: systemPrompt,
+    input,
+    max_output_tokens: options?.maxOutputTokens ?? 1024,
   };
 
   if (options?.reasoningEffort) {
-    payload.reasoning_effort = options.reasoningEffort;
+    payload.reasoning = { effort: options.reasoningEffort };
   }
 
   if (tools && tools.length > 0) {
-    payload.tools = tools;
+    // Convert chat completions tool format to responses API format
+    // Chat: { type: 'function', function: { name, description, parameters } }
+    // Responses: { type: 'function', name, description, parameters }
+    payload.tools = (tools as Array<{ type: string; function?: { name: string; description?: string; parameters?: unknown } }>).map((t) => {
+      if (t.type === 'function' && t.function) {
+        return {
+          type: 'function',
+          name: t.function.name,
+          description: t.function.description,
+          parameters: t.function.parameters,
+        };
+      }
+      return t;
+    });
     payload.tool_choice = 'required';
   }
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const res = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -92,17 +105,35 @@ export async function callOpenAI(
   }
 
   const data = await res.json();
-  const choice = data.choices?.[0];
 
-  if (choice?.message?.tool_calls?.length > 0) {
+  // Parse output items — look for function_call and message types
+  const output = data.output || [];
+  const functionCalls = output.filter((item: { type: string }) => item.type === 'function_call');
+  const messageItems = output.filter((item: { type: string }) => item.type === 'message');
+
+  if (functionCalls.length > 0) {
     return {
-      toolCalls: choice.message.tool_calls.map((tc: { function: { name: string; arguments: string } }) => ({
-        name: tc.function.name,
-        args: JSON.parse(tc.function.arguments || '{}'),
+      toolCalls: functionCalls.map((fc: { name: string; arguments: string }) => ({
+        name: fc.name,
+        args: JSON.parse(fc.arguments || '{}'),
       })),
       latencyMs,
     };
   }
 
-  return { text: choice?.message?.content || '', latencyMs };
+  // Extract text from message output items
+  if (messageItems.length > 0) {
+    const textParts = messageItems
+      .flatMap((item: { content: Array<{ type: string; text: string }> }) =>
+        (item.content || []).filter((c: { type: string }) => c.type === 'output_text').map((c: { text: string }) => c.text),
+      );
+    return { text: textParts.join('') || '', latencyMs };
+  }
+
+  // Fallback: check output_text shorthand
+  if (data.output_text) {
+    return { text: data.output_text, latencyMs };
+  }
+
+  return { text: '', latencyMs };
 }

@@ -79,7 +79,7 @@ async function runSimulation(persona: Persona) {
     isModerator: identity.is_moderator,
     model: identity.is_moderator ? MODERATOR_MODEL : MEMBER_MODEL,
     filterModel: FILTER_MODEL,
-    // reasoningEffort: not yet supported with function tools on chat completions API
+    reasoningEffort: identity.reasoning_effort,
     buildSystemPrompt: () => {
       const soul = getSoul(identity.soul_id);
       return identity.is_moderator

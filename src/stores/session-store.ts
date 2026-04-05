@@ -344,7 +344,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         isModerator: member.id === 'facilitator',
         model: member.id === 'facilitator' ? 'gpt-5.4' : 'gpt-5.4-mini',
         filterModel: 'gpt-5.4-nano',
-        // reasoningEffort: not yet supported with function tools on chat completions API
+        reasoningEffort: identity.reasoning_effort,
         buildSystemPrompt: () =>
           member.id === 'facilitator'
             ? buildModeratorPrompt(soul, identity, identities, currentPhase, ctx)

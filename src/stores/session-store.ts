@@ -319,8 +319,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       }));
     }
 
-    const { buildModeratorPrompt, buildReactiveMemberPrompt } = await import('@/lib/council/prompts');
+    const { buildModeratorPrompt, buildReactiveMemberPrompt, buildFilterPrompt } = await import('@/lib/council/prompts');
     const { runReactionLoop } = await import('@/lib/council/engine');
+    const { getSoul } = await import('@/lib/council/souls');
+    const { defaultIdentity } = await import('@/lib/council/identities');
 
     const ctx = {
       userName: user?.name || 'Friend',
@@ -330,18 +332,26 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       sessionNumber: currentSession.sessionNumber,
     };
 
-    // Build agents from council members
+    // Build agents from council members using soul + identity
     const currentPhase = get().currentSession?.phase || 'checkin';
-    const agents = members.map(member => ({
-      id: member.id,
-      name: member.name,
-      isModerator: member.id === 'facilitator',
-      model: member.id === 'facilitator' ? 'gpt-5.4' : 'gpt-5.4-mini',
-      buildSystemPrompt: () =>
-        member.id === 'facilitator'
-          ? buildModeratorPrompt(member, members, currentPhase, ctx)
-          : buildReactiveMemberPrompt(member, members, currentPhase, ctx),
-    }));
+    const identities = members.map(member => defaultIdentity(member.id));
+    const agents = members.map((member, i) => {
+      const identity = identities[i];
+      const soul = getSoul(member.id);
+      return {
+        id: member.id,
+        name: member.name,
+        isModerator: member.id === 'facilitator',
+        model: member.id === 'facilitator' ? 'gpt-5.4' : 'gpt-5.4-mini',
+        filterModel: 'gpt-5.4-nano',
+        buildSystemPrompt: () =>
+          member.id === 'facilitator'
+            ? buildModeratorPrompt(soul, identity, identities, currentPhase, ctx)
+            : buildReactiveMemberPrompt(soul, identity, identities, currentPhase, ctx),
+        buildFilterPrompt: () =>
+          buildFilterPrompt(identity, identities, currentPhase, { userName: ctx.userName }),
+      };
+    });
 
     try {
       const replyToMemberId = replyTo?.memberName

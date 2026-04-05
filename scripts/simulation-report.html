@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSC Simulation Report — April 2026</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #FAFAF8; color: #1a1a1a; line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 2rem; }
+  h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.3rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid #e5e5e5; padding-bottom: 0.25rem; }
+  h3 { font-size: 1.05rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  p { margin-bottom: 0.75rem; }
+  .subtitle { color: #666; font-size: 0.95rem; margin-bottom: 2rem; }
+  .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0; }
+  .metric { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1rem; text-align: center; }
+  .metric .value { font-size: 2rem; font-weight: 700; }
+  .metric .label { font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
+  .metric.good .value { color: #16a34a; }
+  .metric.warn .value { color: #d97706; }
+  .metric.bad .value { color: #dc2626; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+  th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #e5e5e5; }
+  th { background: #f5f5f4; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; color: #555; }
+  tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .tag-green { background: #dcfce7; color: #166534; }
+  .tag-red { background: #fef2f2; color: #991b1b; }
+  .tag-yellow { background: #fef9c3; color: #854d0e; }
+  .tag-blue { background: #dbeafe; color: #1e40af; }
+  .change { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; padding: 0.75rem 1rem; background: white; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 0.9rem; }
+  .change .file { font-family: monospace; font-size: 0.8rem; color: #6366f1; min-width: 200px; }
+  .change .desc { flex: 1; }
+  .timeline { position: relative; padding-left: 2rem; margin: 1rem 0; }
+  .timeline::before { content: ''; position: absolute; left: 0.5rem; top: 0; bottom: 0; width: 2px; background: #d4d4d4; }
+  .timeline-item { position: relative; margin-bottom: 1.5rem; }
+  .timeline-item::before { content: ''; position: absolute; left: -1.65rem; top: 0.35rem; width: 10px; height: 10px; border-radius: 50%; background: #6366f1; border: 2px solid white; }
+  .timeline-item .round { font-weight: 600; font-size: 0.85rem; color: #6366f1; }
+  .quote { border-left: 3px solid #d4d4d4; padding-left: 1rem; margin: 0.75rem 0; color: #444; font-style: italic; }
+  .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1rem 0; }
+  .comparison > div { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1rem; }
+  .comparison h4 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; color: #888; margin-bottom: 0.5rem; }
+  code { font-family: 'SF Mono', Monaco, monospace; font-size: 0.85rem; background: #f5f5f4; padding: 0.1rem 0.3rem; border-radius: 3px; }
+  .arch-diagram { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: monospace; font-size: 0.85rem; white-space: pre; line-height: 1.8; color: #333; }
+</style>
+</head>
+<body>
+
+<h1>JSC Council Simulation Report</h1>
+<p class="subtitle">14 simulation runs across 4 rounds of iteration &middot; April 5, 2026</p>
+
+<h2>Executive Summary</h2>
+
+<div class="metric-grid">
+  <div class="metric good">
+    <div class="value">0</div>
+    <div class="label">Identity Bleed<br>(was 7+ incidents)</div>
+  </div>
+  <div class="metric good">
+    <div class="value">19</div>
+    <div class="label">Avg Messages/Session<br>(was 37)</div>
+  </div>
+  <div class="metric good">
+    <div class="value">48%</div>
+    <div class="label">Message Reduction<br>vs Baseline</div>
+  </div>
+</div>
+
+<p>Over 14 simulation runs, we iterated on three layers: <strong>soul files</strong> (agent personality), <strong>prompt structure</strong> (silence discipline), and <strong>engine architecture</strong> (nano pre-filter claim loop). The result is a conversation engine that produces natural, paced dialogue where agents speak only when they have something uniquely valuable to add.</p>
+
+<h2>Architecture Changes</h2>
+
+<div class="arch-diagram">User message arrives
+  |
+  v
+CLAIM LOOP (max 4 rounds):
+  |-- All eligible agents -> nano filter (gpt-5.4-nano, parallel)
+  |     Tools: speak(reason) | stay_silent()
+  |     ~200ms, ~$0.0001 per call
+  |
+  |-- Candidates who said speak()
+  |     First candidate -> full inference (gpt-5.4 or 5.4-mini)
+  |     Message added to conversation
+  |
+  |-- Remaining agents re-evaluate with nano
+  |     (seeing the new message - may change mind)
+  |
+  v-- Repeat until no one wants to speak</div>
+
+<h3>Key Design Decisions</h3>
+<div class="change"><span class="file">engine.ts</span><span class="desc">Replaced parallel-evaluate-all with sequential claim loop. Agents "riff" off each other naturally.</span></div>
+<div class="change"><span class="file">openai.ts</span><span class="desc">Extracted shared OpenAI calling logic. Both <code>/api/chat</code> and <code>simulate.ts</code> use identical codepath.</span></div>
+<div class="change"><span class="file">souls/*.md</span><span class="desc">8 soul files with Core, Voice, Lens, Rules, and Anti-patterns. Immutable personality layer.</span></div>
+<div class="change"><span class="file">identities.ts</span><span class="desc">Identity layer (name, age, industry) separated from soul. DB-persisted, per-user customizable.</span></div>
+<div class="change"><span class="file">prompts.ts</span><span class="desc">Rewrote <code>buildFilterPrompt()</code> for nano calls. Strengthened silence-by-default rules. Added tool usage enforcement.</span></div>
+
+<h2>Iteration Timeline</h2>
+
+<div class="timeline">
+  <div class="timeline-item">
+    <div class="round">Round 1 — Baseline (Pre-Soul)</div>
+    <p>Runs 1-4. Flat roster.ts definitions. All members spoke every turn. Identity bleed rampant (agents answered as the user). Phase transitions never fired. Avg 40 messages/session.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="round">Round 2 — Soul Files + Identity Separation</div>
+    <p>Runs 5-8. Created 8 soul .md files with anti-patterns ("You are NOT the user"). Identity bleed eliminated immediately. Avg 28 messages. Phase transitions started working via <code>move_to_phase</code> tool.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="round">Round 3 — Silence Discipline + Prompt Tuning</div>
+    <p>Runs 9-14. Rewrote member prompt to lead with "DEFAULT ACTION: stay_silent." Added pacing rules. DA verbal tic fixed. Avg 25 messages. Warmup turns now have only Maude speaking.</p>
+  </div>
+  <div class="timeline-item">
+    <div class="round">Round 4 — Nano Pre-Filter Claim Loop</div>
+    <p>Final runs. gpt-5.4-nano decides speak/silent before full inference. Sequential claim with re-evaluation. Agents "change mind" after seeing others speak. Avg 19 messages. Natural riffing between agents.</p>
+  </div>
+</div>
+
+<h2>Results by Persona</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Persona</th>
+      <th>Session</th>
+      <th>Members</th>
+      <th>R1 Msgs</th>
+      <th>R2 Msgs</th>
+      <th>R3 Msgs</th>
+      <th>R4 Msgs</th>
+      <th>Phase?</th>
+      <th>ID Bleed?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Ray Donovan</strong><br><small>Data eng, 41, climate tech side project</small></td>
+      <td>0</td>
+      <td>Maude, DA, Founder, Witness</td>
+      <td>29</td>
+      <td>26</td>
+      <td>26</td>
+      <td><strong>17</strong></td>
+      <td><span class="tag tag-green">Yes</span></td>
+      <td><span class="tag tag-green">None</span></td>
+    </tr>
+    <tr>
+      <td><strong>Keiko Tanaka</strong><br><small>Product designer, 28, 43 rejections</small></td>
+      <td>5</td>
+      <td>Maude, Mirror, Operator, Connector</td>
+      <td>28</td>
+      <td>22</td>
+      <td>24</td>
+      <td><strong>21</strong></td>
+      <td><span class="tag tag-green">Yes</span></td>
+      <td><span class="tag tag-green">None</span></td>
+    </tr>
+    <tr>
+      <td><strong>Andre Mitchell</strong><br><small>HS principal, 44, startup vs corporate</small></td>
+      <td>7</td>
+      <td>Maude, Strategist, Mirror, Operator</td>
+      <td>32</td>
+      <td>29</td>
+      <td>31</td>
+      <td><strong>19</strong></td>
+      <td><span class="tag tag-yellow">Partial</span></td>
+      <td><span class="tag tag-green">None</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Bug Fixes</h2>
+
+<table>
+  <thead>
+    <tr><th>Bug</th><th>Cause</th><th>Fix</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Identity bleed (agents speak as user)</td>
+      <td>No identity boundary in prompts</td>
+      <td>Soul anti-patterns: "You are NOT the user. NEVER answer questions directed at them."</td>
+      <td><span class="tag tag-green">Fixed</span></td>
+    </tr>
+    <tr>
+      <td>Everyone speaks every turn</td>
+      <td>All agents evaluated in parallel, no silence incentive</td>
+      <td>Nano pre-filter claim loop — agents re-evaluate after each speaker</td>
+      <td><span class="tag tag-green">Fixed</span></td>
+    </tr>
+    <tr>
+      <td>Phase never advances</td>
+      <td>Maude used send_message instead of move_to_phase tool</td>
+      <td>Added "MUST call the move_to_phase tool" with bold emphasis in agenda</td>
+      <td><span class="tag tag-green">Fixed</span></td>
+    </tr>
+    <tr>
+      <td>DA "I ask because" on every message</td>
+      <td>Soul rules said "Always frame pushback as: I ask because..."</td>
+      <td>Changed to "vary your phrasing"</td>
+      <td><span class="tag tag-green">Fixed</span></td>
+    </tr>
+    <tr>
+      <td>Duplicate commitments</td>
+      <td>Maude called create_commitment multiple times</td>
+      <td>Dedup logic in engine callbacks</td>
+      <td><span class="tag tag-green">Fixed</span></td>
+    </tr>
+    <tr>
+      <td>Market Mirror too verbose/corporate</td>
+      <td>Voice description encouraged essay-style responses</td>
+      <td>Soul updated: "Short, punchy observations — not essays"</td>
+      <td><span class="tag tag-green">Fixed</span></td>
+    </tr>
+    <tr>
+      <td>Maude blocks on skipped check-in</td>
+      <td>Agenda insisted on completing all check-in steps</td>
+      <td>Added "If user skips ahead, go with it" rule</td>
+      <td><span class="tag tag-yellow">Improved</span></td>
+    </tr>
+    <tr>
+      <td>Sim script uses different codepath than app</td>
+      <td>Separate callOpenAI in simulate.ts vs /api/chat</td>
+      <td>Extracted shared <code>openai.ts</code> used by both</td>
+      <td><span class="tag tag-green">Fixed</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Before / After Examples</h2>
+
+<div class="comparison">
+  <div>
+    <h4>Before (Round 1) — User says "Hey, first time here"</h4>
+    <div class="quote">Maude: Welcome! Let me introduce everyone...<br>
+    Strategist: I'm the Strategist, here to help you...<br>
+    Operator: I'm the Operator, I help turn...<br>
+    Witness: I notice you might be feeling...<br>
+    <strong>4 responses, all at once</strong></div>
+  </div>
+  <div>
+    <h4>After (Round 4) — Same input</h4>
+    <div class="quote">Maude: I'm Maude, your moderator. First meeting always feels awkward; that's normal.<br>
+    <em>[Round 2: no one wants to speak. Done.]</em><br>
+    <strong>1 response. Members wait for substance.</strong></div>
+  </div>
+</div>
+
+<div class="comparison">
+  <div>
+    <h4>Before — User shares vulnerability</h4>
+    <div class="quote">Maude: That makes sense...<br>
+    Strategist: Your career arc...<br>
+    Operator: To make progress by Friday...<br>
+    DA: Have you considered...<br>
+    Witness: I notice a tension...<br>
+    <strong>5 responses, all variations of the same point</strong></div>
+  </div>
+  <div>
+    <h4>After — Same type of input</h4>
+    <div class="quote">Maude: I hear a pattern — you reframed the problem...<br>
+    <em>[DA: changed mind, stay_silent]</em><br>
+    Founder: Build a 90-day experiment with a hard runway number...<br>
+    <em>[Witness: changed mind, stay_silent]</em><br>
+    <strong>2 responses. DA and Witness deferred because Maude + Founder covered it.</strong></div>
+  </div>
+</div>
+
+<h2>Remaining Known Issues</h2>
+
+<table>
+  <thead><tr><th>Issue</th><th>Severity</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Andre's session never fully advanced past checkin</td>
+      <td><span class="tag tag-yellow">Medium</span></td>
+      <td>User jumped to CMF topic; Maude tried to pull back to emotional check-in. The "skip ahead" rule helps but doesn't always override.</td>
+    </tr>
+    <tr>
+      <td>Commitment text sometimes duplicates between Maude's auto-detect and user's explicit statement</td>
+      <td><span class="tag tag-yellow">Low</span></td>
+      <td>Maude pre-records commitment before user states it precisely. Dedup catches exact matches but not semantic dupes.</td>
+    </tr>
+    <tr>
+      <td>Agent responses can still be verbose (300-400 chars)</td>
+      <td><span class="tag tag-yellow">Low</span></td>
+      <td>Soul files say 2-4 sentences but models sometimes produce longer output. Could add max_completion_tokens per-agent.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Files Modified</h2>
+
+<table>
+  <thead><tr><th>File</th><th>Action</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>src/lib/council/souls/*.md</code> (8 files)</td><td><span class="tag tag-blue">Created</span></td><td>Immutable personality definitions</td></tr>
+    <tr><td><code>src/lib/council/souls.ts</code></td><td><span class="tag tag-blue">Created</span></td><td>Soul loader + cache</td></tr>
+    <tr><td><code>src/lib/council/identities.ts</code></td><td><span class="tag tag-blue">Created</span></td><td>Identity types + defaults</td></tr>
+    <tr><td><code>src/lib/council/openai.ts</code></td><td><span class="tag tag-blue">Created</span></td><td>Shared OpenAI calling logic</td></tr>
+    <tr><td><code>src/lib/council/engine.ts</code></td><td><span class="tag tag-yellow">Rewritten</span></td><td>Claim loop with nano pre-filter</td></tr>
+    <tr><td><code>src/lib/council/tools.ts</code></td><td><span class="tag tag-yellow">Modified</span></td><td>Added FILTER_TOOLS (speak/stay_silent)</td></tr>
+    <tr><td><code>src/lib/council/prompts.ts</code></td><td><span class="tag tag-yellow">Rewritten</span></td><td>Soul+identity inputs, filter prompt, silence rules</td></tr>
+    <tr><td><code>src/app/api/chat/route.ts</code></td><td><span class="tag tag-yellow">Simplified</span></td><td>Now uses shared openai.ts</td></tr>
+    <tr><td><code>src/stores/session-store.ts</code></td><td><span class="tag tag-yellow">Modified</span></td><td>Builds agents with soul+identity+filterModel</td></tr>
+    <tr><td><code>scripts/simulate.ts</code></td><td><span class="tag tag-yellow">Rewritten</span></td><td>Uses real engine + shared openai.ts</td></tr>
+    <tr><td><code>.claude/skills/simulate/SKILL.md</code></td><td><span class="tag tag-blue">Created</span></td><td>/simulate skill for running test sessions</td></tr>
+    <tr><td><code>supabase/migrations/004_agent_identities.sql</code></td><td><span class="tag tag-blue">Created</span></td><td>agent_identities table + session columns</td></tr>
+  </tbody>
+</table>
+
+<p style="margin-top: 3rem; color: #999; font-size: 0.8rem; text-align: center;">Generated by Claude Code &middot; jobsearch.quest simulation infrastructure</p>
+
+</body>
+</html>

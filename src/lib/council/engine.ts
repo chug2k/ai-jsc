@@ -1,11 +1,18 @@
 /**
- * Council Engine — multi-agent reactive conversation with tool calling.
+ * Council Engine — multi-agent reactive conversation with claim loop.
  *
- * Agents use tools (send_message, reply_to, stay_silent, etc.) to take
- * actions. The moderator gets additional tools (move_to_phase, call_on, etc.)
+ * Flow per user message:
+ * 1. All agents do a cheap nano filter call in parallel (speak/silent)
+ * 2. First agent who wants to speak does full inference
+ * 3. Their message is added to conversation
+ * 4. Remaining agents re-evaluate with nano (seeing the new message)
+ * 5. Repeat until no one wants to speak or max iterations hit
+ *
+ * This naturally produces organic pacing — agents riff off each other,
+ * and the conversation self-regulates as points get covered.
  */
 
-import { getToolsForAgent, parseToolCall, type AgentAction, type ToolCall } from './tools';
+import { getToolsForAgent, parseToolCall, FILTER_TOOLS, parseFilterCall, type AgentAction, type ToolCall } from './tools';
 
 export interface AgentMessage {
   role: 'user' | 'assistant';
@@ -19,7 +26,9 @@ export interface CouncilAgent {
   name: string;
   isModerator: boolean;
   model?: string;
+  filterModel?: string;
   buildSystemPrompt: () => string;
+  buildFilterPrompt: () => string;
 }
 
 export interface EngineCallbacks {
@@ -41,20 +50,20 @@ export interface CouncilEngineConfig {
 }
 
 export async function runReactionLoop(config: CouncilEngineConfig): Promise<AgentMessage[]> {
-  const { agents, callbacks, llm, maxResponses = 8, moderatorOnly = false, replyToMember } = config;
+  const { agents, callbacks, llm, maxResponses = 6, moderatorOnly = false, replyToMember } = config;
   const messages = [...config.messages];
   const activeAgents = moderatorOnly ? agents.filter(a => a.isModerator) : agents;
   const allNewMessages: AgentMessage[] = [];
 
-  const pending = new Set(activeAgents.map(a => a.id));
-  const staleDrafts = new Map<string, string>();
+  // Track who has spoken this turn — each agent speaks at most once
+  const spoken = new Set<string>();
 
-  // If replying to a specific member, let them go first
-  if (replyToMember && pending.has(replyToMember)) {
+  // If user replied to a specific member, they skip the filter and go first
+  if (replyToMember) {
     const agent = activeAgents.find(a => a.id === replyToMember);
     if (agent) {
-      const action = await evaluateAgent(agent, messages, llm, undefined, true);
-      pending.delete(agent.id);
+      const action = await evaluateAgent(agent, messages, llm, `The user replied directly to YOUR message. You MUST respond.`);
+      spoken.add(agent.id);
       const msg = processAction(action, agent, callbacks);
       if (msg) {
         messages.push(msg);
@@ -64,49 +73,134 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
     }
   }
 
-  while (pending.size > 0 && allNewMessages.length < maxResponses) {
-    const snapshotLength = messages.length;
+  // Claim loop — max 4 iterations to prevent runaway
+  const MAX_ROUNDS = 4;
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    if (allNewMessages.length >= maxResponses) break;
 
-    const evaluations = [...pending].map(async (agentId) => {
-      const agent = activeAgents.find(a => a.id === agentId)!;
-      const staleDraft = staleDrafts.get(agentId);
-      const action = await evaluateAgent(agent, messages, llm, staleDraft);
-      return { agent, action, snapshotLength };
-    });
+    // Who hasn't spoken yet?
+    const eligible = activeAgents.filter(a => !spoken.has(a.id));
+    if (eligible.length === 0) break;
 
-    let anyAccepted = false;
-    for (const evalPromise of evaluations) {
-      const { agent, action, snapshotLength: evalSnapshot } = await evalPromise;
-      pending.delete(agent.id);
-      staleDrafts.delete(agent.id);
+    // All eligible agents do nano filter in parallel
+    const filterResults = await Promise.all(
+      eligible.map(async (agent) => {
+        const result = await filterAgent(agent, messages, llm);
+        return { agent, ...result };
+      }),
+    );
 
-      if (action.type === 'silent') {
-        console.log(`[engine] ${agent.name}: stay_silent`);
-        continue;
-      }
-
-      if (messages.length !== evalSnapshot) {
-        console.log(`[engine] ${agent.name}: stale, re-queuing`);
-        pending.add(agent.id);
-        if (action.text) staleDrafts.set(agent.id, action.text);
-        continue;
-      }
-
-      const msg = processAction(action, agent, callbacks);
-      if (msg) {
-        messages.push(msg);
-        allNewMessages.push(msg);
-        anyAccepted = true;
-        console.log(`[engine] ${agent.name}: ${action.type} (${msg.content.length} chars)`);
-      }
-
-      if (allNewMessages.length >= maxResponses) break;
+    // Who wants to speak?
+    const candidates = filterResults.filter(r => r.wantsToSpeak);
+    if (candidates.length === 0) {
+      console.log(`[engine] Round ${round + 1}: no one wants to speak. Done.`);
+      break;
     }
 
-    if (!anyAccepted && pending.size === 0) break;
+    console.log(`[engine] Round ${round + 1}: ${candidates.map(c => c.agent.name).join(', ')} want to speak`);
+
+    // First candidate does full inference
+    const { agent, reason } = candidates[0];
+    const hint = reason ? `You decided to speak because: "${reason}". Now compose your response from your lens.` : undefined;
+    const action = await evaluateAgent(agent, messages, llm, hint);
+    spoken.add(agent.id);
+
+    if (action.type === 'silent') {
+      console.log(`[engine] ${agent.name}: changed mind, stay_silent`);
+      continue;
+    }
+
+    const msg = processAction(action, agent, callbacks);
+    if (msg) {
+      messages.push(msg);
+      allNewMessages.push(msg);
+      console.log(`[engine] ${agent.name}: ${action.type} (${msg.content.length} chars)`);
+    }
+
+    // If call_on, give called members direct claims (skip nano filter)
+    if (action.type === 'call_on' && action.members && action.members.length > 0) {
+      for (const calledName of action.members) {
+        if (allNewMessages.length >= maxResponses) break;
+        const calledAgent = activeAgents.find(a =>
+          a.name === calledName || a.name.toLowerCase().includes(calledName.toLowerCase()),
+        );
+        if (!calledAgent || spoken.has(calledAgent.id)) continue;
+
+        const callHint = `Maude called on you to speak. The prompt was: "${action.text || ''}". You MUST respond — do not use stay_silent.`;
+        const calledAction = await evaluateAgent(calledAgent, messages, llm, callHint);
+        spoken.add(calledAgent.id);
+
+        if (calledAction.type === 'silent') {
+          console.log(`[engine] ${calledAgent.name}: called on but chose silent`);
+          continue;
+        }
+
+        const calledMsg = processAction(calledAction, calledAgent, callbacks);
+        if (calledMsg) {
+          messages.push(calledMsg);
+          allNewMessages.push(calledMsg);
+          console.log(`[engine] ${calledAgent.name}: called on, ${calledAction.type} (${calledMsg.content.length} chars)`);
+        }
+      }
+    }
+
+    // Loop back — remaining agents will re-evaluate with the new message
   }
 
   return allNewMessages;
+}
+
+/** Nano pre-filter: cheap model decides if agent should speak */
+async function filterAgent(
+  agent: CouncilAgent,
+  messages: AgentMessage[],
+  llm: (systemPrompt: string, messages: AgentMessage[], model?: string, tools?: unknown[]) => Promise<{ toolCalls?: ToolCall[]; text?: string }>,
+): Promise<{ wantsToSpeak: boolean; reason?: string }> {
+  try {
+    const filterPrompt = agent.buildFilterPrompt();
+    const result = await llm(filterPrompt, messages.slice(-10), agent.filterModel, FILTER_TOOLS);
+
+    if (result.toolCalls && result.toolCalls.length > 0) {
+      return parseFilterCall(result.toolCalls[0]);
+    }
+    // If no tool call, default to silent
+    return { wantsToSpeak: false };
+  } catch (err) {
+    console.warn(`[engine] ${agent.name} filter failed:`, err);
+    return { wantsToSpeak: false };
+  }
+}
+
+/** Full inference: agent composes their response with all tools */
+async function evaluateAgent(
+  agent: CouncilAgent,
+  messages: AgentMessage[],
+  llm: (systemPrompt: string, messages: AgentMessage[], model?: string, tools?: unknown[]) => Promise<{ toolCalls?: ToolCall[]; text?: string }>,
+  hint?: string,
+): Promise<AgentAction> {
+  try {
+    let systemPrompt = agent.buildSystemPrompt();
+
+    if (hint) {
+      systemPrompt += `\n\n${hint}`;
+    }
+
+    const tools = getToolsForAgent(agent.isModerator);
+    const result = await llm(systemPrompt, messages, agent.model, tools);
+
+    if (result.toolCalls && result.toolCalls.length > 0) {
+      return parseToolCall(result.toolCalls[0]);
+    }
+
+    if (result.text) {
+      return { type: 'message', text: result.text };
+    }
+
+    return { type: 'silent' };
+  } catch (err) {
+    console.warn(`[engine] ${agent.name} failed:`, err);
+    return { type: 'silent' };
+  }
 }
 
 /** Process an agent action and return a message (if applicable) */
@@ -142,21 +236,18 @@ function processAction(action: AgentAction, agent: CouncilAgent, callbacks: Engi
     case 'commitment':
       if (action.text) {
         callbacks.onCommitment(action.text, action.deadline);
-        const commitMsg: AgentMessage = {
-          role: 'assistant',
-          content: `✅ Commitment recorded: ${action.text}${action.deadline ? ` (by ${action.deadline})` : ''}`,
-          memberName: agent.name,
-        };
-        callbacks.onMessage(commitMsg);
-        return commitMsg;
+        // Don't emit a message for commitment recording — Maude should
+        // acknowledge naturally via a separate send_message tool call.
+        return null;
       }
       return null;
 
     case 'call_on':
-      if (action.member && action.text) {
+      if ((action.member || action.members?.length) && action.text) {
         const callMsg: AgentMessage = { role: 'assistant', content: action.text, memberName: agent.name };
         callbacks.onMessage(callMsg);
-        callbacks.onCallOn(action.member, action.text);
+        const calledName = action.members?.[0] || action.member || '';
+        callbacks.onCallOn(calledName, action.text);
         return callMsg;
       }
       return null;
@@ -174,42 +265,5 @@ function processAction(action: AgentAction, agent: CouncilAgent, callbacks: Engi
     case 'silent':
     default:
       return null;
-  }
-}
-
-async function evaluateAgent(
-  agent: CouncilAgent,
-  messages: AgentMessage[],
-  llm: (systemPrompt: string, messages: AgentMessage[], model?: string, tools?: unknown[]) => Promise<{ toolCalls?: ToolCall[]; text?: string }>,
-  staleDraft?: string,
-  isRepliedTo?: boolean,
-): Promise<AgentAction> {
-  try {
-    let systemPrompt = agent.buildSystemPrompt();
-
-    if (isRepliedTo) {
-      systemPrompt += `\n\nIMPORTANT: The user replied directly to YOUR message. You MUST respond using send_message or reply_to — do not use stay_silent.`;
-    }
-
-    if (staleDraft) {
-      systemPrompt += `\n\nNOTE: You were about to say: "${staleDraft}" — but new messages arrived. If your point is still relevant, send it (reworded if needed). If someone covered it, use stay_silent.`;
-    }
-
-    const tools = getToolsForAgent(agent.isModerator);
-    const result = await llm(systemPrompt, messages, agent.model, tools);
-
-    if (result.toolCalls && result.toolCalls.length > 0) {
-      return parseToolCall(result.toolCalls[0]);
-    }
-
-    // Fallback: plain text (shouldn't happen with tool_choice: required)
-    if (result.text) {
-      return { type: 'message', text: result.text };
-    }
-
-    return { type: 'silent' };
-  } catch (err) {
-    console.warn(`[engine] ${agent.name} failed:`, err);
-    return { type: 'silent' };
   }
 }

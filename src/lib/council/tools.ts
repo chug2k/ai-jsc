@@ -14,6 +14,7 @@ export interface AgentAction {
   type: 'message' | 'reply' | 'silent' | 'move_phase' | 'commitment' | 'call_on' | 'end_session';
   text?: string;
   member?: string;
+  members?: string[];
   quote?: string;
   phase?: string;
   deadline?: string;
@@ -104,14 +105,18 @@ const MODERATOR_TOOLS = [
     type: 'function' as const,
     function: {
       name: 'call_on',
-      description: 'Ask a specific council member to speak. Use when you want a particular member\'s perspective or when a member has been quiet.',
+      description: 'Ask one or more council members to speak. Use when you want a particular member\'s perspective or when members have been quiet. Called members will speak in order.',
       parameters: {
         type: 'object',
         properties: {
-          member: { type: 'string', description: 'The name of the member to call on.' },
-          prompt: { type: 'string', description: 'What you\'re asking them to weigh in on (e.g. "Connector, what networking angle do you see here?")' },
+          members: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Names of members to call on, in the order you want them to speak.',
+          },
+          prompt: { type: 'string', description: 'What you\'re asking them to weigh in on (e.g. "What networking angle do you see here?")' },
         },
-        required: ['member', 'prompt'],
+        required: ['members', 'prompt'],
       },
     },
   },
@@ -135,6 +140,47 @@ export function getToolsForAgent(isModerator: boolean) {
   return isModerator ? [...BASE_TOOLS, ...MODERATOR_TOOLS] : BASE_TOOLS;
 }
 
+/** Nano pre-filter tools — cheap model decides speak or silent */
+export const FILTER_TOOLS = [
+  {
+    type: 'function' as const,
+    function: {
+      name: 'speak',
+      description: 'You have something valuable to contribute that no one else has said. Claim your turn.',
+      parameters: {
+        type: 'object',
+        properties: {
+          reason: { type: 'string', description: 'Brief reason why you need to speak (1 sentence). What unique angle from your lens will you add?' },
+        },
+        required: ['reason'],
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'stay_silent',
+      description: 'You have nothing new to add, or someone else already covered your point, or the conversation does not need your voice right now. This is the default — most of the time, stay silent.',
+      parameters: {
+        type: 'object',
+        properties: {},
+      },
+    },
+  },
+];
+
+export interface FilterResult {
+  wantsToSpeak: boolean;
+  reason?: string;
+}
+
+export function parseFilterCall(toolCall: ToolCall): FilterResult {
+  if (toolCall.name === 'speak') {
+    return { wantsToSpeak: true, reason: toolCall.args.reason as string };
+  }
+  return { wantsToSpeak: false };
+}
+
 /** Parse a tool call from OpenAI response into an AgentAction */
 export function parseToolCall(toolCall: ToolCall): AgentAction {
   const { name, args } = toolCall;
@@ -150,8 +196,17 @@ export function parseToolCall(toolCall: ToolCall): AgentAction {
       return { type: 'move_phase', phase: args.phase as string, text: args.transition_message as string };
     case 'create_commitment':
       return { type: 'commitment', text: args.text as string, deadline: args.deadline as string };
-    case 'call_on':
-      return { type: 'call_on', member: args.member as string, text: args.prompt as string };
+    case 'call_on': {
+      // Support both old format (member: string) and new (members: string[])
+      const calledMembers = args.members as string[] | undefined;
+      const singleMember = args.member as string | undefined;
+      return {
+        type: 'call_on',
+        members: calledMembers || (singleMember ? [singleMember] : []),
+        member: singleMember || calledMembers?.[0],
+        text: args.prompt as string,
+      };
+    }
     case 'end_session':
       return { type: 'end_session', text: args.closing_message as string };
     default:

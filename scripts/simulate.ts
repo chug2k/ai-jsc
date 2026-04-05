@@ -16,6 +16,7 @@ dotenv.config({ path: path.resolve(__dirname, '..', '.env.local') });
 import { buildModeratorPrompt, buildReactiveMemberPrompt, buildFilterPrompt } from '../src/lib/council/prompts';
 import { runReactionLoop, type AgentMessage, type CouncilAgent } from '../src/lib/council/engine';
 import { callOpenAI } from '../src/lib/council/openai';
+import { generateSessionSummary } from '../src/lib/council/summarize';
 import { getSoul } from '../src/lib/council/souls';
 import { defaultIdentity, type AgentIdentity } from '../src/lib/council/identities';
 
@@ -175,9 +176,22 @@ async function main() {
   console.log(`Final phase: ${result.finalPhase}`);
   console.log(`Commitments: ${result.commitments.map((c) => c.text).join('; ') || 'none'}`);
 
+  // Generate post-session summary
+  console.log(`\nGenerating session summary...`);
+  const summary = await generateSessionSummary(OPENAI_API_KEY!, {
+    sessionNumber: persona.sessionNumber,
+    userName: persona.name,
+    messages: result.messages,
+    commitments: result.commitments.map(c => c.text),
+  });
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`SESSION SUMMARY (for next session's context)`);
+  console.log(`${'='.repeat(60)}`);
+  console.log(summary);
+
   // Write transcript to /tmp for the skill to read
   const outPath = `/tmp/sim-${Date.now()}.txt`;
-  fs.writeFileSync(outPath, result.transcript.join('\n'), 'utf-8');
+  fs.writeFileSync(outPath, result.transcript.join('\n') + `\n\n--- SESSION SUMMARY ---\n${summary}`, 'utf-8');
   console.log(`\nTranscript saved: ${outPath}`);
 }
 

@@ -39,6 +39,7 @@ export interface Session {
   ended_at?: string | null;
   phase: string;
   member_ids: string[];
+  summary?: string | null;
 }
 
 interface UserProfile {
@@ -324,12 +325,18 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const { getSoul } = await import('@/lib/council/souls');
     const { defaultIdentity } = await import('@/lib/council/identities');
 
+    // Build prior session summaries from past sessions
+    const priorSessions = state.pastSessions
+      .filter(s => s.summary && s.phase === 'done')
+      .map((s, i) => ({ number: i, summary: s.summary! }));
+
     const ctx = {
       userName: user?.name || 'Friend',
       searchStatus: user?.search_status || 'slow',
       userContext: user?.context || '',
       commitments: state.commitments.filter(c => !c.done).map(c => ({ text: c.text })),
       sessionNumber: currentSession.sessionNumber,
+      priorSessions,
     };
 
     // Build agents from council members using soul + identity
@@ -422,6 +429,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
               api('/api/sessions', {
                 method: 'PATCH',
                 body: JSON.stringify({ id: currentSession.dbId, phase: 'done' }),
+              }).catch(console.warn);
+              // Fire-and-forget: generate session summary in background
+              api('/api/sessions/summarize', {
+                method: 'POST',
+                body: JSON.stringify({ sessionId: currentSession.dbId }),
+              }).then((res) => {
+                if (res.summary) console.log('[summary] Generated:', res.summary.substring(0, 100) + '...');
               }).catch(console.warn);
             }
           },

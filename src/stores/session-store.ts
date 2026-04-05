@@ -145,7 +145,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   authUser: null,
   limits: null,
   usage: { sessions_used: 0 },
-  selectedIds: ['facilitator', 'strategist', 'operator'],
+  selectedIds: ['facilitator', 'strategist', 'operator', 'devils_advocate'],
   customMembers: [],
   councilConfigId: null,
   currentSession: null,

@@ -19,8 +19,11 @@ const SOUL_FILES: Record<string, string> = {
   operator: 'operator.md',
   devils_advocate: 'devils-advocate.md',
   recruiter: 'market-mirror.md',
-  founder: 'founder.md',
   therapist: 'witness.md',
+  interview_coach: 'interview-coach.md',
+  insider: 'insider.md',
+  // Legacy (still loadable for existing configs)
+  founder: 'founder.md',
   network: 'connector.md',
 };
 

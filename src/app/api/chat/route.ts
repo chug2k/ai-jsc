@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { system, messages, model, tools } = body;
+  const { system, messages, model, tools, reasoningEffort } = body;
 
   if (!system || !messages) {
     return NextResponse.json({ error: 'Missing system or messages' }, { status: 400 });
@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
       messages,
       model || 'gpt-5.4-mini',
       tools,
+      reasoningEffort ? { reasoningEffort } : undefined,
     );
     return NextResponse.json(result);
   } catch (err: unknown) {

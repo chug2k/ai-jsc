@@ -68,8 +68,8 @@ async function runSimulation(persona: Persona) {
   console.log('---');
 
   // LLM function — uses the same shared callOpenAI as /api/chat
-  const llm = async (systemPrompt: string, msgs: AgentMessage[], model?: string, tools?: unknown[]) => {
-    return callOpenAI(OPENAI_API_KEY!, systemPrompt, msgs, model || MEMBER_MODEL, tools);
+  const llm = async (systemPrompt: string, msgs: AgentMessage[], model?: string, tools?: unknown[], options?: { reasoningEffort?: 'low' | 'medium' | 'high' }) => {
+    return callOpenAI(OPENAI_API_KEY!, systemPrompt, msgs, model || MEMBER_MODEL, tools, options);
   };
 
   // Helper to build agents for current phase
@@ -79,6 +79,7 @@ async function runSimulation(persona: Persona) {
     isModerator: identity.is_moderator,
     model: identity.is_moderator ? MODERATOR_MODEL : MEMBER_MODEL,
     filterModel: FILTER_MODEL,
+    // reasoningEffort: not yet supported with function tools on chat completions API
     buildSystemPrompt: () => {
       const soul = getSoul(identity.soul_id);
       return identity.is_moderator

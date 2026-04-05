@@ -5,6 +5,8 @@
  * - Message formatting (developer role, name sanitization, replyTo injection)
  * - Tool calling with tool_choice: required
  * - Response parsing (tool calls or fallback text)
+ * - Reasoning effort per agent
+ * - Latency measurement
  */
 
 export interface LLMMessage {
@@ -22,6 +24,12 @@ export interface ToolCall {
 export interface LLMResult {
   toolCalls?: ToolCall[];
   text?: string;
+  latencyMs?: number;
+}
+
+export interface CallOptions {
+  reasoningEffort?: 'low' | 'medium' | 'high';
+  maxCompletionTokens?: number;
 }
 
 /**
@@ -33,7 +41,10 @@ export async function callOpenAI(
   messages: LLMMessage[],
   model: string,
   tools?: unknown[],
+  options?: CallOptions,
 ): Promise<LLMResult> {
+  const start = Date.now();
+
   const msgs = [
     { role: 'developer', content: systemPrompt },
     ...messages.slice(-30).map((m) => {
@@ -50,9 +61,13 @@ export async function callOpenAI(
 
   const payload: Record<string, unknown> = {
     model,
-    max_completion_tokens: 1024,
+    max_completion_tokens: options?.maxCompletionTokens ?? 1024,
     messages: msgs,
   };
+
+  if (options?.reasoningEffort) {
+    payload.reasoning_effort = options.reasoningEffort;
+  }
 
   if (tools && tools.length > 0) {
     payload.tools = tools;
@@ -67,6 +82,8 @@ export async function callOpenAI(
     },
     body: JSON.stringify(payload),
   });
+
+  const latencyMs = Date.now() - start;
 
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -83,8 +100,9 @@ export async function callOpenAI(
         name: tc.function.name,
         args: JSON.parse(tc.function.arguments || '{}'),
       })),
+      latencyMs,
     };
   }
 
-  return { text: choice?.message?.content || '' };
+  return { text: choice?.message?.content || '', latencyMs };
 }

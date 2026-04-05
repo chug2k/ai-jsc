@@ -129,13 +129,13 @@ async function api(path: string, options?: RequestInit) {
   return res.json();
 }
 
-/** Call /api/chat. Model and tools can be overridden per-call. */
-async function chatApi(system: string, messages: unknown[], model?: string, tools?: unknown[]) {
+/** Call /api/chat. Model, tools, and options can be overridden per-call. */
+async function chatApi(system: string, messages: unknown[], model?: string, tools?: unknown[], options?: { reasoningEffort?: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const devModel = (useSessionStore.getState() as any)._devModel as string | undefined;
   return api('/api/chat', {
     method: 'POST',
-    body: JSON.stringify({ system, messages, model: devModel || model, ...(tools ? { tools } : {}) }),
+    body: JSON.stringify({ system, messages, model: devModel || model, ...(tools ? { tools } : {}), ...(options?.reasoningEffort ? { reasoningEffort: options.reasoningEffort } : {}) }),
   });
 }
 
@@ -344,6 +344,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         isModerator: member.id === 'facilitator',
         model: member.id === 'facilitator' ? 'gpt-5.4' : 'gpt-5.4-mini',
         filterModel: 'gpt-5.4-nano',
+        // reasoningEffort: not yet supported with function tools on chat completions API
         buildSystemPrompt: () =>
           member.id === 'facilitator'
             ? buildModeratorPrompt(soul, identity, identities, currentPhase, ctx)
@@ -425,8 +426,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
             }
           },
         },
-        llm: async (system, messages, model, tools) => {
-          const result = await chatApi(system, messages, model, tools);
+        llm: async (system, messages, model, tools, options) => {
+          const result = await chatApi(system, messages, model, tools, options);
           return result;
         },
       });

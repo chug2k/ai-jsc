@@ -27,6 +27,7 @@ export interface CouncilAgent {
   isModerator: boolean;
   model?: string;
   filterModel?: string;
+  reasoningEffort?: 'low' | 'medium' | 'high';
   buildSystemPrompt: () => string;
   buildFilterPrompt: () => string;
 }
@@ -43,7 +44,7 @@ export interface CouncilEngineConfig {
   agents: CouncilAgent[];
   messages: AgentMessage[];
   callbacks: EngineCallbacks;
-  llm: (systemPrompt: string, messages: AgentMessage[], model?: string, tools?: unknown[]) => Promise<{ toolCalls?: ToolCall[]; text?: string }>;
+  llm: (systemPrompt: string, messages: AgentMessage[], model?: string, tools?: unknown[], options?: { reasoningEffort?: 'low' | 'medium' | 'high' }) => Promise<{ toolCalls?: ToolCall[]; text?: string; latencyMs?: number }>;
   maxResponses?: number;
   moderatorOnly?: boolean;
   replyToMember?: string;
@@ -150,20 +151,26 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
   return allNewMessages;
 }
 
+type LLMFn = (systemPrompt: string, messages: AgentMessage[], model?: string, tools?: unknown[], options?: { reasoningEffort?: 'low' | 'medium' | 'high' }) => Promise<{ toolCalls?: ToolCall[]; text?: string; latencyMs?: number }>;
+
 /** Nano pre-filter: cheap model decides if agent should speak */
 async function filterAgent(
   agent: CouncilAgent,
   messages: AgentMessage[],
-  llm: (systemPrompt: string, messages: AgentMessage[], model?: string, tools?: unknown[]) => Promise<{ toolCalls?: ToolCall[]; text?: string }>,
+  llm: LLMFn,
 ): Promise<{ wantsToSpeak: boolean; reason?: string }> {
   try {
     const filterPrompt = agent.buildFilterPrompt();
+    // No reasoning_effort for nano filter — not supported with function tools
     const result = await llm(filterPrompt, messages.slice(-10), agent.filterModel, FILTER_TOOLS);
+
+    if (result.latencyMs) {
+      console.log(`[engine] ${agent.name} filter: ${result.latencyMs}ms`);
+    }
 
     if (result.toolCalls && result.toolCalls.length > 0) {
       return parseFilterCall(result.toolCalls[0]);
     }
-    // If no tool call, default to silent
     return { wantsToSpeak: false };
   } catch (err) {
     console.warn(`[engine] ${agent.name} filter failed:`, err);
@@ -175,7 +182,7 @@ async function filterAgent(
 async function evaluateAgent(
   agent: CouncilAgent,
   messages: AgentMessage[],
-  llm: (systemPrompt: string, messages: AgentMessage[], model?: string, tools?: unknown[]) => Promise<{ toolCalls?: ToolCall[]; text?: string }>,
+  llm: LLMFn,
   hint?: string,
 ): Promise<AgentAction> {
   try {
@@ -187,6 +194,10 @@ async function evaluateAgent(
 
     const tools = getToolsForAgent(agent.isModerator);
     const result = await llm(systemPrompt, messages, agent.model, tools);
+
+    if (result.latencyMs) {
+      console.log(`[engine] ${agent.name} inference: ${result.latencyMs}ms`);
+    }
 
     if (result.toolCalls && result.toolCalls.length > 0) {
       return parseToolCall(result.toolCalls[0]);

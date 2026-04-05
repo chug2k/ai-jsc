@@ -141,6 +141,252 @@ export function getCheckinPrompt(sessionNumber: number): string {
   return 'What\'s been on your mind lately — outside of the job search?';
 }
 
+/**
+ * Full session agendas from the real Never Search Alone curriculum.
+ * Source: Phyl Terry's first 10 agendas + Cassie Zawilski's detailed run-of-show (JSC 249).
+ *
+ * Maude gets the entire agenda as her run-of-show for the session.
+ * She drives through it using move_to_phase, call_on, and create_commitment.
+ */
+export const SESSION_AGENDAS: Record<number, string> = {
+  0: `SESSION 0: TRUST-BUILDING (First Meeting)
+No homework. This is about opening up and building trust.
+
+RUN OF SHOW:
+1. CHECK-IN: Welcome everyone. Ask: "Where are you based? On a scale of 1-10, what's your level of energy right now?" Then: "What routines energize or restore you?"
+
+2. INTRODUCTIONS (main exercise): This is the bulk of the session. Each person gets time to share:
+   - Tell us about YOU. Your personal life. Your career.
+   - How are you doing emotionally during your job search? Everyone has some level of fear, anxiety, insecurity — what about you?
+   - Where are you in your job search process? What's your timeframe?
+   - What type of support do you need or want?
+   - How scary is it for you to join strangers to do this?
+   Use call_on to give each council member a turn to respond to what the user shares.
+
+3. REQUESTS FOR HELP: Address any RFHs that came up during introductions.
+
+4. HOMEWORK: Read Chapters 1-3 of Never Search Alone. Think about what you want from this process.
+
+5. CHECK-OUT: "What are you looking forward to this week?" Then close the session.`,
+
+  1: `SESSION 1: CHARTER & EXTENDED INTRODUCTIONS
+Pre-work: Read Chapters 1-3. Review the "Checklist If You Just Left or Lost Your Job."
+
+RUN OF SHOW:
+1. CHECK-IN: Welcome back. Ask: "What routines energize or restore you?" Emotional pulse 1-10. Professional updates.
+
+2. EXTENDED INTRODUCTIONS: Each person shares:
+   - What brought you to this community?
+   - What role are you looking for?
+   - Where are you in your search? What's your timeframe?
+   - How are you feeling about your search?
+   - What's one challenge you're experiencing?
+   - What type of support do you need?
+   Use call_on to have council members respond with their lens.
+
+3. REQUESTS FOR HELP: Address any RFHs.
+
+4. HOMEWORK: Read Chapter 4. Reflect on what you hate doing and what you don't want in your job to prep for the must-nots/must-haves exercise next session.
+
+5. CHECK-OUT: One word for how you're leaving today.`,
+
+  2: `SESSION 2: MNOOKIN TWO-PAGER — MUST-NOTS & MUST-HAVES
+Pre-work: Read Chapter 4. Come ready to do the exercises.
+
+RUN OF SHOW:
+1. CHECK-IN: Ask: "What was a highlight from your past week?" Emotional pulse 1-10. Professional updates. Any RFHs?
+
+2. EXERCISE — WHAT YOU HATE (AND LOVE) DOING:
+   Ask the user:
+   - What kinds of jobs, industries, and functions do you HATE doing?
+   - What about past jobs did you DISLIKE?
+   Then have them INVERT their list to what they LOVE doing.
+   Use call_on to have council members react and probe.
+
+3. EXERCISE — MUST-NOTS & MUST-HAVES:
+   Ask the user:
+   - What do you NOT want in your next job?
+   - Have you ever had a bad job or bad boss? What did that teach you about what you don't want?
+   Then INVERT the must-nots into must-haves.
+   Have the user present their must-haves for discussion. Use call_on for feedback.
+   Framework for feedback: "I like... I wish... I wonder..."
+
+4. REQUESTS FOR HELP.
+
+5. HOMEWORK: Draft your Mnookin Two-Pager. Schedule your first 3 Listening Tour calls.
+
+6. CHECK-OUT: One word.`,
+
+  3: `SESSION 3: MNOOKIN TWO-PAGER PRESENTATIONS
+Pre-work: Draft your Mnookin Two-Pager and be ready to present.
+
+RUN OF SHOW:
+1. CHECK-IN: Ask: "What is one highlight from the past week?" Emotional pulse 1-10. Professional updates.
+
+2. MNOOKIN PRESENTATIONS: The user presents their Mnookin Two-Pager.
+   - Give them time to share their full two-pager: what they love/hate, must-haves, must-nots, career goals.
+   - Then open it up for council feedback using call_on.
+   - Feedback framework: "I like... I wish... I wonder..."
+   - Ask: What might be missing? What should be edited? What resonates?
+
+3. REQUESTS FOR HELP.
+
+4. HOMEWORK: Revise your Mnookin with the council's feedback. Read Chapter 5 and complete the Gratitude House exercise. Schedule Listening Tour calls.
+
+5. CHECK-OUT: "What surprised, encouraged, or inspired you about today?"`,
+
+  4: `SESSION 4: GRATITUDE HOUSE
+Pre-work: Revise Mnookin. Read Chapter 5. Complete the Gratitude House exercise. Schedule Listening Tour calls.
+
+RUN OF SHOW:
+1. CHECK-IN: Ask: "What did you want to be when you grew up?" Emotional pulse 1-10. Professional updates.
+
+2. MNOOKIN REVISIONS (if needed): Quick check on any revised two-pagers. Time for feedback.
+
+3. GRATITUDE HOUSE EXERCISE: The user shares insights from their Gratitude House exercise:
+   - Who has helped your career?
+   - What are you grateful for?
+   - Who should you reach out to?
+   - What surprises, learnings, or takeaways came from this exercise?
+   Use call_on for council to react and connect dots.
+
+4. REQUESTS FOR HELP.
+
+5. HOMEWORK: Start your Listening Tour. Complete 3+ conversations and prepare to report back.
+
+6. CHECK-OUT: One word.`,
+
+  5: `SESSION 5: LISTENING TOUR (First Report-Back)
+Pre-work: Read Chapters 6-8. Complete 3+ Listening Tour calls. Revise Mnookin. Schedule more calls.
+
+RUN OF SHOW:
+1. CHECK-IN: Ask: "What's one thing that brings you energy and joy lately?" Emotional pulse 1-10. Professional updates. Any help needed?
+
+2. LISTENING TOUR EXERCISE: The user reports back on their conversations:
+   - What surprised, encouraged, or inspired you from those calls?
+   - Was there any challenging feedback to receive?
+   - What has been the most useful job search advice you've received?
+   - How have the insights from those calls informed what you're looking for?
+   - What will you revise in your Mnookin Two-Pager as a result?
+   - What questions or approaches have led to helpful feedback?
+   Use call_on to have council members probe and connect dots.
+
+3. REQUESTS FOR HELP.
+
+4. HOMEWORK: Continue Listening Tour. Revise Mnookin based on what you're learning.
+
+5. CHECK-OUT: "What are you most looking forward to over the next week?"`,
+
+  6: `SESSION 6: LISTENING TOUR (Continued)
+Pre-work: Continue Listening Tour. Revise Mnookin. Prepare to share insights.
+
+RUN OF SHOW:
+1. CHECK-IN: Ask: "If you could snap your fingers and have any new skill, what would you choose?" Emotional pulse 1-10. Professional updates.
+
+2. LISTENING TOUR (continued): Same prompts as session 5 — what's new from recent conversations?
+   - New surprises, challenging feedback, useful advice?
+   - How are the insights changing what you're looking for?
+   - What will you revise in your Mnookin?
+   Use call_on for council feedback.
+
+3. REQUESTS FOR HELP.
+
+4. HOMEWORK: Read Chapter 9. Draft your 1-sentence job search strategy (Candidate-Market Fit).
+
+5. CHECK-OUT: "Which of your strengths are you most grateful for?"`,
+
+  7: `SESSION 7: CANDIDATE-MARKET FIT
+Pre-work: Continue Listening Tour. Read Chapter 9. Draft CMF statements.
+
+RUN OF SHOW:
+1. CHECK-IN: Ask: "What did you do for your very first job? What stands out as you think back?" Emotional pulse 1-10. Professional updates.
+
+2. LISTENING TOUR UPDATE: Brief check-in on recent conversations and Mnookin revisions.
+
+3. CANDIDATE-MARKET FIT EXERCISE: The user presents their draft CMF statement for feedback.
+   - Share your career goal (CMF statement) and what you learned from the Listening Tour.
+   - Include any disconnect between what you want and what the market sees for you today.
+   - Share your job search strategy and outline a multi-step plan if you can't get to your goal right away.
+   Use call_on for council to pressure-test the CMF: Is it specific enough? Does it match market reality? What's missing?
+
+4. REQUESTS FOR HELP.
+
+5. HOMEWORK: Iterate on CMF. Read Chapter 10 and prepare for LinkedIn/resume rehab.
+
+6. CHECK-OUT: "What is something you're looking forward to this weekend?"`,
+
+  8: `SESSION 8: LINKEDIN/RESUME REHAB
+Pre-work: Read Chapter 10. Prepare LinkedIn profile and resume for review. Bring CMF and Mnookin.
+
+RUN OF SHOW:
+1. CHECK-IN: Ask: "What is one highlight from your past week?" Emotional pulse 1-10. Professional updates.
+
+2. CMF CHECK-IN: Quick round of updated CMF statements and feedback from council.
+
+3. LINKEDIN/RESUME REHAB EXERCISE: Review the user's LinkedIn profile and resume against their CMF.
+   - Does the headline/summary match their CMF?
+   - Do the bullets show scope, outcomes, and seniority — or just tasks?
+   - What signal does the profile send to a recruiter in 20 seconds?
+   Use call_on for council to give specific, actionable feedback.
+
+4. REQUESTS FOR HELP.
+
+5. HOMEWORK: Update LinkedIn and resume. Set up Megibow Dashboard. Create target company list. Join networking groups.
+
+6. CHECK-OUT: "What's something you're looking forward to this month?"`,
+
+  9: `SESSION 9: NETWORKING
+Pre-work: Read Chapter 11. Update your broader network. Set up Megibow Dashboard and Opportunity Screener. Create target company list.
+
+RUN OF SHOW:
+1. CHECK-IN: Ask: "What's something — an activity, a person, a place — that's giving you joy lately?" Emotional pulse 1-10. Professional updates.
+
+2. NETWORKING EXERCISE: Share your networking strategy and resources.
+   - Who are you reaching out to? What's your approach?
+   - Review Megibow Dashboard.
+   - Go back to Listening Tour contacts and share your CMF — turn them into Listening Posts.
+   Note: Networking is one of the most difficult parts of the search, but with a strong CMF and a council behind you, you have the support to do it well.
+   Use call_on for council to help with strategy and introductions.
+
+3. REQUESTS FOR HELP.
+
+4. HOMEWORK: Continue networking. Read Chapter 12 for interview prep.
+
+5. CHECK-OUT: One word.`,
+
+  10: `SESSION 10: INTERVIEW PREP
+Pre-work: Read Chapter 12. Research companies you're interviewing with. Draft Job Mission with OKRs if interviewing.
+
+RUN OF SHOW:
+1. CHECK-IN: Ask: "What's something you're looking forward to?" Emotional pulse 1-10. Professional updates.
+
+2. INTERVIEW PREP EXERCISE: Practice interview scenarios.
+   - Paired interview prep: practice telling your story using your CMF.
+   - Post-interview debrief: if you've had recent interviews, share what happened.
+   - Begin drafting your Job Mission with OKRs if you have a specific employer in mind.
+   Use call_on for council to give feedback on interview responses and strategy.
+
+3. REQUESTS FOR HELP.
+
+4. HOMEWORK: Continue interviewing. Re-read Chapters 13-14 on negotiation.
+
+5. CHECK-OUT: One word.`,
+};
+
+/** Get the full session agenda. Sessions 11+ use a generic ongoing format. */
+export function getSessionAgenda(sessionNumber: number): string {
+  if (sessionNumber in SESSION_AGENDAS) return SESSION_AGENDAS[sessionNumber];
+  return `SESSION ${sessionNumber}: ONGOING (Networking / Interviewing / Negotiating)
+Continue the search. The council is here for whatever comes up.
+
+RUN OF SHOW:
+1. CHECK-IN: Personal prompt. Emotional pulse 1-10. Professional updates.
+2. MAIN DISCUSSION: Bring your biggest request for help — a decision, a dilemma, interview prep, negotiation strategy, or anything you need.
+3. REQUESTS FOR HELP.
+4. HOMEWORK: Keep going. Bring your wins and challenges next time.
+5. CHECK-OUT: One word.`;
+}
+
 export const PHASE_HINTS: Record<string, { placeholder: string; chips: string[] }> = {
   checkin: {
     placeholder: 'Share how you\'re doing — personally and professionally.',

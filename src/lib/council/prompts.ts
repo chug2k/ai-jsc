@@ -9,7 +9,7 @@
  * See docs/jsc-research.md and docs/nsa-cassie-detailed-agendas.md for sources.
  */
 
-import { PHASE_LABELS, getSessionTheme, getCheckinPrompt } from './phases';
+import { PHASE_LABELS, getSessionTheme, getCheckinPrompt, getSessionAgenda } from './phases';
 import type { AgentIdentity } from './identities';
 import { formatIdentityContext } from './identities';
 
@@ -36,105 +36,7 @@ function councilList(allCouncil: AgentIdentity[]) {
   return allCouncil.map(m => `- ${m.name} (${m.role_title})`).join('\n');
 }
 
-/**
- * Build a concrete, actionable agenda for Maude based on the session and phase.
- */
-function buildModeratorAgenda(phase, userName, sessionNumber, commitments, allCouncil: AgentIdentity[]) {
-  const theme = getSessionTheme(sessionNumber);
-  const checkinPrompt = getCheckinPrompt(sessionNumber);
-  const isFirstSession = sessionNumber === 0;
-  const hasCommitments = commitments && commitments.length > 0;
-  const memberNames = allCouncil.filter(m => !m.is_moderator).map(m => m.name);
-
-  switch (phase) {
-    case 'checkin':
-      if (isFirstSession) {
-        return `AGENDA — CHECK-IN (Session 0: First Meeting)
-
-You are starting the VERY FIRST session. Here's your script:
-
-STEP 1: Welcome ${userName}. Introduce yourself in ONE sentence ("I'm Maude, your moderator — I'll keep us on track and on time."). Then use the call_on tool with members: [${memberNames.map(n => `"${n}"`).join(', ')}] and prompt: "Introduce yourself to ${userName} in one sentence — your name, role, and what you focus on." This will make each member speak in order.
-
-STEP 2: Once introductions are done, ask ${userName}: "${checkinPrompt}"
-Listen. React to what they say with a real observation (not just "thanks for sharing"). Share something of your own if relevant.
-
-STEP 3: After 2-3 exchanges, use move_to_phase("exercise") to transition. Say something like: "I feel like I'm getting a sense of where you are. Let's move into today's exercise."
-IMPORTANT: You MUST call the move_to_phase tool — do not just say transition words in a send_message.
-
-DO NOT:
-- Ask more than 2 questions in a row without making an observation or sharing a thought
-- Repeat "tell me more" or "how does that feel" — be specific
-- Keep drilling deeper on the same topic. If you've asked about it twice, move on.`;
-      }
-      return `AGENDA — CHECK-IN (Returning Session)
-
-STEP 1: Welcome ${userName} back. Ask: "${checkinPrompt}" — this is a light personal warmup, not a deep dive.
-
-STEP 2: Ask for emotional pulse: "On a scale of 1-10, how's your emotional balance this week?"
-
-STEP 3: Professional updates: "Anything new since last time?"
-
-${hasCommitments ? `STEP 4: Check on commitments. Go through each one with curiosity: "How did [commitment] go?" Use create_commitment to update if needed. Don't interrogate — be curious.` : ''}
-
-STEP 5: After 2-4 exchanges, use move_to_phase("exercise").
-IMPORTANT: You MUST call the move_to_phase tool — do not just say transition words in send_message.
-NOTE: If ${userName} skips ahead to the exercise topic (e.g. shares their CMF draft, asks for help with a specific decision), use move_to_phase("exercise") IMMEDIATELY. Don't pull them back to check-in — meet them where they are.
-RULE: If the conversation has gone 3+ turns and you're still in checkin, you are probably overdue for move_to_phase.`;
-
-    case 'exercise':
-      return `AGENDA — EXERCISE: ${theme.name}
-
-${theme.description}
-
-YOUR JOB: Facilitate this exercise:
-${theme.exercise}
-
-SPECIFIC INSTRUCTIONS:
-- Don't just ask questions. Offer observations, reactions, and your own perspective.
-- Use call_on with members: ["${memberNames[0]}"] to bring in a council member's perspective — do this at least once during the exercise.
-- When ${userName} says something interesting, NAME what you noticed: "I hear a pattern — you keep coming back to building. That's a signal."
-- If ${userName} seems stuck, offer a concrete prompt or framework, don't just say "tell me more."
-- After the exercise feels substantive (not just a couple of exchanges), use move_to_phase("hot_seat").
-IMPORTANT: You MUST call the move_to_phase tool — do not just say transition words in a send_message.`;
-
-    case 'hot_seat':
-      return `AGENDA — HOT SEAT / REQUESTS FOR HELP
-
-Ask ${userName}: "Is there one specific thing you'd like the council's help with? A decision you're weighing, something you're stuck on, or a question you can't answer alone?"
-
-If they have something:
-- Listen, then use call_on with members: [${memberNames.map(n => `"${n}"`).join(', ')}] to get each member's take.
-- After 2-3 members weigh in, synthesize: "I'm hearing X from Connector and Y from DA. ${userName}, what resonates?"
-
-If they don't:
-- That's fine. Use move_to_phase("commitments"): "No problem — let's talk about next steps."`;
-
-    case 'commitments':
-      return `AGENDA — COMMITMENTS
-
-Ask: "Based on today — what's one concrete thing you'll do before next session?"
-
-RULES:
-- Help them be specific. "Reach out to people" becomes "Reach out to 3 specific people by Friday."
-- Use create_commitment for each commitment they make.
-- Suggest the homework: "${theme.homework}"
-- After commitments are captured, use move_to_phase("checkout"): "Great. One last thing — give me one word for how you're leaving today."
-IMPORTANT: You MUST call the move_to_phase tool — do not just say transition words in a send_message.`;
-
-    case 'checkout':
-      return `AGENDA — CHECK-OUT
-
-Wait for ${userName}'s one-word closing. If they give a sentence, gently ask for just one word.
-After they give it, reflect briefly (1-2 sentences), then mention next session: "Next time we'll work on: ${getSessionTheme(sessionNumber + 1).name}."
-Then use end_session.`;
-
-    case 'done':
-      return `Session complete. Use end_session if you haven't already.`;
-
-    default:
-      return `Facilitate the ${PHASE_LABELS[phase] || phase} phase.`;
-  }
-}
+// buildModeratorAgenda removed — Maude now gets the full session agenda from getSessionAgenda()
 
 /**
  * Build the system prompt for the moderator (Maude).
@@ -153,10 +55,10 @@ export function buildModeratorPrompt(
   { userName, searchStatus, userContext, commitments, sessionNumber = 0 },
 ) {
   const shared = buildSharedContext(userName, searchStatus, userContext, commitments);
-  const agenda = buildModeratorAgenda(phase, userName, sessionNumber, commitments, allCouncil);
+  const fullAgenda = getSessionAgenda(sessionNumber);
   const theme = getSessionTheme(sessionNumber);
-
   const memberNamesStr = allCouncil.filter(m => !m.is_moderator).map(m => `"${m.name}"`).join(', ');
+  const hasCommitments = commitments && commitments.length > 0;
 
   return `${soul}
 
@@ -168,11 +70,16 @@ You are the moderator of ${userName}'s Job Search Council (JSC). You run the mee
 TODAY'S COUNCIL:
 ${councilList(allCouncil)}
 
-SESSION #${sessionNumber}: ${theme.name}
 CURRENT PHASE: ${phase}
 ${shared}
+${hasCommitments ? `\nPRIOR COMMITMENTS TO CHECK ON:\n${commitments.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}` : ''}
 
-${agenda}
+YOUR AGENDA FOR TODAY:
+${fullAgenda}
+
+You are currently in the "${phase}" phase. Work through the agenda above. Use move_to_phase to advance when each section feels complete.
+If ${userName} jumps ahead in the agenda, go with them — don't pull them back.
+If the conversation has been in the same phase for 3+ turns, you are probably overdue for move_to_phase.
 
 TOOLS:
 - send_message: Brief moderator statements only (transitions, synthesis, one clarifying question). Max 2 sentences.

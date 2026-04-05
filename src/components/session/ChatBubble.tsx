@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { Member, Message } from '@/stores/session-store';
 import { allMembers } from '@/stores/session-store';
 import { useSessionStore } from '@/stores/session-store';
@@ -27,12 +28,30 @@ function fmt(text: string, members: Member[]) {
 interface ChatBubbleProps {
   message: Message;
   index: number;
+  messageId?: string;
   onReply?: (index: number) => void;
   onScrollTo?: (index: number) => void;
 }
 
-export default function ChatBubble({ message, index, onReply, onScrollTo }: ChatBubbleProps) {
+export default function ChatBubble({ message, index, messageId, onReply, onScrollTo }: ChatBubbleProps) {
   const { customMembers, user } = useSessionStore();
+  const [reaction, setReaction] = useState<'up' | 'down' | null>(null);
+  const [reacting, setReacting] = useState(false);
+
+  const handleReaction = async (type: 'up' | 'down') => {
+    if (!messageId || reacting) return;
+    setReacting(true);
+    const newReaction = reaction === type ? null : type;
+    setReaction(newReaction);
+    try {
+      await fetch('/api/reactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId, reaction: type }),
+      });
+    } catch { /* silent fail */ }
+    setReacting(false);
+  };
   const members = allMembers(customMembers);
 
   let member: Member | undefined;
@@ -119,8 +138,48 @@ export default function ChatBubble({ message, index, onReply, onScrollTo }: Chat
           <div className="chat-bubble chat-bubble-ai"
             style={{ borderLeft: `3px solid ${color}` }}
             dangerouslySetInnerHTML={{ __html: fmt(displayText, members) }} />
+          <div className="flex gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => handleReaction('up')}
+              className="reaction-btn"
+              style={{
+                color: reaction === 'up' ? 'var(--accent)' : 'var(--muted)',
+                opacity: reaction === 'up' ? 1 : 0.5,
+              }}
+              title="Helpful"
+            >
+              <ThumbUp filled={reaction === 'up'} />
+            </button>
+            <button
+              onClick={() => handleReaction('down')}
+              className="reaction-btn"
+              style={{
+                color: reaction === 'down' ? 'var(--danger, #ef4444)' : 'var(--muted)',
+                opacity: reaction === 'down' ? 1 : 0.5,
+              }}
+              title="Not helpful"
+            >
+              <ThumbDown filled={reaction === 'down'} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function ThumbUp({ filled }: { filled: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 22V11M2 13V20C2 21.1 2.9 22 4 22H17.4C18.7 22 19.8 21.1 20 19.8L21.5 11.8C21.7 10.3 20.5 9 19 9H14V4C14 2.9 13.1 2 12 2L7 11" />
+    </svg>
+  );
+}
+
+function ThumbDown({ filled }: { filled: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 2V13M22 11V4C22 2.9 21.1 2 20 2H6.6C5.3 2 4.2 2.9 4 4.2L2.5 12.2C2.3 13.7 3.5 15 5 15H10V20C10 21.1 10.9 22 12 22L17 13" />
+    </svg>
   );
 }

@@ -5,6 +5,7 @@ import { useSessionStore } from '@/stores/session-store';
 import { getSessionTheme } from '@/lib/council/phases';
 import ChatBubble from './ChatBubble';
 import ChatInput, { type ReplyTarget } from './ChatInput';
+import SessionFeedback from './SessionFeedback';
 import Sidebar from './Sidebar';
 
 function LoadingDots({ color = 'var(--accent)', emoji = '📋' }: { color?: string; emoji?: string }) {
@@ -89,6 +90,7 @@ export default function SessionView() {
             </div>
           ))}
           {isLoading && <LoadingDots />}
+          {currentSession.phase === 'done' && <SessionFeedback />}
           <div ref={chatEndRef} />
         </div>
         <ChatInput replyTo={replyTo} onClearReply={() => setReplyTo(null)} />

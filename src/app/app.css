@@ -135,6 +135,20 @@ select { cursor: pointer; }
   background: var(--accent-dim);
   border: 1px solid var(--accent-mid);
 }
+.reaction-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.15s, opacity 0.15s;
+  display: flex;
+  align-items: center;
+}
+.reaction-btn:hover {
+  background: var(--surface-hover, #f0f0ee);
+  opacity: 1 !important;
+}
 .chat-bubble code {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.75rem;

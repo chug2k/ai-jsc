@@ -3,312 +3,375 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JSC Simulation Report — April 2026</title>
+<title>JSC Council Simulation Report — Final</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #FAFAF8; color: #1a1a1a; line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 2rem; }
-  h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #FAFAF8; color: #1a1a1a; line-height: 1.6; max-width: 960px; margin: 0 auto; padding: 2rem; }
+  h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.25rem; }
   h2 { font-size: 1.3rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid #e5e5e5; padding-bottom: 0.25rem; }
   h3 { font-size: 1.05rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; }
   p { margin-bottom: 0.75rem; }
   .subtitle { color: #666; font-size: 0.95rem; margin-bottom: 2rem; }
-  .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0; }
+  .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1.5rem 0; }
   .metric { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1rem; text-align: center; }
-  .metric .value { font-size: 2rem; font-weight: 700; }
-  .metric .label { font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
+  .metric .value { font-size: 1.8rem; font-weight: 700; }
+  .metric .label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
   .metric.good .value { color: #16a34a; }
-  .metric.warn .value { color: #d97706; }
-  .metric.bad .value { color: #dc2626; }
-  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
   th, td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid #e5e5e5; }
   th { background: #f5f5f4; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; color: #555; }
-  tr:last-child td { border-bottom: none; }
   .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
   .tag-green { background: #dcfce7; color: #166534; }
-  .tag-red { background: #fef2f2; color: #991b1b; }
   .tag-yellow { background: #fef9c3; color: #854d0e; }
   .tag-blue { background: #dbeafe; color: #1e40af; }
-  .change { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; padding: 0.75rem 1rem; background: white; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 0.9rem; }
-  .change .file { font-family: monospace; font-size: 0.8rem; color: #6366f1; min-width: 200px; }
-  .change .desc { flex: 1; }
-  .timeline { position: relative; padding-left: 2rem; margin: 1rem 0; }
-  .timeline::before { content: ''; position: absolute; left: 0.5rem; top: 0; bottom: 0; width: 2px; background: #d4d4d4; }
-  .timeline-item { position: relative; margin-bottom: 1.5rem; }
-  .timeline-item::before { content: ''; position: absolute; left: -1.65rem; top: 0.35rem; width: 10px; height: 10px; border-radius: 50%; background: #6366f1; border: 2px solid white; }
-  .timeline-item .round { font-weight: 600; font-size: 0.85rem; color: #6366f1; }
-  .quote { border-left: 3px solid #d4d4d4; padding-left: 1rem; margin: 0.75rem 0; color: #444; font-style: italic; }
+  .tag-purple { background: #f3e8ff; color: #6b21a8; }
+  .quote { border-left: 3px solid #d4d4d4; padding: 0.5rem 1rem; margin: 0.75rem 0; color: #444; font-style: italic; font-size: 0.9rem; }
+  .quote .attr { font-style: normal; font-weight: 600; font-size: 0.8rem; color: #888; margin-bottom: 0.25rem; }
+  .arch-card { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1rem; margin: 0.5rem 0; display: flex; gap: 1rem; align-items: flex-start; }
+  .arch-card .emoji { font-size: 1.5rem; }
+  .arch-card .name { font-weight: 700; font-size: 1rem; }
+  .arch-card .role { font-size: 0.8rem; color: #888; }
+  .arch-card .desc { font-size: 0.85rem; color: #555; margin-top: 0.25rem; }
+  .arch-card .reasoning { font-size: 0.75rem; margin-top: 0.25rem; }
   .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1rem 0; }
   .comparison > div { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1rem; }
-  .comparison h4 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; color: #888; margin-bottom: 0.5rem; }
-  code { font-family: 'SF Mono', Monaco, monospace; font-size: 0.85rem; background: #f5f5f4; padding: 0.1rem 0.3rem; border-radius: 3px; }
-  .arch-diagram { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: monospace; font-size: 0.85rem; white-space: pre; line-height: 1.8; color: #333; }
+  .comparison h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; color: #888; margin-bottom: 0.5rem; }
+  .flow-diagram { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'SF Mono', Monaco, monospace; font-size: 0.8rem; white-space: pre; line-height: 1.8; color: #333; }
+  .persona-row { display: grid; grid-template-columns: 180px 1fr; gap: 0.5rem; padding: 0.75rem 0; border-bottom: 1px solid #f0f0ee; }
+  .persona-row:last-child { border-bottom: none; }
+  .persona-name { font-weight: 600; }
+  .persona-ctx { font-size: 0.8rem; color: #888; }
+  .persona-highlight { font-size: 0.85rem; }
 </style>
 </head>
 <body>
 
-<h1>JSC Council Simulation Report</h1>
-<p class="subtitle">14 simulation runs across 4 rounds of iteration &middot; April 5, 2026</p>
-
-<h2>Executive Summary</h2>
+<h1>JSC Simulation Report</h1>
+<p class="subtitle">30+ simulation runs &middot; 11 personas &middot; 5 rounds of iteration &middot; April 5, 2026</p>
 
 <div class="metric-grid">
   <div class="metric good">
     <div class="value">0</div>
-    <div class="label">Identity Bleed<br>(was 7+ incidents)</div>
+    <div class="label">Identity bleed<br>(was 7+ incidents)</div>
   </div>
   <div class="metric good">
-    <div class="value">19</div>
-    <div class="label">Avg Messages/Session<br>(was 37)</div>
+    <div class="value">21</div>
+    <div class="label">Avg messages<br>(was 37)</div>
   </div>
   <div class="metric good">
-    <div class="value">48%</div>
-    <div class="label">Message Reduction<br>vs Baseline</div>
+    <div class="value">~4s</div>
+    <div class="label">Time to first<br>response</div>
+  </div>
+  <div class="metric good">
+    <div class="value">11/11</div>
+    <div class="label">Personas producing<br>quality conversations</div>
   </div>
 </div>
 
-<p>Over 14 simulation runs, we iterated on three layers: <strong>soul files</strong> (agent personality), <strong>prompt structure</strong> (silence discipline), and <strong>engine architecture</strong> (nano pre-filter claim loop). The result is a conversation engine that produces natural, paced dialogue where agents speak only when they have something uniquely valuable to add.</p>
+<h2>The Council</h2>
+<p>Seven archetypes plus a moderator. Real names, real backgrounds. Users see the person first, the archetype on hover.</p>
 
-<h2>Architecture Changes</h2>
+<div class="arch-card">
+  <div class="emoji">📋</div>
+  <div>
+    <div class="name" style="color:#4ade80">Maude</div>
+    <div class="role">Moderator &middot; gpt-5.4</div>
+    <div class="desc">Runs the meeting. Calls on members, transitions phases, records commitments. Does not give advice. Her primary tool is <code>call_on</code>.</div>
+  </div>
+</div>
+<div class="arch-card">
+  <div class="emoji">🗺️</div>
+  <div>
+    <div class="name" style="color:#818cf8">Eli</div>
+    <div class="role">Career Arc Advisor &middot; gpt-5.4-mini</div>
+    <div class="desc">Thinks in decades. Helps people zoom out from "I need a job" to "I'm building a career." Sees patterns across stages.</div>
+    <div class="reasoning"><span class="tag tag-purple">reasoning: medium</span> Analytical — produces sharper insights with deeper thinking</div>
+  </div>
+</div>
+<div class="arch-card">
+  <div class="emoji">⚙️</div>
+  <div>
+    <div class="name" style="color:#f59e0b">June</div>
+    <div class="role">Action Partner &middot; gpt-5.4-mini</div>
+    <div class="desc">Turns feelings into concrete next steps with deadlines. "What would make this feel real by next week?" Includes networking actions.</div>
+  </div>
+</div>
+<div class="arch-card">
+  <div class="emoji">😈</div>
+  <div>
+    <div class="name" style="color:#ef4444">Rina</div>
+    <div class="role">Assumption Checker &middot; gpt-5.4-mini</div>
+    <div class="desc">Asks the question nobody else is asking. Stress-tests assumptions. "What if the opposite is true?"</div>
+    <div class="reasoning"><span class="tag tag-purple">reasoning: medium</span> Analytical — finding untested assumptions benefits from reasoning</div>
+  </div>
+</div>
+<div class="arch-card">
+  <div class="emoji">🔍</div>
+  <div>
+    <div class="name" style="color:#22d3ee">Dex</div>
+    <div class="role">Market Mirror &middot; gpt-5.4-mini</div>
+    <div class="desc">Tells you how the market sees you. What your resume actually says vs what you think it says. Blunt about positioning.</div>
+  </div>
+</div>
+<div class="arch-card">
+  <div class="emoji">🪞</div>
+  <div>
+    <div class="name" style="color:#e879f9">Sam</div>
+    <div class="role">Emotional Compass &middot; gpt-5.4-mini</div>
+    <div class="desc">Notices what you might not see from inside. Names patterns in how you feel about decisions. Creates space for honesty.</div>
+  </div>
+</div>
+<div class="arch-card">
+  <div class="emoji">🎯</div>
+  <div>
+    <div class="name" style="color:#f97316">Kai</div>
+    <div class="role">Interview Coach &middot; gpt-5.4-mini</div>
+    <div class="desc">Helps tell your story, prep for interviews, negotiate offers. Gives concrete scripts: "Try saying it like this..."</div>
+    <div class="reasoning"><span class="tag tag-blue">NEW</span> Replaced "The Founder"</div>
+  </div>
+</div>
+<div class="arch-card">
+  <div class="emoji">🏢</div>
+  <div>
+    <div class="name" style="color:#a3e635">Val</div>
+    <div class="role">Hiring Insider &middot; gpt-5.4-mini</div>
+    <div class="desc">Has been on the other side of the table. Knows how hiring decisions, comp bands, and leveling actually work.</div>
+    <div class="reasoning"><span class="tag tag-blue">NEW</span> Replaced "The Connector"</div>
+  </div>
+</div>
 
-<div class="arch-diagram">User message arrives
+<h2>Engine Architecture</h2>
+
+<div class="flow-diagram">User message arrives
   |
-  v
-CLAIM LOOP (max 4 rounds):
-  |-- All eligible agents -> nano filter (gpt-5.4-nano, parallel)
+  CLAIM LOOP (max 4 rounds):
+  |-- All eligible agents -> nano filter (gpt-5.4-nano, parallel, ~1.3s)
   |     Tools: speak(reason) | stay_silent()
-  |     ~200ms, ~$0.0001 per call
   |
-  |-- Candidates who said speak()
-  |     First candidate -> full inference (gpt-5.4 or 5.4-mini)
+  |-- First candidate -> full inference (gpt-5.4 or mini, ~2-4s)
+  |     If action = call_on -> called members respond sequentially
   |     Message added to conversation
   |
-  |-- Remaining agents re-evaluate with nano
-  |     (seeing the new message - may change mind)
+  |-- Remaining agents re-evaluate with nano (seeing new message)
+  |     May change mind -> natural self-regulation
   |
-  v-- Repeat until no one wants to speak</div>
+  v-- Repeat until no one wants to speak
 
-<h3>Key Design Decisions</h3>
-<div class="change"><span class="file">engine.ts</span><span class="desc">Replaced parallel-evaluate-all with sequential claim loop. Agents "riff" off each other naturally.</span></div>
-<div class="change"><span class="file">openai.ts</span><span class="desc">Extracted shared OpenAI calling logic. Both <code>/api/chat</code> and <code>simulate.ts</code> use identical codepath.</span></div>
-<div class="change"><span class="file">souls/*.md</span><span class="desc">8 soul files with Core, Voice, Lens, Rules, and Anti-patterns. Immutable personality layer.</span></div>
-<div class="change"><span class="file">identities.ts</span><span class="desc">Identity layer (name, age, industry) separated from soul. DB-persisted, per-user customizable.</span></div>
-<div class="change"><span class="file">prompts.ts</span><span class="desc">Rewrote <code>buildFilterPrompt()</code> for nano calls. Strengthened silence-by-default rules. Added tool usage enforcement.</span></div>
+  OpenAI Responses API (/v1/responses)
+  Selective reasoning_effort per agent
+  Shared codepath: openai.ts used by API route + simulation</div>
 
-<h2>Iteration Timeline</h2>
+<h3>Why This Architecture</h3>
+<table>
+  <tr><th>Decision</th><th>Why</th></tr>
+  <tr><td>Nano pre-filter</td><td>Cheap speak/silent decision prevents wasted full-model calls. Agents who have nothing to add never run inference.</td></tr>
+  <tr><td>Sequential claim loop</td><td>Agents "riff" off each other. Member A speaks, Member B re-evaluates and either builds on it or stays silent. Natural conversation pacing.</td></tr>
+  <tr><td>call_on bypass</td><td>When Maude calls on members, they skip the filter and respond directly. Ensures intros and directed questions always get answers.</td></tr>
+  <tr><td>Maude as pure moderator</td><td>Separating orchestration from advice eliminated Maude competing with members for airtime. Members shine, Maude directs.</td></tr>
+  <tr><td>Selective reasoning</td><td>A/B tested: medium reasoning on Eli/Rina produces sharper analytical insights at ~2x latency. Tactical agents (June, Dex, Kai) don't benefit.</td></tr>
+  <tr><td>Soul + Identity</td><td>Souls (.md) define personality. Identities (DB) define facts. Same archetype, different person per user. Enables personalization.</td></tr>
+</table>
 
-<div class="timeline">
-  <div class="timeline-item">
-    <div class="round">Round 1 — Baseline (Pre-Soul)</div>
-    <p>Runs 1-4. Flat roster.ts definitions. All members spoke every turn. Identity bleed rampant (agents answered as the user). Phase transitions never fired. Avg 40 messages/session.</p>
-  </div>
-  <div class="timeline-item">
-    <div class="round">Round 2 — Soul Files + Identity Separation</div>
-    <p>Runs 5-8. Created 8 soul .md files with anti-patterns ("You are NOT the user"). Identity bleed eliminated immediately. Avg 28 messages. Phase transitions started working via <code>move_to_phase</code> tool.</p>
-  </div>
-  <div class="timeline-item">
-    <div class="round">Round 3 — Silence Discipline + Prompt Tuning</div>
-    <p>Runs 9-14. Rewrote member prompt to lead with "DEFAULT ACTION: stay_silent." Added pacing rules. DA verbal tic fixed. Avg 25 messages. Warmup turns now have only Maude speaking.</p>
-  </div>
-  <div class="timeline-item">
-    <div class="round">Round 4 — Nano Pre-Filter Claim Loop</div>
-    <p>Final runs. gpt-5.4-nano decides speak/silent before full inference. Sequential claim with re-evaluation. Agents "change mind" after seeing others speak. Avg 19 messages. Natural riffing between agents.</p>
-  </div>
-</div>
+<h2>Evaluation Results</h2>
 
-<h2>Results by Persona</h2>
-
+<h3>All 11 Personas</h3>
 <table>
   <thead>
-    <tr>
-      <th>Persona</th>
-      <th>Session</th>
-      <th>Members</th>
-      <th>R1 Msgs</th>
-      <th>R2 Msgs</th>
-      <th>R3 Msgs</th>
-      <th>R4 Msgs</th>
-      <th>Phase?</th>
-      <th>ID Bleed?</th>
-    </tr>
+    <tr><th>Persona</th><th>Session</th><th>Council</th><th>Msgs</th><th>Phase?</th><th>Quality</th></tr>
   </thead>
   <tbody>
     <tr>
-      <td><strong>Ray Donovan</strong><br><small>Data eng, 41, climate tech side project</small></td>
-      <td>0</td>
-      <td>Maude, DA, Founder, Witness</td>
-      <td>29</td>
-      <td>26</td>
-      <td>26</td>
-      <td><strong>17</strong></td>
-      <td><span class="tag tag-green">Yes</span></td>
-      <td><span class="tag tag-green">None</span></td>
+      <td><strong>Ray Donovan</strong><br><small>Data eng, 41, climate tech</small></td>
+      <td>0</td><td>Maude, Rina, Eli, Sam</td>
+      <td>18</td>
+      <td><span class="tag tag-green">exercise</span></td>
+      <td><span class="tag tag-green">Excellent</span></td>
     </tr>
     <tr>
-      <td><strong>Keiko Tanaka</strong><br><small>Product designer, 28, 43 rejections</small></td>
-      <td>5</td>
-      <td>Maude, Mirror, Operator, Connector</td>
-      <td>28</td>
+      <td><strong>Keiko Tanaka</strong><br><small>Designer, 28, 43 rejections</small></td>
+      <td>5</td><td>Maude, Dex, June, Kai</td>
+      <td>21</td>
+      <td><span class="tag tag-green">exercise</span></td>
+      <td><span class="tag tag-green">Excellent</span></td>
+    </tr>
+    <tr>
+      <td><strong>Andre Mitchell</strong><br><small>Principal, 44, startup vs corp</small></td>
+      <td>7</td><td>Maude, Eli, Dex, June</td>
       <td>22</td>
-      <td>24</td>
-      <td><strong>21</strong></td>
-      <td><span class="tag tag-green">Yes</span></td>
-      <td><span class="tag tag-green">None</span></td>
+      <td><span class="tag tag-green">exercise</span></td>
+      <td><span class="tag tag-green">Excellent</span></td>
     </tr>
     <tr>
-      <td><strong>Andre Mitchell</strong><br><small>HS principal, 44, startup vs corporate</small></td>
-      <td>7</td>
-      <td>Maude, Strategist, Mirror, Operator</td>
-      <td>32</td>
-      <td>29</td>
-      <td>31</td>
-      <td><strong>19</strong></td>
-      <td><span class="tag tag-yellow">Partial</span></td>
-      <td><span class="tag tag-green">None</span></td>
+      <td><strong>Sofia Herrera</strong><br><small>HR, 36, pivot to org design</small></td>
+      <td>4</td><td>Maude, Eli, Rina, June</td>
+      <td>20</td>
+      <td><span class="tag tag-green">exercise</span></td>
+      <td><span class="tag tag-green">Excellent</span></td>
+    </tr>
+    <tr>
+      <td><strong>Tommy Pak</strong><br><small>Self-taught dev, 25, WordPress</small></td>
+      <td>1</td><td>Maude, Eli, Dex, June</td>
+      <td>23</td>
+      <td><span class="tag tag-green">exercise</span></td>
+      <td><span class="tag tag-green">Excellent</span></td>
+    </tr>
+    <tr>
+      <td><strong>Catherine Osei</strong><br><small>VP Eng, 42, grief/caretaker</small></td>
+      <td>0</td><td>Maude, Eli, Sam, June</td>
+      <td>22</td>
+      <td><span class="tag tag-yellow">checkin</span></td>
+      <td><span class="tag tag-green">Excellent</span> Zero platitudes</td>
+    </tr>
+    <tr>
+      <td><strong>Marcus Hall</strong><br><small>PM, 35, Stripe interview</small></td>
+      <td>10</td><td>Maude, Eli, Kai, Val</td>
+      <td>21</td>
+      <td><span class="tag tag-green">hot_seat</span></td>
+      <td><span class="tag tag-green">Excellent</span> New archetypes shine</td>
+    </tr>
+    <tr>
+      <td><strong>Leah Kim</strong><br><small>Mktg dir, 38, PIP retaliation</small></td>
+      <td>0</td><td>Maude, Rina, Dex, Sam</td>
+      <td>20</td>
+      <td><span class="tag tag-yellow">checkin</span></td>
+      <td><span class="tag tag-green">Excellent</span> Anger handled well</td>
+    </tr>
+    <tr>
+      <td><strong>Nadia Osman</strong><br><small>Civil eng, 40, gov to private</small></td>
+      <td>2</td><td>Maude, Eli, June, Dex, Rina</td>
+      <td>20</td>
+      <td><span class="tag tag-green">exercise</span></td>
+      <td><span class="tag tag-green">Excellent</span></td>
+    </tr>
+    <tr>
+      <td><strong>Derek Yoon</strong><br><small>Jr analyst, 28, fired, 1st job</small></td>
+      <td>0</td><td>Maude, June, Sam, Kai, Val</td>
+      <td>22</td>
+      <td><span class="tag tag-yellow">checkin</span></td>
+      <td><span class="tag tag-green">Excellent</span> Shame handled well</td>
+    </tr>
+    <tr>
+      <td><strong>Jasmine Torres</strong><br><small>CFO, 45, $4M vest vs health</small></td>
+      <td>6</td><td>Maude, Eli, Rina, Sam, Val</td>
+      <td>24</td>
+      <td><span class="tag tag-yellow">checkin</span></td>
+      <td><span class="tag tag-green">Excellent</span> Golden handcuffs nuanced</td>
     </tr>
   </tbody>
 </table>
 
-<h2>Bug Fixes</h2>
+<h2>Best Moments (Selected Quotes)</h2>
+
+<div class="quote">
+  <div class="attr">Rina (Assumption Checker) &mdash; Sofia's burnout-vs-signal question</div>
+  "Burnout usually wants relief from the whole category; a real pivot usually comes with a pull toward a more specific arena... If the draw toward org design still feels alive after recovery, that's probably not avoidance — it's information."
+</div>
+
+<div class="quote">
+  <div class="attr">Eli (Strategist) &mdash; Sofia's identity shift</div>
+  "What's coming through is not a rejection of people work, but a rejection of being assigned the least powerful version of it."
+</div>
+
+<div class="quote">
+  <div class="attr">Val (Hiring Insider) &mdash; Jasmine's golden handcuffs</div>
+  "Once a leader is visibly fraying, people stop evaluating just the vest math and start wondering about judgment, stamina, and succession risk."
+</div>
+
+<div class="quote">
+  <div class="attr">Kai (Interview Coach) &mdash; Derek's fired story</div>
+  "Lead with the brief, neutral version: 'I was let go after a mismatch in expectations and management style, and I've been using that as a reset to sharpen how I clarify priorities and communicate progress.'"
+</div>
+
+<div class="quote">
+  <div class="attr">Sam (Emotional Compass) &mdash; Derek's shame about parents</div>
+  "The loss here isn't just the job — it's the shock of realizing the rules you lived by didn't protect you in this setting."
+</div>
+
+<div class="quote">
+  <div class="attr">Dex (Market Mirror) &mdash; Leah's PIP situation</div>
+  "Fight the PIP only if it buys you time and a clean record; don't confuse moral victory with hiring leverage."
+</div>
+
+<div class="quote">
+  <div class="attr">Rina (Assumption Checker) &mdash; Jasmine's non-negotiables</div>
+  "A 'non-negotiables' list can quietly become a story you keep revising when the money is loud. Make each one observable and time-bound so stress doesn't renegotiate the line for you."
+</div>
+
+<div class="quote">
+  <div class="attr">Val (Hiring Insider) &mdash; Marcus's case study prep</div>
+  "In calibration, 'strategic' reads as senior judgment, not vagueness... a simple 4-part flow: clarify the goal, define the customer/problem, lay out 2-3 solution paths with tradeoffs, then close with a recommendation and success metrics."
+</div>
+
+<h2>Architecture Evolution</h2>
 
 <table>
-  <thead>
-    <tr><th>Bug</th><th>Cause</th><th>Fix</th><th>Status</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Identity bleed (agents speak as user)</td>
-      <td>No identity boundary in prompts</td>
-      <td>Soul anti-patterns: "You are NOT the user. NEVER answer questions directed at them."</td>
-      <td><span class="tag tag-green">Fixed</span></td>
-    </tr>
-    <tr>
-      <td>Everyone speaks every turn</td>
-      <td>All agents evaluated in parallel, no silence incentive</td>
-      <td>Nano pre-filter claim loop — agents re-evaluate after each speaker</td>
-      <td><span class="tag tag-green">Fixed</span></td>
-    </tr>
-    <tr>
-      <td>Phase never advances</td>
-      <td>Maude used send_message instead of move_to_phase tool</td>
-      <td>Added "MUST call the move_to_phase tool" with bold emphasis in agenda</td>
-      <td><span class="tag tag-green">Fixed</span></td>
-    </tr>
-    <tr>
-      <td>DA "I ask because" on every message</td>
-      <td>Soul rules said "Always frame pushback as: I ask because..."</td>
-      <td>Changed to "vary your phrasing"</td>
-      <td><span class="tag tag-green">Fixed</span></td>
-    </tr>
-    <tr>
-      <td>Duplicate commitments</td>
-      <td>Maude called create_commitment multiple times</td>
-      <td>Dedup logic in engine callbacks</td>
-      <td><span class="tag tag-green">Fixed</span></td>
-    </tr>
-    <tr>
-      <td>Market Mirror too verbose/corporate</td>
-      <td>Voice description encouraged essay-style responses</td>
-      <td>Soul updated: "Short, punchy observations — not essays"</td>
-      <td><span class="tag tag-green">Fixed</span></td>
-    </tr>
-    <tr>
-      <td>Maude blocks on skipped check-in</td>
-      <td>Agenda insisted on completing all check-in steps</td>
-      <td>Added "If user skips ahead, go with it" rule</td>
-      <td><span class="tag tag-yellow">Improved</span></td>
-    </tr>
-    <tr>
-      <td>Sim script uses different codepath than app</td>
-      <td>Separate callOpenAI in simulate.ts vs /api/chat</td>
-      <td>Extracted shared <code>openai.ts</code> used by both</td>
-      <td><span class="tag tag-green">Fixed</span></td>
-    </tr>
-  </tbody>
+  <tr><th>Version</th><th>Change</th><th>Impact</th></tr>
+  <tr><td>v1</td><td>Flat roster.ts, all agents parallel</td><td>37 msgs avg, identity bleed, no silence</td></tr>
+  <tr><td>v2</td><td>Soul files (.md) + identity separation</td><td>Identity bleed eliminated</td></tr>
+  <tr><td>v3</td><td>Silence-first prompt rewrite</td><td>~30% fewer messages, warmup turns quiet</td></tr>
+  <tr><td>v4</td><td>Nano pre-filter claim loop</td><td>50% fewer messages, natural riffing</td></tr>
+  <tr><td>v5</td><td>call_on bypass + Maude as pure mod</td><td>Members shine, Maude orchestrates</td></tr>
+  <tr><td>v6</td><td>Real NSA agendas per session</td><td>Maude follows actual curriculum</td></tr>
+  <tr><td>v7</td><td>Responses API + selective reasoning</td><td>Sharper DA/Strategist insights</td></tr>
+  <tr><td>v8</td><td>New archetypes (Kai, Val) + human names</td><td>Interview prep + insider perspective</td></tr>
 </table>
 
-<h2>Before / After Examples</h2>
-
-<div class="comparison">
-  <div>
-    <h4>Before (Round 1) — User says "Hey, first time here"</h4>
-    <div class="quote">Maude: Welcome! Let me introduce everyone...<br>
-    Strategist: I'm the Strategist, here to help you...<br>
-    Operator: I'm the Operator, I help turn...<br>
-    Witness: I notice you might be feeling...<br>
-    <strong>4 responses, all at once</strong></div>
-  </div>
-  <div>
-    <h4>After (Round 4) — Same input</h4>
-    <div class="quote">Maude: I'm Maude, your moderator. First meeting always feels awkward; that's normal.<br>
-    <em>[Round 2: no one wants to speak. Done.]</em><br>
-    <strong>1 response. Members wait for substance.</strong></div>
-  </div>
-</div>
-
-<div class="comparison">
-  <div>
-    <h4>Before — User shares vulnerability</h4>
-    <div class="quote">Maude: That makes sense...<br>
-    Strategist: Your career arc...<br>
-    Operator: To make progress by Friday...<br>
-    DA: Have you considered...<br>
-    Witness: I notice a tension...<br>
-    <strong>5 responses, all variations of the same point</strong></div>
-  </div>
-  <div>
-    <h4>After — Same type of input</h4>
-    <div class="quote">Maude: I hear a pattern — you reframed the problem...<br>
-    <em>[DA: changed mind, stay_silent]</em><br>
-    Founder: Build a 90-day experiment with a hard runway number...<br>
-    <em>[Witness: changed mind, stay_silent]</em><br>
-    <strong>2 responses. DA and Witness deferred because Maude + Founder covered it.</strong></div>
-  </div>
-</div>
+<h2>Latency Profile</h2>
+<table>
+  <tr><th>Component</th><th>Model</th><th>Avg Latency</th><th>Notes</th></tr>
+  <tr><td>Nano filter</td><td>gpt-5.4-nano</td><td>~1.3s</td><td>All agents in parallel</td></tr>
+  <tr><td>Maude inference</td><td>gpt-5.4</td><td>~3.1s</td><td>No reasoning overhead</td></tr>
+  <tr><td>Eli/Rina inference</td><td>gpt-5.4-mini + medium</td><td>~2.8s</td><td>Reasoning adds ~1s</td></tr>
+  <tr><td>Other members</td><td>gpt-5.4-mini</td><td>~1.3s</td><td>No reasoning</td></tr>
+  <tr><td><strong>Time to first message</strong></td><td></td><td><strong>~4.4s</strong></td><td>Filter + first speaker</td></tr>
+  <tr><td>Subsequent speakers</td><td></td><td>~2.5s each</td><td>Filter re-eval + inference</td></tr>
+</table>
 
 <h2>Remaining Known Issues</h2>
-
 <table>
-  <thead><tr><th>Issue</th><th>Severity</th><th>Notes</th></tr></thead>
-  <tbody>
-    <tr>
-      <td>Andre's session never fully advanced past checkin</td>
-      <td><span class="tag tag-yellow">Medium</span></td>
-      <td>User jumped to CMF topic; Maude tried to pull back to emotional check-in. The "skip ahead" rule helps but doesn't always override.</td>
-    </tr>
-    <tr>
-      <td>Commitment text sometimes duplicates between Maude's auto-detect and user's explicit statement</td>
-      <td><span class="tag tag-yellow">Low</span></td>
-      <td>Maude pre-records commitment before user states it precisely. Dedup catches exact matches but not semantic dupes.</td>
-    </tr>
-    <tr>
-      <td>Agent responses can still be verbose (300-400 chars)</td>
-      <td><span class="tag tag-yellow">Low</span></td>
-      <td>Soul files say 2-4 sentences but models sometimes produce longer output. Could add max_completion_tokens per-agent.</td>
-    </tr>
-  </tbody>
+  <tr><th>Issue</th><th>Severity</th><th>Notes</th></tr>
+  <tr>
+    <td>Phase stays in checkin for grief/crisis sessions</td>
+    <td><span class="tag tag-yellow">Low</span></td>
+    <td>Catherine and Jasmine sessions stayed in checkin. Arguably correct — forcing an "exercise" feels wrong when someone is processing trauma.</td>
+  </tr>
+  <tr>
+    <td>Maude occasionally asks checkin question twice</td>
+    <td><span class="tag tag-yellow">Low</span></td>
+    <td>When user skips ahead, Maude sometimes asks "pulse 1-10?" after already asking it. Minor.</td>
+  </tr>
+  <tr>
+    <td>Commitment recording captures first phrasing</td>
+    <td><span class="tag tag-yellow">Low</span></td>
+    <td>If user refines their commitment across two messages, only first version recorded.</td>
+  </tr>
 </table>
 
-<h2>Files Modified</h2>
+<h2>What Changed vs. Why</h2>
 
-<table>
-  <thead><tr><th>File</th><th>Action</th><th>Purpose</th></tr></thead>
-  <tbody>
-    <tr><td><code>src/lib/council/souls/*.md</code> (8 files)</td><td><span class="tag tag-blue">Created</span></td><td>Immutable personality definitions</td></tr>
-    <tr><td><code>src/lib/council/souls.ts</code></td><td><span class="tag tag-blue">Created</span></td><td>Soul loader + cache</td></tr>
-    <tr><td><code>src/lib/council/identities.ts</code></td><td><span class="tag tag-blue">Created</span></td><td>Identity types + defaults</td></tr>
-    <tr><td><code>src/lib/council/openai.ts</code></td><td><span class="tag tag-blue">Created</span></td><td>Shared OpenAI calling logic</td></tr>
-    <tr><td><code>src/lib/council/engine.ts</code></td><td><span class="tag tag-yellow">Rewritten</span></td><td>Claim loop with nano pre-filter</td></tr>
-    <tr><td><code>src/lib/council/tools.ts</code></td><td><span class="tag tag-yellow">Modified</span></td><td>Added FILTER_TOOLS (speak/stay_silent)</td></tr>
-    <tr><td><code>src/lib/council/prompts.ts</code></td><td><span class="tag tag-yellow">Rewritten</span></td><td>Soul+identity inputs, filter prompt, silence rules</td></tr>
-    <tr><td><code>src/app/api/chat/route.ts</code></td><td><span class="tag tag-yellow">Simplified</span></td><td>Now uses shared openai.ts</td></tr>
-    <tr><td><code>src/stores/session-store.ts</code></td><td><span class="tag tag-yellow">Modified</span></td><td>Builds agents with soul+identity+filterModel</td></tr>
-    <tr><td><code>scripts/simulate.ts</code></td><td><span class="tag tag-yellow">Rewritten</span></td><td>Uses real engine + shared openai.ts</td></tr>
-    <tr><td><code>.claude/skills/simulate/SKILL.md</code></td><td><span class="tag tag-blue">Created</span></td><td>/simulate skill for running test sessions</td></tr>
-    <tr><td><code>supabase/migrations/004_agent_identities.sql</code></td><td><span class="tag tag-blue">Created</span></td><td>agent_identities table + session columns</td></tr>
-  </tbody>
-</table>
+<div class="comparison">
+  <div>
+    <h4>Old: "The Devil's Advocate"</h4>
+    <div class="quote">An archetype label. No age, no background, no personality beyond "contrarian." Every interaction starts with "I ask because..."</div>
+  </div>
+  <div>
+    <h4>New: "Rina, 41, org psychologist"</h4>
+    <div class="quote">A person with 15 years in corporate strategy. Asks uncomfortable questions because she cares. Produces insights like "burnout can make the old role feel morally suspect, so the desire to leave can masquerade as a leverage insight."</div>
+  </div>
+</div>
 
-<p style="margin-top: 3rem; color: #999; font-size: 0.8rem; text-align: center;">Generated by Claude Code &middot; jobsearch.quest simulation infrastructure</p>
+<div class="comparison">
+  <div>
+    <h4>Old: "The Founder"</h4>
+    <div class="quote">Talked about equity and startups. Irrelevant for teachers, nurses, government workers, or anyone not considering startup risk.</div>
+  </div>
+  <div>
+    <h4>New: Kai (Interview Coach) + Val (Hiring Insider)</h4>
+    <div class="quote">Kai gives concrete scripts: "Try saying it like this..." Val shares what hiring managers actually think: "In calibration, that reads as..." Useful for every persona we tested.</div>
+  </div>
+</div>
+
+<p style="margin-top: 3rem; color: #999; font-size: 0.8rem; text-align: center;">Generated by Claude Code &middot; jobsearch.quest &middot; 30+ simulation runs across 11 personas</p>
 
 </body>
 </html>

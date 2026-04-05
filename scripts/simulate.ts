@@ -32,6 +32,8 @@ interface Persona {
   sessionNumber: number;
   memberIds: string[];
   messages: string[];
+  commitments?: string[];
+  priorSessions?: { number: number; summary: string }[];
 }
 
 const MODERATOR_MODEL = 'gpt-5.4';
@@ -48,7 +50,8 @@ async function runSimulation(persona: Persona) {
     userName: persona.name,
     searchStatus: persona.searchStatus,
     userContext: persona.userContext,
-    commitments: [] as { text: string }[],
+    commitments: (persona.commitments || []).map(t => ({ text: t })),
+    priorSessions: persona.priorSessions || [],
     sessionNumber: persona.sessionNumber,
   };
 

@@ -20,16 +20,21 @@ const STATUS_MAP = {
   paused: 'paused',
 };
 
-function buildSharedContext(userName, searchStatus, userContext, commitments) {
+function buildSharedContext(userName, searchStatus, userContext, commitments, priorSessions?) {
   const commitStr = commitments.length
     ? commitments.map((c, i) => `${i + 1}. ${c.text}`).join('\n')
+    : '';
+
+  const priorStr = priorSessions?.length
+    ? priorSessions.map((s) => `Session ${s.number}: ${s.summary}`).join('\n')
     : '';
 
   return `
 ABOUT ${userName.toUpperCase()}:
 - Search status: ${STATUS_MAP[searchStatus] || 'exploring'}
 ${userContext ? `- Background: ${userContext}` : ''}
-${commitStr ? `\nPRIOR COMMITMENTS:\n${commitStr}` : ''}`;
+${commitStr ? `\nPRIOR COMMITMENTS:\n${commitStr}` : ''}
+${priorStr ? `\nWHAT WE KNOW FROM PREVIOUS SESSIONS:\n${priorStr}` : ''}`;
 }
 
 function councilList(allCouncil: AgentIdentity[]) {
@@ -52,9 +57,9 @@ export function buildModeratorPrompt(
   identity: AgentIdentity,
   allCouncil: AgentIdentity[],
   phase: string,
-  { userName, searchStatus, userContext, commitments, sessionNumber = 0 },
+  { userName, searchStatus, userContext, commitments, sessionNumber = 0, priorSessions = [] as { number: number; summary: string }[] },
 ) {
-  const shared = buildSharedContext(userName, searchStatus, userContext, commitments);
+  const shared = buildSharedContext(userName, searchStatus, userContext, commitments, priorSessions);
   const fullAgenda = getSessionAgenda(sessionNumber);
   const theme = getSessionTheme(sessionNumber);
   const memberNamesStr = allCouncil.filter(m => !m.is_moderator).map(m => `"${m.name}"`).join(', ');
@@ -112,9 +117,9 @@ export function buildReactiveMemberPrompt(
   identity: AgentIdentity,
   allCouncil: AgentIdentity[],
   phase: string,
-  { userName, searchStatus, userContext, commitments, sessionNumber = 0 },
+  { userName, searchStatus, userContext, commitments, sessionNumber = 0, priorSessions = [] as { number: number; summary: string }[] },
 ) {
-  const shared = buildSharedContext(userName, searchStatus, userContext, commitments);
+  const shared = buildSharedContext(userName, searchStatus, userContext, commitments, priorSessions);
   const theme = getSessionTheme(sessionNumber);
   const otherMembers = allCouncil.filter(m => m.name !== identity.name).map(m => `- ${m.name} (${m.role_title})`).join('\n');
 

@@ -11,10 +11,13 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@remotion/player": "^4.0.445",
+    "@remotion/transitions": "^4.0.445",
     "next": "^16.2.2",
     "posthog-js": "^1.364.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "remotion": "^4.0.445",
     "stripe": "^22.0.0"
   },
   "devDependencies": {

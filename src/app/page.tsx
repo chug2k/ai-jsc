@@ -4,6 +4,7 @@ import styles from './landing.module.css';
 import FaqItem from '@/components/ui/FaqItem';
 import { getPlans, type PlanData } from '@/lib/plans';
 import PricingButton from '@/components/ui/PricingButton';
+import CouncilDemo from '@/components/landing/CouncilDemo';
 
 export const metadata: Metadata = {
   title: 'jobsearch.quest — AI-Powered Job Search Council | Never Search Alone',
@@ -117,6 +118,15 @@ export default async function LandingPage() {
             </div>
             <p className={styles.note}>5,000+ real JSCs launched through Never Search Alone. This is the AI-powered edition.</p>
           </div>
+        </div>
+      </section>
+
+      {/* ═══════ LIVE DEMO ═══════ */}
+      <section className={styles.section} style={{ paddingTop: '48px', paddingBottom: '48px' }}>
+        <div className={styles.container} style={{ textAlign: 'center' }}>
+          <div className={styles['section-label']}>See it in action</div>
+          <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '24px' }}>A council session, live</h2>
+          <CouncilDemo />
         </div>
       </section>
 

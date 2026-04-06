@@ -215,103 +215,103 @@ export default async function LandingPage() {
         <div className={styles.container}>
           <div className={styles['section-label']}>Real council conversations</div>
           <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '4px' }}>Hear what your council sounds like</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>Real output from real sessions. Each member has a distinct voice and lens. They don&apos;t agree with each other.</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>Real output from real sessions. Each member brings a different lens to your search.</p>
 
-          {/* Convo 1: Fired and ashamed */}
+          {/* Convo 1: Interview prep */}
           <div style={{ marginBottom: '40px' }}>
             <div className={styles['convo-scenario']}>
-              <div className={styles['convo-scenario-label']}>Session 0 &middot; Trust-Building</div>
-              <h3>Derek got fired from his first real job. He doesn&apos;t know how to explain it.</h3>
+              <div className={styles['convo-scenario-label']}>Session 10 &middot; Interview Prep</div>
+              <h3>Marcus has a Stripe PM interview and worries he&apos;ll sound too tactical.</h3>
             </div>
             <div className={styles['convo-thread']}>
               <div className={`${styles.msg} ${styles['msg-user']}`}>
                 <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Derek</div>
-                  <div className={styles['msg-text']}>I don&apos;t even know how to explain what happened in interviews. &ldquo;I got fired&rdquo; &mdash; how do you make that sound okay?</div>
+                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Marcus</div>
+                  <div className={styles['msg-text']}>My background is 8 years of PM at mid-market B2B SaaS. I&apos;ve shipped a lot but I&apos;m worried I&apos;ll sound too tactical and not strategic enough for Stripe&apos;s bar.</div>
                 </div>
-                <div className={styles['msg-avatar']}>D</div>
+                <div className={styles['msg-avatar']}>M</div>
+              </div>
+              <div className={styles.msg}>
+                <div className={styles['msg-avatar']} style={{ background: '#818cf822', border: '1px solid #818cf844' }}>&#x1F5FA;&#xFE0F;</div>
+                <div className={styles['msg-body']}>
+                  <div className={styles['msg-name']} style={{ color: '#818cf8' }}>Eli <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Career Arc Advisor</span></div>
+                  <div className={styles['msg-text']}>&ldquo;Strategic&rdquo; usually means you zoom out to the system around the problem: who the customer is, where the economics sit, and what would actually move the business, not just the feature. The signal is less &ldquo;I know a lot of tactics&rdquo; and more &ldquo;I can choose the right hill to climb.&rdquo;</div>
+                </div>
               </div>
               <div className={styles.msg}>
                 <div className={styles['msg-avatar']} style={{ background: '#f9731622', border: '1px solid #f9731644' }}>&#x1F3AF;</div>
                 <div className={styles['msg-body']}>
                   <div className={styles['msg-name']} style={{ color: '#f97316' }}>Kai <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Interview Coach</span></div>
-                  <div className={styles['msg-text']}>Lead with the brief, neutral version: &ldquo;I was let go after a mismatch in expectations and management style, and I&apos;ve been using that as a reset to sharpen how I clarify priorities and communicate progress.&rdquo; That works because it answers the concern without sounding defensive and pivots immediately to what changed.</div>
-                </div>
-              </div>
-              <div className={styles.msg}>
-                <div className={styles['msg-avatar']} style={{ background: '#e879f922', border: '1px solid #e879f944' }}>&#x1FA9E;</div>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: '#e879f9' }}>Sam <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Emotional Compass</span></div>
-                  <div className={styles['msg-text']}>The loss here isn&apos;t just the job &mdash; it&apos;s the shock of realizing the rules you lived by didn&apos;t protect you in this setting. That kind of mismatch can leave someone feeling blamed for not reading minds.</div>
+                  <div className={styles['msg-text']}>Lead with a one-sentence thesis before any tactics: &ldquo;I&apos;d solve this by focusing on X because it&apos;s the highest-leverage constraint on Y.&rdquo; That sounds strategic because it shows a business lens, a prioritization choice, and a reason for the choice.</div>
                 </div>
               </div>
               <div className={styles.msg}>
                 <div className={styles['msg-avatar']} style={{ background: '#a3e63522', border: '1px solid #a3e63544' }}>&#x1F3E2;</div>
                 <div className={styles['msg-body']}>
                   <div className={styles['msg-name']} style={{ color: '#a3e635' }}>Val <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Hiring Insider</span></div>
-                  <div className={styles['msg-text']}>As someone who&apos;s hired for roles like this, unclear expectations usually mean a manager who was under-managing, not a candidate who should have guessed harder. Keep it short and non-defensive: &ldquo;There was a mismatch and I didn&apos;t surface it quickly enough.&rdquo; Hiring managers care more about how you talk about the miss than the miss itself.</div>
+                  <div className={styles['msg-text']}>As someone who&apos;s hired for roles like this, strategic in a case study means you frame the problem in terms of business leverage, then choose the constraint that matters most. In calibration, that reads as senior judgment, not vagueness.</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Convo 2: Golden handcuffs */}
+          {/* Convo 2: Must-nots & positioning */}
           <div style={{ marginBottom: '40px' }}>
             <div className={styles['convo-scenario']}>
-              <div className={styles['convo-scenario-label']}>Session 6 &middot; Listening Tour</div>
-              <h3>Jasmine is a CFO with $4M in stock about to vest. But she&apos;s having panic attacks.</h3>
+              <div className={styles['convo-scenario-label']}>Session 2 &middot; Must-Nots &amp; Must-Haves</div>
+              <h3>Nadia is a government engineer who doesn&apos;t know if private sector would want her.</h3>
             </div>
             <div className={styles['convo-thread']}>
               <div className={`${styles.msg} ${styles['msg-user']}`}>
                 <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Jasmine</div>
-                  <div className={styles['msg-text']}>$4M is life-changing money. But I&apos;m on anxiety medication, I&apos;ve gained 30 pounds, and my husband says I&apos;m a different person. At what point does the money stop being worth it?</div>
+                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Nadia</div>
+                  <div className={styles['msg-text']}>Does 15 years of DOT experience translate, or does it just scream &ldquo;slow and bureaucratic&rdquo;?</div>
                 </div>
-                <div className={styles['msg-avatar']}>J</div>
-              </div>
-              <div className={styles.msg}>
-                <div className={styles['msg-avatar']} style={{ background: '#ef444422', border: '1px solid #ef444444' }}>&#x1F608;</div>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: '#ef4444' }}>Rina <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Assumption Checker</span></div>
-                  <div className={styles['msg-text']}>The big assumption is that this is a clean threshold question, when it may actually be a compounding one: every extra month can cost more health than the cash is worth. If your health and earning capacity are deteriorating, the real tradeoff may be between one payout and the rest of your career.</div>
-                </div>
-              </div>
-              <div className={styles.msg}>
-                <div className={styles['msg-avatar']} style={{ background: '#a3e63522', border: '1px solid #a3e63544' }}>&#x1F3E2;</div>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: '#a3e635' }}>Val <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Hiring Insider</span></div>
-                  <div className={styles['msg-text']}>The inside view is blunt: once a leader is visibly fraying, people stop evaluating just the vest math and start wondering about judgment, stamina, and succession risk. Good boards quietly recognize that before the package looks irrational on paper.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Convo 3: PIP retaliation */}
-          <div>
-            <div className={styles['convo-scenario']}>
-              <div className={styles['convo-scenario-label']}>Session 0 &middot; Trust-Building</div>
-              <h3>Leah reported her manager to HR. Two weeks later she&apos;s on a PIP.</h3>
-            </div>
-            <div className={styles['convo-thread']}>
-              <div className={`${styles.msg} ${styles['msg-user']}`}>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Leah</div>
-                  <div className={styles['msg-text']}>What I really need to know is: do I fight this, or do I just leave? And if I leave, how do I tell my story without sounding bitter?</div>
-                </div>
-                <div className={styles['msg-avatar']}>L</div>
-              </div>
-              <div className={styles.msg}>
-                <div className={styles['msg-avatar']} style={{ background: '#ef444422', border: '1px solid #ef444444' }}>&#x1F608;</div>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: '#ef4444' }}>Rina <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Assumption Checker</span></div>
-                  <div className={styles['msg-text']}>Don&apos;t force this into an either/or yet. Fighting without an exit can trap you, and leaving without building a record can leave their version standing. If you do leave, tell it as a values story: what environments you do your best work in, the impact you created, and what you&apos;re moving toward.</div>
-                </div>
+                <div className={styles['msg-avatar']}>N</div>
               </div>
               <div className={styles.msg}>
                 <div className={styles['msg-avatar']} style={{ background: '#22d3ee22', border: '1px solid #22d3ee44' }}>&#x1F50D;</div>
                 <div className={styles['msg-body']}>
                   <div className={styles['msg-name']} style={{ color: '#22d3ee' }}>Dex <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Market Mirror</span></div>
-                  <div className={styles['msg-text']}>Fight the PIP only if it buys you time and a clean record. Don&apos;t confuse moral victory with hiring leverage. A PIP after a retaliation complaint tells future employers &ldquo;this role is damaged,&rdquo; not &ldquo;this person failed.&rdquo;</div>
+                  <div className={styles['msg-text']}>Frame it as &ldquo;I&apos;ve managed $200M in infrastructure projects under regulatory constraints,&rdquo; not &ldquo;I inspect bridges for the state.&rdquo; That reads as operating discipline, not bureaucratic slowness.</div>
+                </div>
+              </div>
+              <div className={styles.msg}>
+                <div className={styles['msg-avatar']} style={{ background: '#ef444422', border: '1px solid #ef444444' }}>&#x1F608;</div>
+                <div className={styles['msg-body']}>
+                  <div className={styles['msg-name']} style={{ color: '#ef4444' }}>Rina <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Assumption Checker</span></div>
+                  <div className={styles['msg-text']}>I wish you&apos;d test whether &ldquo;more money&rdquo; is also a proxy for being valued, because if you don&apos;t name a target range now, you could recreate the same underpaid pattern in a faster, prettier setting.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Convo 3: Negotiation */}
+          <div>
+            <div className={styles['convo-scenario']}>
+              <div className={styles['convo-scenario-label']}>Session 10 &middot; Offer Negotiation</div>
+              <h3>Marcus got the offer. Now he needs to negotiate comp.</h3>
+            </div>
+            <div className={styles['convo-thread']}>
+              <div className={`${styles.msg} ${styles['msg-user']}`}>
+                <div className={styles['msg-body']}>
+                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Marcus</div>
+                  <div className={styles['msg-text']}>If I get the offer, how do I negotiate? I&apos;m at $180k and I know Stripe pays well but I don&apos;t want to leave money on the table.</div>
+                </div>
+                <div className={styles['msg-avatar']}>M</div>
+              </div>
+              <div className={styles.msg}>
+                <div className={styles['msg-avatar']} style={{ background: '#818cf822', border: '1px solid #818cf844' }}>&#x1F5FA;&#xFE0F;</div>
+                <div className={styles['msg-body']}>
+                  <div className={styles['msg-name']} style={{ color: '#818cf8' }}>Eli <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Career Arc Advisor</span></div>
+                  <div className={styles['msg-text']}>People leave money on the table when they negotiate too early on base alone. The larger lever is the full package and the story for why the market should pay for your scope.</div>
+                </div>
+              </div>
+              <div className={styles.msg}>
+                <div className={styles['msg-avatar']} style={{ background: '#f9731622', border: '1px solid #f9731644' }}>&#x1F3AF;</div>
+                <div className={styles['msg-body']}>
+                  <div className={styles['msg-name']} style={{ color: '#f97316' }}>Kai <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Interview Coach</span></div>
+                  <div className={styles['msg-text']}>Wait for the written offer, then come back with a package-based counter: &ldquo;I&apos;m excited, and based on my current comp and the scope here, I was expecting something closer to X total comp &mdash; is there flexibility on base and equity to get there?&rdquo;</div>
                 </div>
               </div>
             </div>

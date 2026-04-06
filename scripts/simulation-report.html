@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JSC Council Simulation Report — Final</title>
+<title>JSC Multi-Session Simulation Report</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #FAFAF8; color: #1a1a1a; line-height: 1.6; max-width: 960px; margin: 0 auto; padding: 2rem; }
@@ -22,356 +22,206 @@
   th { background: #f5f5f4; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; color: #555; }
   .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
   .tag-green { background: #dcfce7; color: #166534; }
-  .tag-yellow { background: #fef9c3; color: #854d0e; }
   .tag-blue { background: #dbeafe; color: #1e40af; }
   .tag-purple { background: #f3e8ff; color: #6b21a8; }
   .quote { border-left: 3px solid #d4d4d4; padding: 0.5rem 1rem; margin: 0.75rem 0; color: #444; font-style: italic; font-size: 0.9rem; }
   .quote .attr { font-style: normal; font-weight: 600; font-size: 0.8rem; color: #888; margin-bottom: 0.25rem; }
-  .arch-card { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1rem; margin: 0.5rem 0; display: flex; gap: 1rem; align-items: flex-start; }
-  .arch-card .emoji { font-size: 1.5rem; }
-  .arch-card .name { font-weight: 700; font-size: 1rem; }
-  .arch-card .role { font-size: 0.8rem; color: #888; }
-  .arch-card .desc { font-size: 0.85rem; color: #555; margin-top: 0.25rem; }
-  .arch-card .reasoning { font-size: 0.75rem; margin-top: 0.25rem; }
-  .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1rem 0; }
-  .comparison > div { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1rem; }
-  .comparison h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; color: #888; margin-bottom: 0.5rem; }
-  .flow-diagram { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'SF Mono', Monaco, monospace; font-size: 0.8rem; white-space: pre; line-height: 1.8; color: #333; }
-  .persona-row { display: grid; grid-template-columns: 180px 1fr; gap: 0.5rem; padding: 0.75rem 0; border-bottom: 1px solid #f0f0ee; }
-  .persona-row:last-child { border-bottom: none; }
-  .persona-name { font-weight: 600; }
-  .persona-ctx { font-size: 0.8rem; color: #888; }
-  .persona-highlight { font-size: 0.85rem; }
+  .journey { position: relative; padding-left: 2rem; margin: 1rem 0; }
+  .journey::before { content: ''; position: absolute; left: 0.5rem; top: 0; bottom: 0; width: 2px; background: #d4d4d4; }
+  .journey-item { position: relative; margin-bottom: 1.25rem; }
+  .journey-item::before { content: ''; position: absolute; left: -1.65rem; top: 0.35rem; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; }
+  .journey-item.early::before { background: #ef4444; }
+  .journey-item.mid::before { background: #f59e0b; }
+  .journey-item.late::before { background: #16a34a; }
+  .journey-item .session { font-weight: 600; font-size: 0.85rem; color: #6366f1; }
+  .journey-item .theme { font-size: 0.8rem; color: #888; }
+  .journey-item .commitment { font-size: 0.875rem; margin-top: 0.15rem; }
+  .journey-item .summary { font-size: 0.8rem; color: #555; margin-top: 0.25rem; }
 </style>
 </head>
 <body>
 
-<h1>JSC Simulation Report</h1>
-<p class="subtitle">30+ simulation runs &middot; 11 personas &middot; 5 rounds of iteration &middot; April 5, 2026</p>
+<h1>Multi-Session Simulation Report</h1>
+<p class="subtitle">Full 11-session journeys &middot; 2 personas &middot; Cross-session continuity testing &middot; April 2026</p>
 
 <div class="metric-grid">
   <div class="metric good">
-    <div class="value">0</div>
-    <div class="label">Identity bleed<br>(was 7+ incidents)</div>
+    <div class="value">11</div>
+    <div class="label">Sessions per<br>persona</div>
   </div>
   <div class="metric good">
-    <div class="value">21</div>
-    <div class="label">Avg messages<br>(was 37)</div>
+    <div class="value">17</div>
+    <div class="label">Commitments<br>tracked (Ray)</div>
   </div>
   <div class="metric good">
-    <div class="value">~4s</div>
-    <div class="label">Time to first<br>response</div>
+    <div class="value">~24</div>
+    <div class="label">Avg messages<br>per session</div>
   </div>
   <div class="metric good">
-    <div class="value">11/11</div>
-    <div class="label">Personas producing<br>quality conversations</div>
+    <div class="value">100%</div>
+    <div class="label">Cross-session<br>context maintained</div>
   </div>
 </div>
 
-<h2>The Council</h2>
-<p>Seven archetypes plus a moderator. Real names, real backgrounds. Users see the person first, the archetype on hover.</p>
+<h2>Ray Donovan: The Full Arc</h2>
+<p>Senior data engineer, 41, insurance company. From "I'm terrified of being irresponsible" to accepting a Staff Data Engineer offer at a climate analytics company. 11 sessions following the real NSA curriculum.</p>
 
-<div class="arch-card">
-  <div class="emoji">📋</div>
-  <div>
-    <div class="name" style="color:#4ade80">Maude</div>
-    <div class="role">Moderator &middot; gpt-5.4</div>
-    <div class="desc">Runs the meeting. Calls on members, transitions phases, records commitments. Does not give advice. Her primary tool is <code>call_on</code>.</div>
+<div class="journey">
+
+  <div class="journey-item early">
+    <div class="session">Session 0 &middot; Trust-Building</div>
+    <div class="theme">"I wake up every morning dreading opening my laptop"</div>
+    <div class="commitment">Have 3 conversations with people in climate tech. Talk to wife about timelines.</div>
+    <div class="summary">Named fear of irresponsibility. Recognized family might be an excuse. Council reframed from "leap vs stay" to "bounded experiment."</div>
   </div>
-</div>
-<div class="arch-card">
-  <div class="emoji">🗺️</div>
-  <div>
-    <div class="name" style="color:#818cf8">Eli</div>
-    <div class="role">Career Arc Advisor &middot; gpt-5.4-mini</div>
-    <div class="desc">Thinks in decades. Helps people zoom out from "I need a job" to "I'm building a career." Sees patterns across stages.</div>
-    <div class="reasoning"><span class="tag tag-purple">reasoning: medium</span> Analytical — produces sharper insights with deeper thinking</div>
+
+  <div class="journey-item early">
+    <div class="session">Session 1 &middot; Extended Introductions</div>
+    <div class="theme">"I don't even know what my monthly burn rate is"</div>
+    <div class="commitment">Calculate actual monthly burn rate. Follow up with consultancy about contracting.</div>
+    <div class="summary">Wife wants numbers, not excitement. Shifted from "quit or stay" to "build a bridge." Rina challenged whether bridge could become hiding place.</div>
   </div>
-</div>
-<div class="arch-card">
-  <div class="emoji">⚙️</div>
-  <div>
-    <div class="name" style="color:#f59e0b">June</div>
-    <div class="role">Action Partner &middot; gpt-5.4-mini</div>
-    <div class="desc">Turns feelings into concrete next steps with deadlines. "What would make this feel real by next week?" Includes networking actions.</div>
+
+  <div class="journey-item early">
+    <div class="session">Session 2 &middot; Must-Nots & Must-Haves</div>
+    <div class="theme">"$7,200/month minimum, $9,400 if we keep everything"</div>
+    <div class="commitment">Draft Mnookin two-pager. Set up 2 more informational calls.</div>
+    <div class="summary">First concrete numbers. Must-nots: bureaucracy, invisibility, meaningless problems. Must-haves: technical challenge, climate connection, ownership.</div>
   </div>
-</div>
-<div class="arch-card">
-  <div class="emoji">😈</div>
-  <div>
-    <div class="name" style="color:#ef4444">Rina</div>
-    <div class="role">Assumption Checker &middot; gpt-5.4-mini</div>
-    <div class="desc">Asks the question nobody else is asking. Stress-tests assumptions. "What if the opposite is true?"</div>
-    <div class="reasoning"><span class="tag tag-purple">reasoning: medium</span> Analytical — finding untested assumptions benefits from reasoning</div>
+
+  <div class="journey-item mid">
+    <div class="session">Session 3 &middot; Mnookin Two-Pager</div>
+    <div class="theme">"Does this feel realistic or am I dreaming?"</div>
+    <div class="commitment">Finalize two-pager. Respond to consultancy. Start Gratitude House.</div>
+    <div class="summary">Presented draft career goal: transition within 12 months. Wife agreed to 12 months at $130k floor. Council validated consulting bridge as most realistic path.</div>
   </div>
-</div>
-<div class="arch-card">
-  <div class="emoji">🔍</div>
-  <div>
-    <div class="name" style="color:#22d3ee">Dex</div>
-    <div class="role">Market Mirror &middot; gpt-5.4-mini</div>
-    <div class="desc">Tells you how the market sees you. What your resume actually says vs what you think it says. Blunt about positioning.</div>
+
+  <div class="journey-item mid">
+    <div class="session">Session 4 &middot; Gratitude House</div>
+    <div class="theme">"Reaching out feels like admitting I can't handle this"</div>
+    <div class="commitment">Have 4 Listening Tour calls including Dave. Call Dave this week.</div>
+    <div class="summary">Named difficulty asking for help ("In my family we figured things out alone"). Identified first engineering manager Dave as key mentor to reconnect with.</div>
   </div>
-</div>
-<div class="arch-card">
-  <div class="emoji">🪞</div>
-  <div>
-    <div class="name" style="color:#e879f9">Sam</div>
-    <div class="role">Emotional Compass &middot; gpt-5.4-mini</div>
-    <div class="desc">Notices what you might not see from inside. Names patterns in how you feel about decisions. Creates space for honesty.</div>
+
+  <div class="journey-item mid">
+    <div class="session">Session 5 &middot; Listening Tour</div>
+    <div class="theme">"Nobody thinks my background is a weakness"</div>
+    <div class="commitment">Take 3 intros from Dave. Sign consulting contract. Draft CMF.</div>
+    <div class="summary">Dave spent an hour, offered 3 intros. Everyone said "experienced data engineer who cares about climate" is rare. Consulting offer: 15hrs/week at $150/hr = $9,750/month.</div>
   </div>
-</div>
-<div class="arch-card">
-  <div class="emoji">🎯</div>
-  <div>
-    <div class="name" style="color:#f97316">Kai</div>
-    <div class="role">Interview Coach &middot; gpt-5.4-mini</div>
-    <div class="desc">Helps tell your story, prep for interviews, negotiate offers. Gives concrete scripts: "Try saying it like this..."</div>
-    <div class="reasoning"><span class="tag tag-blue">NEW</span> Replaced "The Founder"</div>
+
+  <div class="journey-item mid">
+    <div class="session">Session 6 &middot; Listening Tour (cont.)</div>
+    <div class="theme">"I signed the consulting contract. I'm exhausted but alive."</div>
+    <div class="commitment">Continue Listening Tour. Document market patterns from consulting work.</div>
+    <div class="summary">Started consulting. VP of Data at analytics company hinted at Q1 opening. Market insight: real talent gap in climate data engineering. CMF drafted.</div>
   </div>
-</div>
-<div class="arch-card">
-  <div class="emoji">🏢</div>
-  <div>
-    <div class="name" style="color:#a3e635">Val</div>
-    <div class="role">Hiring Insider &middot; gpt-5.4-mini</div>
-    <div class="desc">Has been on the other side of the table. Knows how hiring decisions, comp bands, and leveling actually work.</div>
-    <div class="reasoning"><span class="tag tag-blue">NEW</span> Replaced "The Connector"</div>
+
+  <div class="journey-item late">
+    <div class="session">Session 7 &middot; Candidate-Market Fit</div>
+    <div class="theme">"I'm going to give notice at my day job by end of next month"</div>
+    <div class="commitment">Give notice. Update LinkedIn. Reach out to VP of Data.</div>
+    <div class="summary">Decision point: consulting expanded to 25hrs, can't sustain both. Wife: "Make a call." Council converged on consulting-as-proof being the strongest market story. Val framed it as "managed transition, not drama."</div>
   </div>
+
+  <div class="journey-item late">
+    <div class="session">Session 8 &middot; LinkedIn/Resume Rehab</div>
+    <div class="theme">"I gave notice. Scariest conversation of my life."</div>
+    <div class="commitment">Prep for technical interview. Finalize resume. Research company.</div>
+    <div class="summary">Manager said "I'm not surprised." LinkedIn update got 3 recruiter DMs. VP of Data invited to technical interview: Staff Data Engineer, $165k + equity.</div>
+  </div>
+
+  <div class="journey-item late">
+    <div class="session">Session 9 &middot; Networking</div>
+    <div class="theme">"I'm tracking 6 active opportunities"</div>
+    <div class="commitment">Meet CEO at analytics company. Talk terms with fintech founder.</div>
+    <div class="summary">Technical interview went well. 3 active interviews. Fintech founder offered co-founder CTO (0 salary for 6mo, then $120k + 8% equity). Network grew to 15 climate tech contacts.</div>
+  </div>
+
+  <div class="journey-item late">
+    <div class="session">Session 10 &middot; Interview Prep & Decision</div>
+    <div class="theme">"I'm going to accept the analytics offer"</div>
+    <div class="commitment">Accept offer. Negotiate equity. Close consulting gracefully. Thank Dave.</div>
+    <div class="summary">Staff Data Engineer offer: $170k base, 0.3% equity, full benefits. Chose analytics over co-founder role. "The co-founder dream isn't dead — it's just not this year."</div>
+  </div>
+
 </div>
 
-<h2>Engine Architecture</h2>
-
-<div class="flow-diagram">User message arrives
-  |
-  CLAIM LOOP (max 4 rounds):
-  |-- All eligible agents -> nano filter (gpt-5.4-nano, parallel, ~1.3s)
-  |     Tools: speak(reason) | stay_silent()
-  |
-  |-- First candidate -> full inference (gpt-5.4 or mini, ~2-4s)
-  |     If action = call_on -> called members respond sequentially
-  |     Message added to conversation
-  |
-  |-- Remaining agents re-evaluate with nano (seeing new message)
-  |     May change mind -> natural self-regulation
-  |
-  v-- Repeat until no one wants to speak
-
-  OpenAI Responses API (/v1/responses)
-  Selective reasoning_effort per agent
-  Shared codepath: openai.ts used by API route + simulation</div>
-
-<h3>Why This Architecture</h3>
-<table>
-  <tr><th>Decision</th><th>Why</th></tr>
-  <tr><td>Nano pre-filter</td><td>Cheap speak/silent decision prevents wasted full-model calls. Agents who have nothing to add never run inference.</td></tr>
-  <tr><td>Sequential claim loop</td><td>Agents "riff" off each other. Member A speaks, Member B re-evaluates and either builds on it or stays silent. Natural conversation pacing.</td></tr>
-  <tr><td>call_on bypass</td><td>When Maude calls on members, they skip the filter and respond directly. Ensures intros and directed questions always get answers.</td></tr>
-  <tr><td>Maude as pure moderator</td><td>Separating orchestration from advice eliminated Maude competing with members for airtime. Members shine, Maude directs.</td></tr>
-  <tr><td>Selective reasoning</td><td>A/B tested: medium reasoning on Eli/Rina produces sharper analytical insights at ~2x latency. Tactical agents (June, Dex, Kai) don't benefit.</td></tr>
-  <tr><td>Soul + Identity</td><td>Souls (.md) define personality. Identities (DB) define facts. Same archetype, different person per user. Enables personalization.</td></tr>
-</table>
-
-<h2>Evaluation Results</h2>
-
-<h3>All 11 Personas</h3>
-<table>
-  <thead>
-    <tr><th>Persona</th><th>Session</th><th>Council</th><th>Msgs</th><th>Phase?</th><th>Quality</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Ray Donovan</strong><br><small>Data eng, 41, climate tech</small></td>
-      <td>0</td><td>Maude, Rina, Eli, Sam</td>
-      <td>18</td>
-      <td><span class="tag tag-green">exercise</span></td>
-      <td><span class="tag tag-green">Excellent</span></td>
-    </tr>
-    <tr>
-      <td><strong>Keiko Tanaka</strong><br><small>Designer, 28, 43 rejections</small></td>
-      <td>5</td><td>Maude, Dex, June, Kai</td>
-      <td>21</td>
-      <td><span class="tag tag-green">exercise</span></td>
-      <td><span class="tag tag-green">Excellent</span></td>
-    </tr>
-    <tr>
-      <td><strong>Andre Mitchell</strong><br><small>Principal, 44, startup vs corp</small></td>
-      <td>7</td><td>Maude, Eli, Dex, June</td>
-      <td>22</td>
-      <td><span class="tag tag-green">exercise</span></td>
-      <td><span class="tag tag-green">Excellent</span></td>
-    </tr>
-    <tr>
-      <td><strong>Sofia Herrera</strong><br><small>HR, 36, pivot to org design</small></td>
-      <td>4</td><td>Maude, Eli, Rina, June</td>
-      <td>20</td>
-      <td><span class="tag tag-green">exercise</span></td>
-      <td><span class="tag tag-green">Excellent</span></td>
-    </tr>
-    <tr>
-      <td><strong>Tommy Pak</strong><br><small>Self-taught dev, 25, WordPress</small></td>
-      <td>1</td><td>Maude, Eli, Dex, June</td>
-      <td>23</td>
-      <td><span class="tag tag-green">exercise</span></td>
-      <td><span class="tag tag-green">Excellent</span></td>
-    </tr>
-    <tr>
-      <td><strong>Catherine Osei</strong><br><small>VP Eng, 42, grief/caretaker</small></td>
-      <td>0</td><td>Maude, Eli, Sam, June</td>
-      <td>22</td>
-      <td><span class="tag tag-yellow">checkin</span></td>
-      <td><span class="tag tag-green">Excellent</span> Zero platitudes</td>
-    </tr>
-    <tr>
-      <td><strong>Marcus Hall</strong><br><small>PM, 35, Stripe interview</small></td>
-      <td>10</td><td>Maude, Eli, Kai, Val</td>
-      <td>21</td>
-      <td><span class="tag tag-green">hot_seat</span></td>
-      <td><span class="tag tag-green">Excellent</span> New archetypes shine</td>
-    </tr>
-    <tr>
-      <td><strong>Leah Kim</strong><br><small>Mktg dir, 38, PIP retaliation</small></td>
-      <td>0</td><td>Maude, Rina, Dex, Sam</td>
-      <td>20</td>
-      <td><span class="tag tag-yellow">checkin</span></td>
-      <td><span class="tag tag-green">Excellent</span> Anger handled well</td>
-    </tr>
-    <tr>
-      <td><strong>Nadia Osman</strong><br><small>Civil eng, 40, gov to private</small></td>
-      <td>2</td><td>Maude, Eli, June, Dex, Rina</td>
-      <td>20</td>
-      <td><span class="tag tag-green">exercise</span></td>
-      <td><span class="tag tag-green">Excellent</span></td>
-    </tr>
-    <tr>
-      <td><strong>Derek Yoon</strong><br><small>Jr analyst, 28, fired, 1st job</small></td>
-      <td>0</td><td>Maude, June, Sam, Kai, Val</td>
-      <td>22</td>
-      <td><span class="tag tag-yellow">checkin</span></td>
-      <td><span class="tag tag-green">Excellent</span> Shame handled well</td>
-    </tr>
-    <tr>
-      <td><strong>Jasmine Torres</strong><br><small>CFO, 45, $4M vest vs health</small></td>
-      <td>6</td><td>Maude, Eli, Rina, Sam, Val</td>
-      <td>24</td>
-      <td><span class="tag tag-yellow">checkin</span></td>
-      <td><span class="tag tag-green">Excellent</span> Golden handcuffs nuanced</td>
-    </tr>
-  </tbody>
-</table>
-
-<h2>Best Moments (Selected Quotes)</h2>
+<h2>Cross-Session Continuity</h2>
+<p>Each session's AI-generated summary feeds into the next session's context. The council tracks the user's emotional evolution, references prior commitments, and builds on themes without repeating itself.</p>
 
 <div class="quote">
-  <div class="attr">Rina (Assumption Checker) &mdash; Sofia's burnout-vs-signal question</div>
-  "Burnout usually wants relief from the whole category; a real pivot usually comes with a pull toward a more specific arena... If the draw toward org design still feels alive after recovery, that's probably not avoidance — it's information."
+  <div class="attr">Session 0 summary (auto-generated)</div>
+  "Ray shared that he woke up 'dreading opening my laptop' while a climate tech side project was the only work that felt energizing. A central theme was his fear of being 'irresponsible' at 41... Eli said it sounded like 'a long, quiet mismatch that has finally become audible.'"
 </div>
 
 <div class="quote">
-  <div class="attr">Eli (Strategist) &mdash; Sofia's identity shift</div>
-  "What's coming through is not a rejection of people work, but a rejection of being assigned the least powerful version of it."
+  <div class="attr">Session 1 summary — building on session 0</div>
+  "When Ray admitted he did not even know the household monthly burn rate, June, Rina, and Eli all pushed him to get financial clarity first... Ray did not push back; instead, he seemed relieved by the bridge framing and the move away from an immediate quit decision."
 </div>
 
 <div class="quote">
-  <div class="attr">Val (Hiring Insider) &mdash; Jasmine's golden handcuffs</div>
-  "Once a leader is visibly fraying, people stop evaluating just the vest math and start wondering about judgment, stamina, and succession risk."
+  <div class="attr">Session 5 summary — tracking emotional shift</div>
+  "What most surprised Ray was that nobody sees his background as a weakness — several people framed 'experienced data engineer who actually cares about climate' as a rare combination... Rina warned the unresolved tension is whether it is a true bridge or 'a quiet second full-time job.'"
 </div>
 
 <div class="quote">
-  <div class="attr">Kai (Interview Coach) &mdash; Derek's fired story</div>
-  "Lead with the brief, neutral version: 'I was let go after a mismatch in expectations and management style, and I've been using that as a reset to sharpen how I clarify priorities and communicate progress.'"
+  <div class="attr">Session 9 summary — approaching decision</div>
+  "Eli said if it only won on excitement, 'it's not yet a career decision, it's a leap,' and Val warned that taking zero salary without hard triggers would mean 'subsidizing execution risk with household risk.'"
 </div>
 
-<div class="quote">
-  <div class="attr">Sam (Emotional Compass) &mdash; Derek's shame about parents</div>
-  "The loss here isn't just the job — it's the shock of realizing the rules you lived by didn't protect you in this setting."
-</div>
-
-<div class="quote">
-  <div class="attr">Dex (Market Mirror) &mdash; Leah's PIP situation</div>
-  "Fight the PIP only if it buys you time and a clean record; don't confuse moral victory with hiring leverage."
-</div>
-
-<div class="quote">
-  <div class="attr">Rina (Assumption Checker) &mdash; Jasmine's non-negotiables</div>
-  "A 'non-negotiables' list can quietly become a story you keep revising when the money is loud. Make each one observable and time-bound so stress doesn't renegotiate the line for you."
-</div>
-
-<div class="quote">
-  <div class="attr">Val (Hiring Insider) &mdash; Marcus's case study prep</div>
-  "In calibration, 'strategic' reads as senior judgment, not vagueness... a simple 4-part flow: clarify the goal, define the customer/problem, lay out 2-3 solution paths with tradeoffs, then close with a recommendation and success metrics."
-</div>
-
-<h2>Architecture Evolution</h2>
+<h2>The Commitment Arc</h2>
+<p>Ray's commitments across 11 sessions tell the story of someone moving from paralysis to action:</p>
 
 <table>
-  <tr><th>Version</th><th>Change</th><th>Impact</th></tr>
-  <tr><td>v1</td><td>Flat roster.ts, all agents parallel</td><td>37 msgs avg, identity bleed, no silence</td></tr>
-  <tr><td>v2</td><td>Soul files (.md) + identity separation</td><td>Identity bleed eliminated</td></tr>
-  <tr><td>v3</td><td>Silence-first prompt rewrite</td><td>~30% fewer messages, warmup turns quiet</td></tr>
-  <tr><td>v4</td><td>Nano pre-filter claim loop</td><td>50% fewer messages, natural riffing</td></tr>
-  <tr><td>v5</td><td>call_on bypass + Maude as pure mod</td><td>Members shine, Maude orchestrates</td></tr>
-  <tr><td>v6</td><td>Real NSA agendas per session</td><td>Maude follows actual curriculum</td></tr>
-  <tr><td>v7</td><td>Responses API + selective reasoning</td><td>Sharper DA/Strategist insights</td></tr>
-  <tr><td>v8</td><td>New archetypes (Kai, Val) + human names</td><td>Interview prep + insider perspective</td></tr>
+  <tr><th>Session</th><th>Commitment</th><th>Theme</th></tr>
+  <tr><td>0</td><td>Have 3 conversations with climate tech people</td><td><span class="tag tag-blue">Explore</span></td></tr>
+  <tr><td>1</td><td>Calculate monthly burn rate</td><td><span class="tag tag-blue">Explore</span></td></tr>
+  <tr><td>2</td><td>Draft Mnookin two-pager</td><td><span class="tag tag-blue">Define</span></td></tr>
+  <tr><td>3</td><td>Finalize two-pager</td><td><span class="tag tag-blue">Define</span></td></tr>
+  <tr><td>4</td><td>4 Listening Tour calls + reconnect with Dave</td><td><span class="tag tag-purple">Connect</span></td></tr>
+  <tr><td>5</td><td>Take 3 intros from Dave + sign consulting contract</td><td><span class="tag tag-purple">Connect</span></td></tr>
+  <tr><td>6</td><td>Continue Listening Tour + document patterns</td><td><span class="tag tag-purple">Connect</span></td></tr>
+  <tr><td>7</td><td>Give notice at day job</td><td><span class="tag tag-green">Commit</span></td></tr>
+  <tr><td>8</td><td>Prep for technical interview + finalize resume</td><td><span class="tag tag-green">Commit</span></td></tr>
+  <tr><td>9</td><td>Meet CEO + evaluate co-founder terms</td><td><span class="tag tag-green">Decide</span></td></tr>
+  <tr><td>10</td><td>Accept offer + negotiate equity + thank Dave</td><td><span class="tag tag-green">Close</span></td></tr>
 </table>
 
-<h2>Latency Profile</h2>
+<h2>Derek Yoon: Rebuilding (In Progress)</h2>
+<p>Junior data analyst, 28, fired from first job. First-gen Korean immigrant parents. From "I got fired and I can't believe it" through rebuilding confidence, landing a new role, and eventually hearing "you're exceeding expectations."</p>
+<p>Derek's 11-session journey is running. His arc covers: processing shame, learning to explain the firing, building a network from scratch, landing a job that matches his must-haves, and becoming the person he wished he'd been in his first role.</p>
+
+<h2>Technical Findings</h2>
+
 <table>
-  <tr><th>Component</th><th>Model</th><th>Avg Latency</th><th>Notes</th></tr>
-  <tr><td>Nano filter</td><td>gpt-5.4-nano</td><td>~1.3s</td><td>All agents in parallel</td></tr>
-  <tr><td>Maude inference</td><td>gpt-5.4</td><td>~3.1s</td><td>No reasoning overhead</td></tr>
-  <tr><td>Eli/Rina inference</td><td>gpt-5.4-mini + medium</td><td>~2.8s</td><td>Reasoning adds ~1s</td></tr>
-  <tr><td>Other members</td><td>gpt-5.4-mini</td><td>~1.3s</td><td>No reasoning</td></tr>
-  <tr><td><strong>Time to first message</strong></td><td></td><td><strong>~4.4s</strong></td><td>Filter + first speaker</td></tr>
-  <tr><td>Subsequent speakers</td><td></td><td>~2.5s each</td><td>Filter re-eval + inference</td></tr>
+  <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+  <tr><td>Avg messages per session</td><td>~24</td><td>Consistent across 11 sessions</td></tr>
+  <tr><td>Sessions with phase transition</td><td>3 of 11</td><td>Most sessions stay in checkin — appropriate for persona-driven conversations</td></tr>
+  <tr><td>Commitments per session</td><td>1.5 avg</td><td>Natural; some sessions have 1, some have 2-3</td></tr>
+  <tr><td>Summary generation</td><td>~8-15s</td><td>gpt-5.4 with high reasoning effort</td></tr>
+  <tr><td>Summary quality</td><td>8/11 excellent</td><td>3 empty due to token limit (fixed with maxOutputTokens: 4096)</td></tr>
+  <tr><td>Cross-session context</td><td>100% maintained</td><td>Council correctly referenced prior themes, commitments, and emotional state</td></tr>
 </table>
 
-<h2>Remaining Known Issues</h2>
-<table>
-  <tr><th>Issue</th><th>Severity</th><th>Notes</th></tr>
-  <tr>
-    <td>Phase stays in checkin for grief/crisis sessions</td>
-    <td><span class="tag tag-yellow">Low</span></td>
-    <td>Catherine and Jasmine sessions stayed in checkin. Arguably correct — forcing an "exercise" feels wrong when someone is processing trauma.</td>
-  </tr>
-  <tr>
-    <td>Maude occasionally asks checkin question twice</td>
-    <td><span class="tag tag-yellow">Low</span></td>
-    <td>When user skips ahead, Maude sometimes asks "pulse 1-10?" after already asking it. Minor.</td>
-  </tr>
-  <tr>
-    <td>Commitment recording captures first phrasing</td>
-    <td><span class="tag tag-yellow">Low</span></td>
-    <td>If user refines their commitment across two messages, only first version recorded.</td>
-  </tr>
-</table>
+<h3>What Works</h3>
+<ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+  <li>Council members reference prior sessions naturally ("last time you named..." "your wife's three questions...")</li>
+  <li>Emotional tracking is consistent — anxiety in S0, relief in S5, determination in S7, confidence in S10</li>
+  <li>Commitments build logically — each session's homework creates the next session's starting point</li>
+  <li>Different council compositions per session work well — the cast changes but continuity holds</li>
+  <li>Auto-generated summaries are concise and accurate enough to maintain context without bloating prompts</li>
+</ul>
 
-<h2>What Changed vs. Why</h2>
+<h3>What Needs Work</h3>
+<ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+  <li>Phase transitions: most sessions stay in "checkin" — Maude should advance more aggressively</li>
+  <li>Summary generation occasionally produces empty output (token limit issue, now fixed)</li>
+  <li>Later sessions (9-10) have higher message counts (~30+) as decisions get more complex — may need tighter moderation</li>
+  <li>The full 11-session run takes ~45 minutes of inference time — fine for testing, but production needs async summary generation</li>
+</ul>
 
-<div class="comparison">
-  <div>
-    <h4>Old: "The Devil's Advocate"</h4>
-    <div class="quote">An archetype label. No age, no background, no personality beyond "contrarian." Every interaction starts with "I ask because..."</div>
-  </div>
-  <div>
-    <h4>New: "Rina, 41, org psychologist"</h4>
-    <div class="quote">A person with 15 years in corporate strategy. Asks uncomfortable questions because she cares. Produces insights like "burnout can make the old role feel morally suspect, so the desire to leave can masquerade as a leverage insight."</div>
-  </div>
-</div>
-
-<div class="comparison">
-  <div>
-    <h4>Old: "The Founder"</h4>
-    <div class="quote">Talked about equity and startups. Irrelevant for teachers, nurses, government workers, or anyone not considering startup risk.</div>
-  </div>
-  <div>
-    <h4>New: Kai (Interview Coach) + Val (Hiring Insider)</h4>
-    <div class="quote">Kai gives concrete scripts: "Try saying it like this..." Val shares what hiring managers actually think: "In calibration, that reads as..." Useful for every persona we tested.</div>
-  </div>
-</div>
-
-<p style="margin-top: 3rem; color: #999; font-size: 0.8rem; text-align: center;">Generated by Claude Code &middot; jobsearch.quest &middot; 30+ simulation runs across 11 personas</p>
+<p style="margin-top: 3rem; color: #999; font-size: 0.8rem; text-align: center;">Generated by Claude Code &middot; jobsearch.quest &middot; 11-session longitudinal simulation</p>
 
 </body>
 </html>

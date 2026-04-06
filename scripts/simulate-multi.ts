@@ -19,6 +19,7 @@ import { callOpenAI } from '../src/lib/council/openai';
 import { generateSessionSummary } from '../src/lib/council/summarize';
 import { getSoul } from '../src/lib/council/souls';
 import { defaultIdentity, type AgentIdentity } from '../src/lib/council/identities';
+import { PHASE_MAX_TURNS, getNextPhase } from '../src/lib/council/phases';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 if (!OPENAI_API_KEY) { console.error('Missing OPENAI_API_KEY'); process.exit(1); }
@@ -100,16 +101,18 @@ async function runSession(
   });
 
   // User messages
+  let turnsInPhase = 0;
   for (const userMsg of session.messages) {
     messages.push({ role: 'user', content: userMsg, memberName: persona.name });
     log(persona.name, userMsg);
+    turnsInPhase++;
 
     let ended = false;
     await runReactionLoop({
       agents: buildAgents(), messages: [...messages], llm,
       callbacks: {
         onMessage: msg => { messages.push(msg); log(msg.memberName || '?', msg.content); },
-        onPhaseChange: p => { phase = p; log('SYS', `Phase -> ${phase}`); },
+        onPhaseChange: p => { phase = p; turnsInPhase = 0; log('SYS', `Phase -> ${phase}`); },
         onCommitment: t => {
           if (!newCommitments.some(c => c.text === t)) { newCommitments.push({ text: t }); log('SYS', `Commitment: ${t}`); }
         },
@@ -117,6 +120,18 @@ async function runSession(
       },
     });
     if (ended) break;
+
+    // Force phase advance if turns exceeded
+    const maxTurns = PHASE_MAX_TURNS[phase];
+    if (maxTurns && turnsInPhase >= maxTurns && phase !== 'done') {
+      const next = getNextPhase(phase);
+      if (next) {
+        log('SYS', `Phase -> ${next} (forced after ${turnsInPhase} turns)`);
+        phase = next;
+        turnsInPhase = 0;
+      }
+    }
+
     console.log('');
   }
 

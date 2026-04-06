@@ -82,6 +82,7 @@ interface SessionState {
     memberIds: string[];
     hotSeatReady?: boolean;
     sessionNumber: number;
+    turnsInPhase: number;
   } | null;
   pastSessions: Session[];
   commitments: Commitment[];
@@ -98,6 +99,7 @@ interface SessionState {
   addCustomMember: (member: Member) => void;
   updateUser: (fields: Partial<Pick<UserProfile, 'name' | 'search_status' | 'context'>>) => Promise<void>;
   startSession: () => Promise<void>;
+  advancePhase: () => void;
   sendMessage: (text: string, replyTo?: { memberName: string | null; content: string; index: number } | null) => Promise<void>;
   toggleCommitment: (id: string) => Promise<void>;
   loadSessionHistory: (sessionId: string) => Promise<Message[]>;
@@ -244,6 +246,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           memberIds: unfinished.member_ids || selectedIds,
           hotSeatReady: false,
           sessionNumber: sessionIndex,
+          turnsInPhase: 0,
         },
         view: 'session',
       });
@@ -271,6 +274,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           memberIds,
           hotSeatReady: false,
           sessionNumber,
+          turnsInPhase: 0,
         },
         view: 'session',
       });
@@ -281,6 +285,23 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       await get().sendMessage('__INIT__');
     } catch (err) {
       set({ error: (err as Error).message });
+    }
+  },
+
+  advancePhase: () => {
+    const { getNextPhase } = require('@/lib/council/phases');
+    const { currentSession } = get();
+    if (!currentSession || currentSession.phase === 'done') return;
+    const next = getNextPhase(currentSession.phase);
+    if (!next) return;
+    set((s) => ({
+      currentSession: s.currentSession ? { ...s.currentSession, phase: next, turnsInPhase: 0 } : null,
+    }));
+    if (currentSession.dbId) {
+      api('/api/sessions', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: currentSession.dbId, phase: next }),
+      }).catch(console.warn);
     }
   },
 
@@ -296,13 +317,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const isInit = text === '__INIT__';
     const userMsg = isInit ? 'Begin the JSC session.' : text;
 
-    // Add user message to local state
+    // Add user message to local state + increment turn counter
     if (!isInit) {
       const userMessage: Message = { role: 'user', content: text, replyTo: replyTo || null };
       set((s) => ({
         currentSession: s.currentSession ? {
           ...s.currentSession,
           messages: [...s.currentSession.messages, userMessage],
+          turnsInPhase: (s.currentSession.turnsInPhase || 0) + 1,
         } : null,
       }));
       if (currentSession.dbId) {
@@ -397,7 +419,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           onPhaseChange: (newPhase, _message) => {
             track('phase_advanced', { from: get().currentSession?.phase, to: newPhase });
             set((s) => ({
-              currentSession: s.currentSession ? { ...s.currentSession, phase: newPhase } : null,
+              currentSession: s.currentSession ? { ...s.currentSession, phase: newPhase, turnsInPhase: 0 } : null,
             }));
             if (currentSession.dbId) {
               api('/api/sessions', {
@@ -447,6 +469,28 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       });
     } catch (err) {
       console.error('AI call failed:', err);
+    }
+
+    // Check if we've exceeded max turns in current phase — force advance
+    const postState = get();
+    if (postState.currentSession && postState.currentSession.phase !== 'done') {
+      const { PHASE_MAX_TURNS, getNextPhase } = await import('@/lib/council/phases');
+      const maxTurns = PHASE_MAX_TURNS[postState.currentSession.phase];
+      if (maxTurns && postState.currentSession.turnsInPhase >= maxTurns) {
+        const next = getNextPhase(postState.currentSession.phase);
+        if (next) {
+          console.log(`[phase] Forcing ${postState.currentSession.phase} -> ${next} (${postState.currentSession.turnsInPhase} turns)`);
+          set((s) => ({
+            currentSession: s.currentSession ? { ...s.currentSession, phase: next, turnsInPhase: 0 } : null,
+          }));
+          if (postState.currentSession.dbId) {
+            api('/api/sessions', {
+              method: 'PATCH',
+              body: JSON.stringify({ id: postState.currentSession.dbId, phase: next }),
+            }).catch(console.warn);
+          }
+        }
+      }
     }
 
     set({ isLoading: false });

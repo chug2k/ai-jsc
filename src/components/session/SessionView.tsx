@@ -5,6 +5,7 @@ import { useSessionStore } from '@/stores/session-store';
 import { getSessionTheme } from '@/lib/council/phases';
 import ChatBubble from './ChatBubble';
 import ChatInput, { type ReplyTarget } from './ChatInput';
+import PhaseBar from './PhaseBar';
 import SessionFeedback from './SessionFeedback';
 import Sidebar from './Sidebar';
 
@@ -82,6 +83,7 @@ export default function SessionView() {
     <div className="flex h-full">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
+        <PhaseBar />
         <div className="flex-1 overflow-y-auto p-5 space-y-4" style={{ scrollBehavior: 'smooth' }}>
           <SessionAgendaBanner sessionNumber={currentSession.sessionNumber} />
           {visibleMessages.map((msg, i) => (

@@ -20,6 +20,25 @@ export const PHASE_ORDER = [
   'done',
 ];
 
+/**
+ * Max user messages per phase before the system forces a transition.
+ * These are soft limits — the UI also lets users advance manually.
+ */
+export const PHASE_MAX_TURNS: Record<string, number> = {
+  checkin: 3,
+  exercise: 5,
+  hot_seat: 4,
+  commitments: 3,
+  checkout: 2,
+};
+
+/** Get the next phase in the sequence. */
+export function getNextPhase(current: string): string | null {
+  const idx = PHASE_ORDER.indexOf(current);
+  if (idx === -1 || idx >= PHASE_ORDER.length - 1) return null;
+  return PHASE_ORDER[idx + 1];
+}
+
 export const PHASE_LABELS: Record<string, string> = {
   checkin: 'Check-In',
   exercise: 'Exercise',

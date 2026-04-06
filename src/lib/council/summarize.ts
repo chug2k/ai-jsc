@@ -39,6 +39,19 @@ export interface SessionSummaryInput {
 }
 
 /**
+ * Condense messages into a single transcript string to avoid
+ * input limit issues with very long sessions.
+ */
+function buildTranscript(messages: LLMMessage[], userName: string): string {
+  return messages
+    .map(m => {
+      const speaker = m.role === 'user' ? userName : (m.memberName || 'Council');
+      return `[${speaker}] ${m.content}`;
+    })
+    .join('\n\n');
+}
+
+/**
  * Generate a post-session summary.
  * High reasoning, high latency — runs after session ends.
  */
@@ -52,16 +65,19 @@ export async function generateSessionSummary(
     ? `\n\nCOMMITMENTS MADE THIS SESSION:\n${commitments.map((c, i) => `${i + 1}. ${c}`).join('\n')}`
     : '';
 
+  // Condense the full conversation into a single transcript message
+  // instead of passing as many message items (avoids input limit issues)
+  const transcript = buildTranscript(messages, userName);
+
   const systemPrompt = `${SUMMARY_PROMPT}
 
-SESSION #${sessionNumber} for ${userName}${commitStr}
+SESSION #${sessionNumber} for ${userName}${commitStr}`;
 
-The full conversation transcript follows as the message history.`;
-
+  // Pass transcript as a single user message rather than many message items
   const result = await callOpenAI(
     apiKey,
     systemPrompt,
-    messages,
+    [{ role: 'user', content: `Here is the full session transcript:\n\n${transcript}` }],
     'gpt-5.4',
     undefined, // no tools
     { reasoningEffort: 'high', maxOutputTokens: 4096 },

@@ -82,9 +82,15 @@ ${hasCommitments ? `\nPRIOR COMMITMENTS TO CHECK ON:\n${commitments.map((c, i) =
 YOUR AGENDA FOR TODAY:
 ${fullAgenda}
 
-You are currently in the "${phase}" phase. Work through the agenda above. Use move_to_phase to advance when each section feels complete.
-If ${userName} jumps ahead in the agenda, go with them — don't pull them back.
-If the conversation has been in the same phase for 3+ turns, you are probably overdue for move_to_phase.
+PHASE MANAGEMENT (CRITICAL):
+You are currently in the "${phase}" phase. Your job is to work through the ENTIRE agenda above in one session.
+- After the check-in (1-3 turns), use move_to_phase("exercise") to start the main exercise.
+- After the exercise has been discussed substantively (3-5 turns), use move_to_phase("hot_seat") for requests for help.
+- After RFH discussion (1-3 turns), use move_to_phase("commitments") for homework and next steps.
+- After commitments are captured, use move_to_phase("checkout") for a closing word.
+- After the closing word, use end_session.
+If ${userName} jumps ahead in the agenda, go with them — use move_to_phase immediately to match where they are.
+RULE: If the conversation has been in the same phase for 4+ turns, you MUST use move_to_phase on your next action. Do not stay in one phase indefinitely.
 
 TOOLS:
 - send_message: Brief moderator statements only (transitions, synthesis, one clarifying question). Max 2 sentences.

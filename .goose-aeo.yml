@@ -1,0 +1,31 @@
+domain: jobsearch.quest
+name: JobSearch Quest
+description: >-
+  # https://jobsearch.quest/
+
+  jobsearch.quest — Never Search Alone jobsearch.quest How it works Council
+  Pricing FAQ Guides Launch App Based on the Never Search Alone methodology Stop
+  job searching alone. The proven Job Search Council methodology — a structured
+  10-session curriculum with accountability, perspective, and support —
+  available on your schedule, guided by AI. Start Your First Session Free See
+  How It Works 5,000+ real JSCs launched through Never Search Alone. This is the
+  AI-powered edition. The problem Searching alone is a losing strategy Solo
+  seekers are slower, less selective, and more likely to take the wrong offer.
+  73% Apply to the wrong roles Without outside perspective, seekers chase titles
+  instead of fit. They optimize for what sounds impressive, not what matches .
+  5× Long...
+competitors:
+  - domain: neversearchalone.org
+    name: Never Search Alone
+providers:
+  - id: openai
+    model: gpt-5.4
+  - id: gemini
+    model: gemini-3-flash-preview
+analysis:
+  provider: openai
+  model: gpt-5.4
+query_limit: 100
+db_path: ./goose-aeo.db
+queries_backup: ./queries.json
+budget_limit_usd: null

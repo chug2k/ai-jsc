@@ -59,18 +59,47 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
   // Track who has spoken this turn — each agent speaks at most once
   const spoken = new Set<string>();
 
-  // If user replied to a specific member, they skip the filter and go first
-  if (replyToMember) {
-    const agent = activeAgents.find(a => a.id === replyToMember);
-    if (agent) {
-      const action = await evaluateAgent(agent, messages, llm, `The user replied directly to YOUR message. You MUST respond.`);
-      spoken.add(agent.id);
+  /** Process all actions from an agent. Handles multi-tool-call responses
+   *  (e.g. Maude can move_to_phase AND call_on in one turn). */
+  const processAgentActions = async (agent: CouncilAgent, actions: AgentAction[]) => {
+    for (const action of actions) {
+      if (action.type === 'silent') {
+        console.log(`[engine] ${agent.name}: stay_silent`);
+        continue;
+      }
+
       const msg = processAction(action, agent, callbacks);
       if (msg) {
         messages.push(msg);
         allNewMessages.push(msg);
-        console.log(`[engine] ${agent.name}: replied first (${action.type})`);
+        console.log(`[engine] ${agent.name}: ${action.type} (${msg.content.length} chars)`);
       }
+
+      // If call_on, give called members direct claims
+      if (action.type === 'call_on' && action.members && action.members.length > 0) {
+        for (const calledName of action.members) {
+          if (allNewMessages.length >= maxResponses) break;
+          const calledAgent = activeAgents.find(a =>
+            a.name === calledName || a.name.toLowerCase().includes(calledName.toLowerCase()),
+          );
+          if (!calledAgent || spoken.has(calledAgent.id)) continue;
+
+          const callHint = `Maude called on you to speak. The prompt was: "${action.text || ''}". You MUST respond — do not use stay_silent.`;
+          const calledActions = await evaluateAgent(calledAgent, messages, llm, callHint);
+          spoken.add(calledAgent.id);
+          await processAgentActions(calledAgent, calledActions);
+        }
+      }
+    }
+  };
+
+  // If user replied to a specific member, they skip the filter and go first
+  if (replyToMember) {
+    const agent = activeAgents.find(a => a.id === replyToMember);
+    if (agent) {
+      const actions = await evaluateAgent(agent, messages, llm, `The user replied directly to YOUR message. You MUST respond.`);
+      spoken.add(agent.id);
+      await processAgentActions(agent, actions);
     }
   }
 
@@ -79,11 +108,9 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
   for (let round = 0; round < MAX_ROUNDS; round++) {
     if (allNewMessages.length >= maxResponses) break;
 
-    // Who hasn't spoken yet?
     const eligible = activeAgents.filter(a => !spoken.has(a.id));
     if (eligible.length === 0) break;
 
-    // All eligible agents do nano filter in parallel
     const filterResults = await Promise.all(
       eligible.map(async (agent) => {
         const result = await filterAgent(agent, messages, llm);
@@ -91,7 +118,6 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
       }),
     );
 
-    // Who wants to speak?
     const candidates = filterResults.filter(r => r.wantsToSpeak);
     if (candidates.length === 0) {
       console.log(`[engine] Round ${round + 1}: no one wants to speak. Done.`);
@@ -100,50 +126,18 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
 
     console.log(`[engine] Round ${round + 1}: ${candidates.map(c => c.agent.name).join(', ')} want to speak`);
 
-    // First candidate does full inference
     const { agent, reason } = candidates[0];
     const hint = reason ? `You decided to speak because: "${reason}". Now compose your response from your lens.` : undefined;
-    const action = await evaluateAgent(agent, messages, llm, hint);
+    const actions = await evaluateAgent(agent, messages, llm, hint);
     spoken.add(agent.id);
 
-    if (action.type === 'silent') {
+    // Check if all actions are silent
+    if (actions.every(a => a.type === 'silent')) {
       console.log(`[engine] ${agent.name}: changed mind, stay_silent`);
       continue;
     }
 
-    const msg = processAction(action, agent, callbacks);
-    if (msg) {
-      messages.push(msg);
-      allNewMessages.push(msg);
-      console.log(`[engine] ${agent.name}: ${action.type} (${msg.content.length} chars)`);
-    }
-
-    // If call_on, give called members direct claims (skip nano filter)
-    if (action.type === 'call_on' && action.members && action.members.length > 0) {
-      for (const calledName of action.members) {
-        if (allNewMessages.length >= maxResponses) break;
-        const calledAgent = activeAgents.find(a =>
-          a.name === calledName || a.name.toLowerCase().includes(calledName.toLowerCase()),
-        );
-        if (!calledAgent || spoken.has(calledAgent.id)) continue;
-
-        const callHint = `Maude called on you to speak. The prompt was: "${action.text || ''}". You MUST respond — do not use stay_silent.`;
-        const calledAction = await evaluateAgent(calledAgent, messages, llm, callHint);
-        spoken.add(calledAgent.id);
-
-        if (calledAction.type === 'silent') {
-          console.log(`[engine] ${calledAgent.name}: called on but chose silent`);
-          continue;
-        }
-
-        const calledMsg = processAction(calledAction, calledAgent, callbacks);
-        if (calledMsg) {
-          messages.push(calledMsg);
-          allNewMessages.push(calledMsg);
-          console.log(`[engine] ${calledAgent.name}: called on, ${calledAction.type} (${calledMsg.content.length} chars)`);
-        }
-      }
-    }
+    await processAgentActions(agent, actions);
 
     // Loop back — remaining agents will re-evaluate with the new message
   }
@@ -178,13 +172,13 @@ async function filterAgent(
   }
 }
 
-/** Full inference: agent composes their response with all tools */
+/** Full inference: agent composes their response with all tools. Returns all actions (model may emit multiple tool calls). */
 async function evaluateAgent(
   agent: CouncilAgent,
   messages: AgentMessage[],
   llm: LLMFn,
   hint?: string,
-): Promise<AgentAction> {
+): Promise<AgentAction[]> {
   try {
     let systemPrompt = agent.buildSystemPrompt();
 
@@ -200,17 +194,17 @@ async function evaluateAgent(
     }
 
     if (result.toolCalls && result.toolCalls.length > 0) {
-      return parseToolCall(result.toolCalls[0]);
+      return result.toolCalls.map(tc => parseToolCall(tc));
     }
 
     if (result.text) {
-      return { type: 'message', text: result.text };
+      return [{ type: 'message', text: result.text }];
     }
 
-    return { type: 'silent' };
+    return [{ type: 'silent' }];
   } catch (err) {
     console.warn(`[engine] ${agent.name} failed:`, err);
-    return { type: 'silent' };
+    return [{ type: 'silent' }];
   }
 }
 

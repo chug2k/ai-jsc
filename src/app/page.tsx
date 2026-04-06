@@ -521,11 +521,8 @@ export default async function LandingPage() {
             <FaqItem question="Is this a replacement for a real JSC?">
               It&apos;s a complement. A real JSC with humans is powerful in ways AI can&apos;t replicate. But jobsearch.quest is available right now, any time, with no scheduling friction. Many people use it between real council meetings. We encourage joining a real one at <a href="https://neversearchalone.org/jsc">neversearchalone.org</a>. <a href="/learn/never-search-alone-methodology">Read about the methodology.</a>
             </FaqItem>
-            <FaqItem question="What AI models does it use?">
-              Paid plans include premium cloud models (GPT-5.4, Claude). Free tier uses GPT-4.1 mini. Pro users can also bring their own API key or run a local model via LM Studio, Ollama, or any OpenAI-compatible endpoint.
-            </FaqItem>
-            <FaqItem question='Are the "real people" actually those people?'>
-              No. They are AI approximations based on each person&apos;s documented communication style, published ideas, and known worldview. Think of it as &ldquo;what would Paul Graham likely say, based on everything he&apos;s written?&rdquo;
+            <FaqItem question="Who are the council members?">
+              Seven distinct advisors, each with a name and a specific lens: Eli (career strategy), June (action steps), Rina (challenging assumptions), Dex (market positioning), Sam (emotional awareness), Kai (interview prep), and Val (hiring insider perspective). Plus Maude, your moderator, who keeps the session moving. You pick 3&ndash;5 for your council.
             </FaqItem>
             <FaqItem question="Is my data private?">
               Session data is stored securely and tied to your Google account. We don&apos;t share your data. You can delete your data at any time from settings.
@@ -540,7 +537,7 @@ export default async function LandingPage() {
               The traditional way is to find 4&ndash;5 peers who are also searching and commit to meeting weekly. The <a href="https://neversearchalone.org/jsc">Never Search Alone community</a> helps match people. If you can&apos;t find a group right away, <a href="/learn/ai-job-search-council-vs-solo-search">start with an AI-powered council</a> on jobsearch.quest and begin the curriculum immediately while you look for real peers.
             </FaqItem>
             <FaqItem question="How is this different from ChatGPT or other AI career tools?">
-              Most AI career tools are task optimizers &mdash; they help with one thing at a time (resume writing, interview prep). jobsearch.quest follows a <a href="/learn/never-search-alone-methodology">structured 10-session curriculum</a> that guides your entire search, remembers your context across sessions, and holds you to weekly commitments. It&apos;s the difference between asking a question and having a guide. <a href="/learn/ai-career-coach-vs-job-search-council">See the full comparison.</a>
+              ChatGPT doesn&apos;t remember your last conversation. It doesn&apos;t check whether you followed through on what you said you&apos;d do. It doesn&apos;t have seven people who each see your situation differently and build on each other&apos;s advice over weeks. jobsearch.quest follows a <a href="/learn/never-search-alone-methodology">structured 10-session curriculum</a>, tracks your commitments across sessions, and keeps a running understanding of your story &mdash; your must-haves, your fears, your progress, and what the council has already told you. <a href="/learn/ai-career-coach-vs-job-search-council">See the full comparison.</a>
             </FaqItem>
             <FaqItem question="What is the Never Search Alone methodology?">
               It&apos;s a system developed by Phyl Terry, documented in the book <em>Never Search Alone</em>. The methodology provides a 10-session progressive curriculum including the Mnookin Two-Pager (defining your <a href="/learn/how-to-write-a-two-pager">must-haves and dealbreakers</a>), the Listening Tour (<a href="/learn/networking-for-job-seekers">strategic networking</a>), and <a href="/learn/candidate-market-fit">Candidate-Market Fit</a>. Over 5,000 Job Search Councils have launched using this approach.

@@ -7,7 +7,9 @@ function makeAgent(id, name, isModerator = false) {
     name,
     isModerator,
     model: 'test-model',
+    filterModel: 'test-filter-model',
     buildSystemPrompt: () => `You are ${name}.`,
+    buildFilterPrompt: () => `Should ${name} speak?`,
   };
 }
 
@@ -24,9 +26,11 @@ describe('runReactionLoop', () => {
     const received = [];
     const agents = [makeAgent('mod', 'Maude', true)];
 
-    const llm = vi.fn(async () => ({
-      toolCalls: [{ name: 'send_message', args: { text: 'Hello!' } }],
-    }));
+    // Filter says speak, inference returns send_message
+    const llm = vi.fn(async (_sys, _msgs, model) => {
+      if (model === 'test-filter-model') return { toolCalls: [{ name: 'speak', args: { reason: 'test' } }] };
+      return { toolCalls: [{ name: 'send_message', args: { text: 'Hello!' } }] };
+    });
 
     await runReactionLoop({
       agents,
@@ -40,16 +44,14 @@ describe('runReactionLoop', () => {
     expect(received[0].memberName).toBe('Maude');
   });
 
-  it('processes stay_silent tool calls', async () => {
+  it('processes stay_silent from filter', async () => {
     const received = [];
-    const agents = [
-      makeAgent('mod', 'Maude', true),
-      makeAgent('strat', 'The Strategist'),
-    ];
+    const agents = [makeAgent('mod', 'Maude', true)];
 
-    const llm = vi.fn(async (system) => {
-      if (system.includes('Maude')) return { toolCalls: [{ name: 'send_message', args: { text: 'Welcome' } }] };
-      return { toolCalls: [{ name: 'stay_silent', args: {} }] };
+    // Filter says silent — inference should never be called
+    const llm = vi.fn(async (_sys, _msgs, model) => {
+      if (model === 'test-filter-model') return { toolCalls: [{ name: 'stay_silent', args: {} }] };
+      throw new Error('Should not reach inference');
     });
 
     await runReactionLoop({
@@ -59,17 +61,17 @@ describe('runReactionLoop', () => {
       llm,
     });
 
-    expect(received.length).toBe(1);
-    expect(received[0].memberName).toBe('Maude');
+    expect(received.length).toBe(0);
   });
 
   it('processes move_to_phase tool calls', async () => {
     let newPhase = null;
     const agents = [makeAgent('mod', 'Maude', true)];
 
-    const llm = vi.fn(async () => ({
-      toolCalls: [{ name: 'move_to_phase', args: { phase: 'exercise', transition_message: 'Moving on!' } }],
-    }));
+    const llm = vi.fn(async (_sys, _msgs, model) => {
+      if (model === 'test-filter-model') return { toolCalls: [{ name: 'speak', args: { reason: 'transition' } }] };
+      return { toolCalls: [{ name: 'move_to_phase', args: { phase: 'exercise', transition_message: 'Moving on!' } }] };
+    });
 
     await runReactionLoop({
       agents,
@@ -85,9 +87,10 @@ describe('runReactionLoop', () => {
     let calledMember = null;
     const agents = [makeAgent('mod', 'Maude', true)];
 
-    const llm = vi.fn(async () => ({
-      toolCalls: [{ name: 'call_on', args: { member: 'The Connector', prompt: 'What do you think?' } }],
-    }));
+    const llm = vi.fn(async (_sys, _msgs, model) => {
+      if (model === 'test-filter-model') return { toolCalls: [{ name: 'speak', args: { reason: 'call' } }] };
+      return { toolCalls: [{ name: 'call_on', args: { members: ['The Connector'], prompt: 'What do you think?' } }] };
+    });
 
     await runReactionLoop({
       agents,
@@ -99,16 +102,17 @@ describe('runReactionLoop', () => {
     expect(calledMember).toBe('The Connector');
   });
 
-  it('passes tools to llm callback', async () => {
+  it('passes tools to llm callback for inference (not filter)', async () => {
     const agents = [makeAgent('mod', 'Maude', true)];
+    const toolsReceived = [];
 
-    const llm = vi.fn(async (_sys, _msgs, _model, tools) => {
-      // Moderator should get extra tools
-      const toolNames = tools.map(t => t.function.name);
-      expect(toolNames).toContain('send_message');
-      expect(toolNames).toContain('stay_silent');
-      expect(toolNames).toContain('move_to_phase');
-      expect(toolNames).toContain('call_on');
+    const llm = vi.fn(async (_sys, _msgs, model, tools) => {
+      if (model === 'test-filter-model') {
+        // Filter tools should have speak/stay_silent
+        return { toolCalls: [{ name: 'speak', args: { reason: 'test' } }] };
+      }
+      // Inference tools should have moderator tools
+      toolsReceived.push(...(tools || []).map(t => t.function.name));
       return { toolCalls: [{ name: 'stay_silent', args: {} }] };
     });
 
@@ -118,5 +122,10 @@ describe('runReactionLoop', () => {
       callbacks: noopCallbacks,
       llm,
     });
+
+    expect(toolsReceived).toContain('send_message');
+    expect(toolsReceived).toContain('stay_silent');
+    expect(toolsReceived).toContain('move_to_phase');
+    expect(toolsReceived).toContain('call_on');
   });
 });

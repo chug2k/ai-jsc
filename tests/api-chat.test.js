@@ -30,9 +30,14 @@ describe('/api/chat route', () => {
   });
 
   it('returns AI text on success', async () => {
+    // Responses API format: output items with message content
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ choices: [{ message: { content: 'Hello from AI' } }] }),
+      json: async () => ({
+        output: [
+          { type: 'message', content: [{ type: 'output_text', text: 'Hello from AI' }] },
+        ],
+      }),
     });
 
     const { POST } = await import('@/app/api/chat/route');
@@ -40,18 +45,21 @@ describe('/api/chat route', () => {
       json: async () => ({
         system: 'You are helpful.',
         messages: [{ role: 'user', content: 'hi' }],
-        model: 'openai:gpt-5.4-nano',
+        model: 'gpt-5.4-nano',
       }),
     };
     const res = await POST(request);
     expect(res.body.text).toBe('Hello from AI');
   });
 
-  it('parses model provider prefix', async () => {
-    // Test that the route handles provider:model format
+  it('returns tool calls from responses API', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ choices: [{ message: { content: 'OpenAI response' } }] }),
+      json: async () => ({
+        output: [
+          { type: 'function_call', name: 'send_message', arguments: '{"text":"Hi there"}' },
+        ],
+      }),
     });
 
     const { POST } = await import('@/app/api/chat/route');
@@ -59,10 +67,12 @@ describe('/api/chat route', () => {
       json: async () => ({
         system: 'sys',
         messages: [{ role: 'user', content: 'q' }],
-        model: 'openai:gpt-5.4-nano',
+        tools: [{ type: 'function', function: { name: 'send_message', parameters: {} } }],
       }),
     };
     const res = await POST(request);
-    expect(res.body.text).toBe('OpenAI response');
+    expect(res.body.toolCalls).toHaveLength(1);
+    expect(res.body.toolCalls[0].name).toBe('send_message');
+    expect(res.body.toolCalls[0].args.text).toBe('Hi there');
   });
 });

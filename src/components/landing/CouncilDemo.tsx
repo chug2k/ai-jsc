@@ -1,6 +1,7 @@
 'use client';
 
-import { Player } from '@remotion/player';
+import { useRef, useEffect, useState, useCallback } from 'react';
+import { Player, type PlayerRef } from '@remotion/player';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, Easing, Sequence } from 'remotion';
 
 /* ─── DATA ─────────────────────────────────────────────────────────────────── */
@@ -254,24 +255,47 @@ function CouncilSession() {
 /* ─── PLAYER WRAPPER ───────────────────────────────────────────────────────── */
 
 export default function CouncilDemo() {
+  const playerRef = useRef<PlayerRef>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hasPlayed, setHasPlayed] = useState(false);
+
+  const handleIntersect = useCallback((entries: IntersectionObserverEntry[]) => {
+    const entry = entries[0];
+    if (entry.isIntersecting && !hasPlayed) {
+      playerRef.current?.play();
+      setHasPlayed(true);
+    }
+  }, [hasPlayed]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(handleIntersect, { threshold: 0.3 });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleIntersect]);
+
   return (
-    <div style={{
-      width: '100%',
-      maxWidth: 480,
-      margin: '0 auto',
-      borderRadius: 14,
-      overflow: 'hidden',
-      border: '1px solid #e5e5e5',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-    }}>
+    <div
+      ref={containerRef}
+      style={{
+        width: '100%',
+        maxWidth: 480,
+        margin: '0 auto',
+        borderRadius: 14,
+        overflow: 'hidden',
+        border: '1px solid #e5e5e5',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+      }}
+    >
       <Player
+        ref={playerRef}
         component={CouncilSession}
         durationInFrames={280}
         fps={30}
         compositionWidth={480}
         compositionHeight={400}
         style={{ width: '100%', height: 'auto', aspectRatio: '480/400' }}
-        autoPlay
         loop
         controls={false}
       />

@@ -5,6 +5,7 @@ import FaqItem from '@/components/ui/FaqItem';
 import { getPlans, type PlanData } from '@/lib/plans';
 import PricingButton from '@/components/ui/PricingButton';
 import CouncilDemo from '@/components/landing/CouncilDemo';
+import MobileNav from '@/components/landing/MobileNav';
 
 export const metadata: Metadata = {
   title: 'jobsearch.quest — AI-Powered Job Search Council | Never Search Alone',
@@ -92,6 +93,7 @@ export default async function LandingPage() {
             <a href="/learn">Guides</a>
             <a href="/app" className={`${styles.btn} ${styles['btn-primary']} ${styles['btn-sm']}`}>Launch App</a>
           </div>
+          <MobileNav styles={styles} />
         </div>
       </nav>
 

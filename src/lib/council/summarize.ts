@@ -64,7 +64,7 @@ The full conversation transcript follows as the message history.`;
     messages,
     'gpt-5.4',
     undefined, // no tools
-    { reasoningEffort: 'high' },
+    { reasoningEffort: 'high', maxOutputTokens: 4096 },
   );
 
   return result.text?.trim() || '';

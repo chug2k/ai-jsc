@@ -4,166 +4,74 @@ import { Player } from '@remotion/player';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, Easing, Sequence } from 'remotion';
 
 const EASE = Easing.bezier(0.16, 1, 0.3, 1);
-const EASE_OVERSHOOT = Easing.bezier(0.34, 1.56, 0.64, 1);
 
-const COUNCIL = [
-  { emoji: '🗺️', name: 'Eli', color: '#818cf8' },
-  { emoji: '😈', name: 'Rina', color: '#ef4444' },
-  { emoji: '🪞', name: 'Sam', color: '#e879f9' },
-  { emoji: '⚙️', name: 'June', color: '#f59e0b' },
-  { emoji: '🎯', name: 'Kai', color: '#f97316' },
-  { emoji: '🏢', name: 'Val', color: '#a3e635' },
-  { emoji: '🔍', name: 'Dex', color: '#22d3ee' },
+const LINES = [
+  "I've been at my job for 6 years and I can't tell if I'm stuck.",
+  "I got fired three days ago. I still can't believe it.",
+  "Does 15 years of government experience even translate?",
+  "I have the offer. But I don't know how to negotiate.",
+  "I keep applying to jobs I don't even want.",
+  "My council helped me see what I couldn't see alone.",
 ];
 
-function CouncilOrb({ member, index, total }: { member: typeof COUNCIL[0]; index: number; total: number }) {
+function RotatingLine({ text, index }: { text: string; index: number }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Staggered entrance
-  const delay = 15 + index * 6;
-  const progress = interpolate(frame - delay, [0, 0.6 * fps], [0, 1], {
-    extrapolateRight: 'clamp',
-    extrapolateLeft: 'clamp',
-    easing: EASE_OVERSHOOT,
-  });
+  // Each line gets ~3 seconds: 0.5s enter, 2s hold, 0.5s exit
+  const duration = 3 * fps;
+  const enterEnd = 0.4 * fps;
+  const exitStart = duration - 0.4 * fps;
 
-  // Orbit position
-  const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
-  const radius = 90;
-  const orbitSpeed = 0.003;
-  const currentAngle = angle + frame * orbitSpeed;
-  const x = Math.cos(currentAngle) * radius;
-  const y = Math.sin(currentAngle) * radius * 0.55; // Slight ellipse for perspective
-
-  // Pulse glow when "speaking"
-  const speakFrame = 60 + index * 30;
-  const glowIntensity = interpolate(
-    frame,
-    [speakFrame, speakFrame + 10, speakFrame + 30],
-    [0, 1, 0],
-    { extrapolateRight: 'clamp', extrapolateLeft: 'clamp' },
-  );
-
-  return (
-    <div style={{
-      position: 'absolute',
-      left: '50%',
-      top: '50%',
-      transform: `translate(${x - 22}px, ${y - 22}px) scale(${interpolate(progress, [0, 1], [0, 1])})`,
-      opacity: progress,
-      zIndex: y > 0 ? 2 : 1,
-    }}>
-      <div style={{
-        width: 44,
-        height: 44,
-        borderRadius: '50%',
-        background: `${member.color}22`,
-        border: `2px solid ${member.color}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 20,
-        boxShadow: glowIntensity > 0.1 ? `0 0 ${16 * glowIntensity}px ${member.color}66` : 'none',
-      }}>
-        {member.emoji}
-      </div>
-      <div style={{
-        textAlign: 'center',
-        fontSize: 9,
-        fontWeight: 600,
-        color: 'rgba(255,255,255,0.9)',
-        marginTop: 3,
-        fontFamily: 'system-ui, sans-serif',
-        textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-      }}>
-        {member.name}
-      </div>
-    </div>
-  );
-}
-
-function ConnectionLine({ fromAngle, toAngle, frame, delay }: { fromAngle: number; toAngle: number; frame: number; delay: number }) {
-  const { fps } = useVideoConfig();
-  const progress = interpolate(frame - delay, [0, 0.3 * fps], [0, 0.6], {
+  const enterProgress = interpolate(frame, [0, enterEnd], [0, 1], {
     extrapolateRight: 'clamp',
     extrapolateLeft: 'clamp',
     easing: EASE,
   });
 
-  if (progress <= 0) return null;
+  const exitProgress = interpolate(frame, [exitStart, duration], [1, 0], {
+    extrapolateRight: 'clamp',
+    extrapolateLeft: 'clamp',
+    easing: EASE,
+  });
 
-  const r = 90;
-  const x1 = 50 + Math.cos(fromAngle) * r * 0.45;
-  const y1 = 50 + Math.sin(fromAngle) * r * 0.25;
-  const x2 = 50 + Math.cos(toAngle) * r * 0.45;
-  const y2 = 50 + Math.sin(toAngle) * r * 0.25;
+  const progress = Math.min(enterProgress, exitProgress);
+  const isLast = index === LINES.length - 1;
 
   return (
-    <line
-      x1={`${x1}%`} y1={`${y1}%`}
-      x2={`${x2}%`} y2={`${y2}%`}
-      stroke="rgba(255,255,255,0.08)"
-      strokeWidth={1}
-      opacity={progress}
-    />
+    <AbsoluteFill style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{
+        opacity: isLast ? enterProgress : progress,
+        transform: `translateY(${interpolate(isLast ? enterProgress : progress, [0, 1], [8, 0])}px)`,
+        textAlign: 'center',
+        padding: '0 20px',
+        maxWidth: 500,
+      }}>
+        <div style={{
+          fontSize: 18,
+          fontWeight: 300,
+          color: isLast ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.7)',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          lineHeight: 1.5,
+          fontStyle: isLast ? 'normal' : 'italic',
+          letterSpacing: isLast ? '0.01em' : 0,
+        }}>
+          {isLast ? text : `"${text}"`}
+        </div>
+      </div>
+    </AbsoluteFill>
   );
 }
 
 function HeroComposition() {
-  const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-
-  // Center "You" pulse
-  const youScale = interpolate(frame, [0, 0.5 * fps], [0, 1], {
-    extrapolateRight: 'clamp',
-    extrapolateLeft: 'clamp',
-    easing: EASE_OVERSHOOT,
-  });
-  const youPulse = 1 + Math.sin(frame / 20) * 0.03;
+  const perLine = 3 * fps; // 3 seconds per line
 
   return (
-    <AbsoluteFill style={{ background: 'transparent', overflow: 'hidden' }}>
-      {/* Subtle connection lines */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-        {COUNCIL.map((_, i) => {
-          const angle1 = (i / COUNCIL.length) * Math.PI * 2 - Math.PI / 2 + frame * 0.003;
-          const angle2 = ((i + 1) / COUNCIL.length) * Math.PI * 2 - Math.PI / 2 + frame * 0.003;
-          return <ConnectionLine key={i} fromAngle={angle1} toAngle={angle2} frame={frame} delay={40 + i * 5} />;
-        })}
-      </svg>
-
-      {/* Center "You" node */}
-      <div style={{
-        position: 'absolute',
-        left: '50%',
-        top: '50%',
-        transform: `translate(-24px, -24px) scale(${youScale * youPulse})`,
-        zIndex: 3,
-      }}>
-        <div style={{
-          width: 48,
-          height: 48,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.15)',
-          border: '2px solid rgba(255,255,255,0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 13,
-          fontWeight: 700,
-          color: '#fff',
-          fontFamily: 'system-ui, sans-serif',
-          backdropFilter: 'blur(4px)',
-        }}>
-          You
-        </div>
-      </div>
-
-      {/* Council orbs */}
-      {COUNCIL.map((m, i) => (
-        <Sequence key={m.name} from={0} layout="none">
-          <CouncilOrb member={m} index={i} total={COUNCIL.length} />
+    <AbsoluteFill style={{ background: 'transparent' }}>
+      {LINES.map((line, i) => (
+        <Sequence key={i} from={i * perLine} durationInFrames={perLine} layout="none">
+          <RotatingLine text={line} index={i} />
         </Sequence>
       ))}
     </AbsoluteFill>
@@ -171,19 +79,17 @@ function HeroComposition() {
 }
 
 export default function HeroAnimation() {
+  const fps = 30;
+  const totalFrames = LINES.length * 3 * fps;
+
   return (
-    <div style={{
-      width: 320,
-      height: 260,
-      margin: '0 auto',
-      position: 'relative',
-    }}>
+    <div style={{ width: '100%', maxWidth: 520, margin: '16px auto 8px', height: 60 }}>
       <Player
         component={HeroComposition}
-        durationInFrames={300}
-        fps={30}
-        compositionWidth={320}
-        compositionHeight={260}
+        durationInFrames={totalFrames}
+        fps={fps}
+        compositionWidth={520}
+        compositionHeight={60}
         style={{ width: '100%', height: '100%' }}
         autoPlay
         loop

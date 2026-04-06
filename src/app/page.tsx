@@ -20,6 +20,7 @@ export default async function LandingPage() {
             <a href="#council">Council</a>
             <a href="#pricing">Pricing</a>
             <a href="#faq">FAQ</a>
+            <a href="/learn">Guides</a>
             <a href="/app" className={`${styles.btn} ${styles['btn-primary']} ${styles['btn-sm']}`}>Launch App</a>
           </div>
         </div>
@@ -61,17 +62,17 @@ export default async function LandingPage() {
             <div className={styles['problem-card']}>
               <div className={styles.stat}>73%</div>
               <h3>Apply to the wrong roles</h3>
-              <p>Without outside perspective, seekers chase titles instead of fit. They optimize for what sounds impressive, not what matches.</p>
+              <p>Without outside perspective, seekers chase titles instead of fit. They optimize for what sounds impressive, not <a href="/learn/candidate-market-fit" style={{ color: 'inherit', textDecoration: 'underline' }}>what matches</a>.</p>
             </div>
             <div className={styles['problem-card']}>
               <div className={styles.stat}>5&times;</div>
               <h3>Longer without accountability</h3>
-              <p>Solo seekers spend weeks &ldquo;researching&rdquo; instead of acting. A council forces specific commitments every week.</p>
+              <p>Solo seekers spend weeks &ldquo;researching&rdquo; instead of acting. A council forces <a href="/learn/job-search-accountability" style={{ color: 'inherit', textDecoration: 'underline' }}>specific commitments</a> every week.</p>
             </div>
             <div className={styles['problem-card']}>
               <div className={styles.stat}>1 in 3</div>
               <h3>Quit within 6 months</h3>
-              <p>Taking the first offer from exhaustion leads to regret. A council keeps you honest about what you actually want.</p>
+              <p>Taking the first offer from <a href="/learn/job-search-burnout" style={{ color: 'inherit', textDecoration: 'underline' }}>exhaustion</a> leads to regret. A council keeps you honest about what you actually want.</p>
             </div>
           </div>
         </div>
@@ -420,10 +421,10 @@ export default async function LandingPage() {
           <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em' }}>Common questions</h2>
           <div className={styles['faq-list']}>
             <FaqItem question="What is a Job Search Council?">
-              A JSC is a small accountability group (4-6 people) who meet weekly to support each other&apos;s job search. Developed by Phyl Terry and documented in <em>Never Search Alone</em>. Over 5,000 real JSCs launched. jobsearch.quest brings this to AI so you can run a session anytime.
+              A JSC is a small accountability group (4-6 people) who meet weekly to support each other&apos;s job search. Developed by Phyl Terry and documented in <em>Never Search Alone</em>. Over 5,000 real JSCs launched. jobsearch.quest brings this to AI so you can run a session anytime. <a href="/learn/what-is-a-job-search-council">Learn more about how JSCs work.</a>
             </FaqItem>
             <FaqItem question="Is this a replacement for a real JSC?">
-              It&apos;s a complement. A real JSC with humans is powerful in ways AI can&apos;t replicate. But jobsearch.quest is available right now, any time, with no scheduling friction. Many people use it between real council meetings. We encourage joining a real one at <a href="https://neversearchalone.org/jsc">neversearchalone.org</a>.
+              It&apos;s a complement. A real JSC with humans is powerful in ways AI can&apos;t replicate. But jobsearch.quest is available right now, any time, with no scheduling friction. Many people use it between real council meetings. We encourage joining a real one at <a href="https://neversearchalone.org/jsc">neversearchalone.org</a>. <a href="/learn/never-search-alone-methodology">Read about the methodology.</a>
             </FaqItem>
             <FaqItem question="What AI models does it use?">
               Paid plans include premium cloud models (GPT-5.4, Claude). Free tier uses GPT-4.1 mini. Pro users can also bring their own API key or run a local model via LM Studio, Ollama, or any OpenAI-compatible endpoint.
@@ -438,7 +439,7 @@ export default async function LandingPage() {
               On the Legendary Quest and Founder&apos;s Circle plans, unused time is refunded &mdash; no questions asked. We want you to find the right role, not pay for months you don&apos;t need.
             </FaqItem>
             <FaqItem question="Can I use this if I'm not actively searching?">
-              Yes. The app supports &ldquo;Slow Seeker&rdquo; and &ldquo;Exploring Quietly&rdquo; modes. The council adapts &mdash; less urgency, more strategic framing. Many users run monthly sessions to stay intentional about their career.
+              Yes. The app supports &ldquo;Slow Seeker&rdquo; and &ldquo;Exploring Quietly&rdquo; modes. The council adapts &mdash; less urgency, more strategic framing. Many users run monthly sessions to stay intentional about their career. Great for <a href="/learn/career-pivot-guide">career pivots</a> or <a href="/learn/candidate-market-fit">finding your Candidate-Market Fit</a>.
             </FaqItem>
           </div>
         </div>
@@ -461,6 +462,7 @@ export default async function LandingPage() {
             <span style={{ color: 'var(--text-tertiary)', fontSize: '12px', marginLeft: '8px' }}>Built on the Never Search Alone methodology</span>
           </div>
           <div style={{ display: 'flex', gap: '24px' }}>
+            <a href="/learn">Guides</a>
             <a href="https://neversearchalone.org">Never Search Alone</a>
             <a href="https://phyl.org">Phyl Terry</a>
             <a href="https://www.amazon.com/Never-Search-Alone-Seekers-Playbook/dp/B0B9Q9YDQ5">The Book</a>

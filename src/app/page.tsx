@@ -38,9 +38,47 @@ export default async function LandingPage() {
     },
   };
 
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What is a Job Search Council?',
+        acceptedAnswer: { '@type': 'Answer', text: 'A Job Search Council (JSC) is a small accountability group of 4-6 people who meet weekly to support each other\'s job search. Developed by Phyl Terry and documented in Never Search Alone, over 5,000 real JSCs have been launched. jobsearch.quest brings this methodology to AI so you can run a session anytime.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'Is an AI Job Search Council a replacement for a real one?',
+        acceptedAnswer: { '@type': 'Answer', text: 'It\'s a complement, not a replacement. A real JSC with humans is powerful in ways AI can\'t replicate — real empathy, serendipitous connections, genuine social accountability. But jobsearch.quest is available right now, any time, with no scheduling friction. Many people use it between real council meetings or while looking for peers to form a real council.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'How does an AI Job Search Council work?',
+        acceptedAnswer: { '@type': 'Answer', text: 'jobsearch.quest follows the Never Search Alone 10-session curriculum. Each session has structured phases: check-in, exercise, hot seat (where AI council members challenge your thinking from multiple perspectives), commitments, and check-out. The AI remembers your context across sessions, tracks your commitments, and guides you from defining what you want through evaluating offers.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'How much does jobsearch.quest cost?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Your first session is free, no credit card required. Paid plans start with monthly access and go up to unlimited sessions. If you land a job before your plan expires, unused time is refunded.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'What is the Never Search Alone methodology?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Never Search Alone is a book and methodology by Phyl Terry that provides a structured 10-session curriculum for job seekers. It includes exercises like the Mnookin Two-Pager (defining must-haves and dealbreakers), the Listening Tour (strategic networking), and Candidate-Market Fit (matching your strengths to roles). Over 5,000 Job Search Councils have been launched using this approach.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'Can I use jobsearch.quest if I\'m not actively searching?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Yes. The app supports "Slow Seeker" and "Exploring Quietly" modes. The council adapts with less urgency and more strategic framing. Many users run monthly sessions to stay intentional about their career, especially for career pivots or finding Candidate-Market Fit.' },
+      },
+    ],
+  };
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       {/* ═══════ NAV ═══════ */}
       <nav className={styles.nav}>
         <div className={styles.container}>
@@ -60,7 +98,7 @@ export default async function LandingPage() {
       <section className={styles.hero}>
         <Image
           src="/img/hero.jpg"
-          alt=""
+          alt="jobsearch.quest — AI-powered Job Search Council based on the Never Search Alone methodology"
           width={1920}
           height={520}
           priority
@@ -78,6 +116,40 @@ export default async function LandingPage() {
               <a href="#how" className={`${styles.btn} ${styles['btn-lg']} ${styles['btn-hero-ghost']}`}>See How It Works</a>
             </div>
             <p className={styles.note}>5,000+ real JSCs launched through Never Search Alone. This is the AI-powered edition.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════ WHAT IS IT ═══════ */}
+      <section className={styles.section}>
+        <div className={styles.container}>
+          <div className={styles['section-label']}>What is jobsearch.quest?</div>
+          <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '16px' }}>An AI-powered Job Search Council you can start in minutes</h2>
+          <p style={{ fontSize: '16px', lineHeight: 1.75, color: 'var(--text)', marginBottom: '16px' }}>
+            <strong>jobsearch.quest</strong> is an AI-powered <a href="/learn/what-is-a-job-search-council" style={{ color: 'inherit', textDecoration: 'underline' }}>Job Search Council</a> based on the <a href="/learn/never-search-alone-methodology" style={{ color: 'inherit', textDecoration: 'underline' }}>Never Search Alone methodology</a> by Phyl Terry. It guides you through a structured 10-session curriculum &mdash; from defining your must-haves to evaluating job offers &mdash; with AI council members who challenge your thinking, hold you accountable, and push you toward the right role.
+          </p>
+          <p style={{ fontSize: '16px', lineHeight: 1.75, color: 'var(--text)', marginBottom: '16px' }}>
+            A real Job Search Council with real people is the gold standard. But most people can&apos;t find 4&ndash;5 peers to meet weekly. jobsearch.quest makes the methodology accessible right now &mdash; no scheduling, no coordination, no waiting. Start a session at midnight or 6am. Your council is always ready.
+          </p>
+          <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap', marginTop: '24px' }}>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <p className={styles.mono} style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>The curriculum</p>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                10 sessions covering the <a href="/learn/how-to-write-a-two-pager" style={{ color: 'inherit', textDecoration: 'underline' }}>Mnookin Two-Pager</a>, <a href="/learn/candidate-market-fit" style={{ color: 'inherit', textDecoration: 'underline' }}>Candidate-Market Fit</a>, <a href="/learn/networking-for-job-seekers" style={{ color: 'inherit', textDecoration: 'underline' }}>Listening Tour</a>, <a href="/learn/interview-preparation-guide" style={{ color: 'inherit', textDecoration: 'underline' }}>interview prep</a>, and <a href="/learn/job-offer-negotiation" style={{ color: 'inherit', textDecoration: 'underline' }}>offer negotiation</a>.
+              </p>
+            </div>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <p className={styles.mono} style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>The council</p>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                15+ AI council members with distinct perspectives &mdash; from strategic thinkers to devil&apos;s advocates. They don&apos;t agree with each other.
+              </p>
+            </div>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <p className={styles.mono} style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>The accountability</p>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                Weekly <a href="/learn/job-search-accountability" style={{ color: 'inherit', textDecoration: 'underline' }}>commitments</a> tracked across sessions. Your council remembers what you said you&apos;d do &mdash; and asks about it.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -143,103 +215,103 @@ export default async function LandingPage() {
         <div className={styles.container}>
           <div className={styles['section-label']}>Real council conversations</div>
           <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '4px' }}>Hear what your council sounds like</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>Each member has a distinct voice and challenge style. They don&apos;t agree with each other.</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>Real output from real sessions. Each member has a distinct voice and lens. They don&apos;t agree with each other.</p>
 
-          {/* Convo 1: Hot Seat */}
+          {/* Convo 1: Fired and ashamed */}
           <div style={{ marginBottom: '40px' }}>
             <div className={styles['convo-scenario']}>
-              <div className={styles['convo-scenario-label']}>Hot Seat &middot; Startup vs. Big Tech</div>
-              <h3>Sarah has a VP Eng offer but can&apos;t pull the trigger</h3>
+              <div className={styles['convo-scenario-label']}>Session 0 &middot; Trust-Building</div>
+              <h3>Derek got fired from his first real job. He doesn&apos;t know how to explain it.</h3>
             </div>
             <div className={styles['convo-thread']}>
               <div className={`${styles.msg} ${styles['msg-user']}`}>
                 <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Sarah</div>
-                  <div className={styles['msg-text']}>I have an offer from a Series A startup as VP Eng but the equity seems low &mdash; 0.5%. Salary is 40% less than Google. I love the team but I keep going back and forth.</div>
+                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Derek</div>
+                  <div className={styles['msg-text']}>I don&apos;t even know how to explain what happened in interviews. &ldquo;I got fired&rdquo; &mdash; how do you make that sound okay?</div>
                 </div>
-                <div className={styles['msg-avatar']}>S</div>
+                <div className={styles['msg-avatar']}>D</div>
               </div>
               <div className={styles.msg}>
-                <div className={styles['msg-avatar']}>&#x1F985;</div>
+                <div className={styles['msg-avatar']} style={{ background: '#f9731622', border: '1px solid #f9731644' }}>&#x1F3AF;</div>
                 <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--primary)' }}>Paul Graham</div>
-                  <div className={styles['msg-text']}>Why are you valuing the safety of a salary over the chance to build something that might actually matter in five years? If this company succeeds, will 0.5% dwarf your current income? And if it fails, what is the real cost: losing money or wasting time on problems where you have no ownership?</div>
-                </div>
-              </div>
-              <div className={styles.msg}>
-                <div className={styles['msg-avatar']}>&#x1F94A;</div>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--primary)' }}>Ben Horowitz</div>
-                  <div className={styles['msg-text']}>The &ldquo;going back and forth&rdquo; is the tell. In a wartime situation, hesitation is the enemy. You already know what you want &mdash; you&apos;re just looking for permission. 0.5% is negotiable. Team chemistry isn&apos;t. Which one is harder to find?</div>
+                  <div className={styles['msg-name']} style={{ color: '#f97316' }}>Kai <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Interview Coach</span></div>
+                  <div className={styles['msg-text']}>Lead with the brief, neutral version: &ldquo;I was let go after a mismatch in expectations and management style, and I&apos;ve been using that as a reset to sharpen how I clarify priorities and communicate progress.&rdquo; That works because it answers the concern without sounding defensive and pivots immediately to what changed.</div>
                 </div>
               </div>
               <div className={styles.msg}>
-                <div className={styles['msg-avatar']}>&#x1FA91;</div>
+                <div className={styles['msg-avatar']} style={{ background: '#e879f922', border: '1px solid #e879f944' }}>&#x1FA9E;</div>
                 <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--primary)' }}>Sheryl Sandberg</div>
-                  <div className={styles['msg-text']}>Before you negotiate the number, negotiate the narrative. What does the equity conversation tell you about how this company values its leaders? If they won&apos;t move on comp for their VP Eng, what happens when you need resources for your team?</div>
+                  <div className={styles['msg-name']} style={{ color: '#e879f9' }}>Sam <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Emotional Compass</span></div>
+                  <div className={styles['msg-text']}>The loss here isn&apos;t just the job &mdash; it&apos;s the shock of realizing the rules you lived by didn&apos;t protect you in this setting. That kind of mismatch can leave someone feeling blamed for not reading minds.</div>
+                </div>
+              </div>
+              <div className={styles.msg}>
+                <div className={styles['msg-avatar']} style={{ background: '#a3e63522', border: '1px solid #a3e63544' }}>&#x1F3E2;</div>
+                <div className={styles['msg-body']}>
+                  <div className={styles['msg-name']} style={{ color: '#a3e635' }}>Val <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Hiring Insider</span></div>
+                  <div className={styles['msg-text']}>As someone who&apos;s hired for roles like this, unclear expectations usually mean a manager who was under-managing, not a candidate who should have guessed harder. Keep it short and non-defensive: &ldquo;There was a mismatch and I didn&apos;t surface it quickly enough.&rdquo; Hiring managers care more about how you talk about the miss than the miss itself.</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Convo 2: Accountability */}
+          {/* Convo 2: Golden handcuffs */}
           <div style={{ marginBottom: '40px' }}>
             <div className={styles['convo-scenario']}>
-              <div className={styles['convo-scenario-label']}>Check-In &middot; Commitments</div>
-              <h3>Marcus promised 5 cold emails. He sent 1.</h3>
+              <div className={styles['convo-scenario-label']}>Session 6 &middot; Listening Tour</div>
+              <h3>Jasmine is a CFO with $4M in stock about to vest. But she&apos;s having panic attacks.</h3>
             </div>
             <div className={styles['convo-thread']}>
               <div className={`${styles.msg} ${styles['msg-user']}`}>
                 <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Marcus</div>
-                  <div className={styles['msg-text']}>I said I&apos;d send 5 cold outreach emails this week but I only sent 1. Work got really busy.</div>
+                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Jasmine</div>
+                  <div className={styles['msg-text']}>$4M is life-changing money. But I&apos;m on anxiety medication, I&apos;ve gained 30 pounds, and my husband says I&apos;m a different person. At what point does the money stop being worth it?</div>
                 </div>
-                <div className={styles['msg-avatar']}>M</div>
+                <div className={styles['msg-avatar']}>J</div>
               </div>
               <div className={styles.msg}>
-                <div className={styles['msg-avatar']}>&#x2699;&#xFE0F;</div>
+                <div className={styles['msg-avatar']} style={{ background: '#ef444422', border: '1px solid #ef444444' }}>&#x1F608;</div>
                 <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--primary)' }}>The Operator</div>
-                  <div className={styles['msg-text']}>One is better than zero &mdash; that&apos;s real. What got in the way of the other four? If we can figure out the blocker, we can make next week&apos;s commitment more realistic. Could you send two more by end of day Friday?</div>
+                  <div className={styles['msg-name']} style={{ color: '#ef4444' }}>Rina <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Assumption Checker</span></div>
+                  <div className={styles['msg-text']}>The big assumption is that this is a clean threshold question, when it may actually be a compounding one: every extra month can cost more health than the cash is worth. If your health and earning capacity are deteriorating, the real tradeoff may be between one payout and the rest of your career.</div>
                 </div>
               </div>
               <div className={styles.msg}>
-                <div className={styles['msg-avatar']}>&#x1FA9E;</div>
+                <div className={styles['msg-avatar']} style={{ background: '#a3e63522', border: '1px solid #a3e63544' }}>&#x1F3E2;</div>
                 <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--primary)' }}>The Witness</div>
-                  <div className={styles['msg-text']}>I notice you said &ldquo;ran out of time&rdquo; rather than &ldquo;chose not to.&rdquo; There&apos;s something underneath the busyness. What would it mean if you sent those emails and people didn&apos;t respond?</div>
+                  <div className={styles['msg-name']} style={{ color: '#a3e635' }}>Val <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Hiring Insider</span></div>
+                  <div className={styles['msg-text']}>The inside view is blunt: once a leader is visibly fraying, people stop evaluating just the vest math and start wondering about judgment, stamina, and succession risk. Good boards quietly recognize that before the package looks irrational on paper.</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Convo 3: Guilt */}
+          {/* Convo 3: PIP retaliation */}
           <div>
             <div className={styles['convo-scenario']}>
-              <div className={styles['convo-scenario-label']}>Hot Seat &middot; Loyalty trap</div>
-              <h3>Priya feels guilty about leaving a struggling company</h3>
+              <div className={styles['convo-scenario-label']}>Session 0 &middot; Trust-Building</div>
+              <h3>Leah reported her manager to HR. Two weeks later she&apos;s on a PIP.</h3>
             </div>
             <div className={styles['convo-thread']}>
               <div className={`${styles.msg} ${styles['msg-user']}`}>
                 <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Priya</div>
-                  <div className={styles['msg-text']}>My company is struggling and I feel guilty leaving. The CEO hired me personally. I keep putting off applications.</div>
+                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Leah</div>
+                  <div className={styles['msg-text']}>What I really need to know is: do I fight this, or do I just leave? And if I leave, how do I tell my story without sounding bitter?</div>
                 </div>
-                <div className={styles['msg-avatar']}>P</div>
+                <div className={styles['msg-avatar']}>L</div>
               </div>
               <div className={styles.msg}>
-                <div className={styles['msg-avatar']}>&#x1FA9E;</div>
+                <div className={styles['msg-avatar']} style={{ background: '#ef444422', border: '1px solid #ef444444' }}>&#x1F608;</div>
                 <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--primary)' }}>The Witness</div>
-                  <div className={styles['msg-text']}>I hear how much this relationship means to you &mdash; that says something good about who you are. But I notice you said &ldquo;putting off&rdquo; applications, not &ldquo;decided against.&rdquo; It sounds like part of you already knows what you need to do.</div>
+                  <div className={styles['msg-name']} style={{ color: '#ef4444' }}>Rina <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Assumption Checker</span></div>
+                  <div className={styles['msg-text']}>Don&apos;t force this into an either/or yet. Fighting without an exit can trap you, and leaving without building a record can leave their version standing. If you do leave, tell it as a values story: what environments you do your best work in, the impact you created, and what you&apos;re moving toward.</div>
                 </div>
               </div>
               <div className={styles.msg}>
-                <div className={styles['msg-avatar']}>&#x1F608;</div>
+                <div className={styles['msg-avatar']} style={{ background: '#22d3ee22', border: '1px solid #22d3ee44' }}>&#x1F50D;</div>
                 <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--primary)' }}>Devil&apos;s Advocate</div>
-                  <div className={styles['msg-text']}>Have you considered: if the company was thriving, would you still be staying? Sometimes what feels like loyalty is really just the comfort of not having to face the uncertainty of a search. What if exploring options doesn&apos;t mean you&apos;re betraying anyone?</div>
+                  <div className={styles['msg-name']} style={{ color: '#22d3ee' }}>Dex <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Market Mirror</span></div>
+                  <div className={styles['msg-text']}>Fight the PIP only if it buys you time and a clean record. Don&apos;t confuse moral victory with hiring leverage. A PIP after a retaliation complaint tells future employers &ldquo;this role is damaged,&rdquo; not &ldquo;this person failed.&rdquo;</div>
                 </div>
               </div>
             </div>
@@ -471,6 +543,15 @@ export default async function LandingPage() {
             <FaqItem question="Can I use this if I'm not actively searching?">
               Yes. The app supports &ldquo;Slow Seeker&rdquo; and &ldquo;Exploring Quietly&rdquo; modes. The council adapts &mdash; less urgency, more strategic framing. Many users run monthly sessions to stay intentional about their career. Great for <a href="/learn/career-pivot-guide">career pivots</a> or <a href="/learn/candidate-market-fit">finding your Candidate-Market Fit</a>.
             </FaqItem>
+            <FaqItem question="How do I start a Job Search Council?">
+              The traditional way is to find 4&ndash;5 peers who are also searching and commit to meeting weekly. The <a href="https://neversearchalone.org/jsc">Never Search Alone community</a> helps match people. If you can&apos;t find a group right away, <a href="/learn/ai-job-search-council-vs-solo-search">start with an AI-powered council</a> on jobsearch.quest and begin the curriculum immediately while you look for real peers.
+            </FaqItem>
+            <FaqItem question="How is this different from ChatGPT or other AI career tools?">
+              Most AI career tools are task optimizers &mdash; they help with one thing at a time (resume writing, interview prep). jobsearch.quest follows a <a href="/learn/never-search-alone-methodology">structured 10-session curriculum</a> that guides your entire search, remembers your context across sessions, and holds you to weekly commitments. It&apos;s the difference between asking a question and having a guide. <a href="/learn/ai-career-coach-vs-job-search-council">See the full comparison.</a>
+            </FaqItem>
+            <FaqItem question="What is the Never Search Alone methodology?">
+              It&apos;s a system developed by Phyl Terry, documented in the book <em>Never Search Alone</em>. The methodology provides a 10-session progressive curriculum including the Mnookin Two-Pager (defining your <a href="/learn/how-to-write-a-two-pager">must-haves and dealbreakers</a>), the Listening Tour (<a href="/learn/networking-for-job-seekers">strategic networking</a>), and <a href="/learn/candidate-market-fit">Candidate-Market Fit</a>. Over 5,000 Job Search Councils have launched using this approach.
+            </FaqItem>
           </div>
         </div>
       </section>
@@ -487,15 +568,45 @@ export default async function LandingPage() {
       {/* ═══════ FOOTER ═══════ */}
       <footer className={styles.footer}>
         <div className={styles.container}>
-          <div>
-            <span className={styles.mono} style={{ fontSize: '13px', fontWeight: 700 }}>jobsearch.quest</span>
-            <span style={{ color: 'var(--text-tertiary)', fontSize: '12px', marginLeft: '8px' }}>Built on the Never Search Alone methodology</span>
-          </div>
-          <div style={{ display: 'flex', gap: '24px' }}>
-            <a href="/learn">Guides</a>
-            <a href="https://neversearchalone.org">Never Search Alone</a>
-            <a href="https://phyl.org">Phyl Terry</a>
-            <a href="https://www.amazon.com/Never-Search-Alone-Seekers-Playbook/dp/B0B9Q9YDQ5">The Book</a>
+          <div className={styles['footer-grid']}>
+            <div>
+              <span className={styles.mono} style={{ fontSize: '13px', fontWeight: 700 }}>jobsearch.quest</span>
+              <p style={{ color: 'var(--text-tertiary)', fontSize: '13px', marginTop: '8px', lineHeight: 1.6 }}>
+                AI-powered Job Search Council based on the Never Search Alone methodology.
+              </p>
+              <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+                <a href="https://neversearchalone.org">Never Search Alone</a>
+                <a href="https://phyl.org">Phyl Terry</a>
+                <a href="https://www.amazon.com/Never-Search-Alone-Seekers-Playbook/dp/B0B9Q9YDQ5">The Book</a>
+              </div>
+            </div>
+            <div>
+              <p className={styles['footer-heading']}>Guides</p>
+              <a href="/learn/what-is-a-job-search-council">What Is a Job Search Council?</a>
+              <a href="/learn/never-search-alone-methodology">The Never Search Alone Methodology</a>
+              <a href="/learn/job-search-accountability">Why Accountability Matters</a>
+              <a href="/learn/ai-job-search-tools">AI Tools for Job Searching</a>
+              <a href="/learn/candidate-market-fit">Candidate-Market Fit</a>
+              <a href="/learn/how-to-write-a-two-pager">How to Write a Two-Pager</a>
+            </div>
+            <div>
+              <p className={styles['footer-heading']}>Job Search Help</p>
+              <a href="/learn/job-search-burnout">Overcoming Burnout</a>
+              <a href="/learn/career-pivot-guide">Career Pivot Guide</a>
+              <a href="/learn/interview-preparation-guide">Interview Preparation</a>
+              <a href="/learn/networking-for-job-seekers">Networking Strategies</a>
+              <a href="/learn/job-offer-negotiation">Offer Negotiation</a>
+              <a href="/learn/job-search-after-layoff">Searching After a Layoff</a>
+            </div>
+            <div>
+              <p className={styles['footer-heading']}>Compare</p>
+              <a href="/learn/job-search-council-vs-career-coach">JSC vs Career Coach</a>
+              <a href="/learn/ai-job-search-council-vs-solo-search">AI Council vs Solo Search</a>
+              <a href="/learn/ai-career-coach-vs-job-search-council">AI Coach vs JSC</a>
+              <a href="/learn/job-search-accountability-tools-compared">Accountability Tools Compared</a>
+              <a href="/learn/remote-job-search">Remote Job Search</a>
+              <a href="/learn/job-search-for-senior-professionals">Senior Professionals</a>
+            </div>
           </div>
         </div>
       </footer>

@@ -105,7 +105,7 @@ async function runSimulation(persona: Persona) {
     moderatorOnly: true,
     callbacks: {
       onMessage: (msg) => { messages.push(msg); log(msg.memberName || 'Unknown', msg.content); },
-      onPhaseChange: (p) => { phase = p; log('SYS', `Phase → ${phase}`); },
+      onPhaseChange: (p) => { phase = p; ctx.turnsInPhase = 0; log('SYS', `Phase → ${phase}`); },
       onCommitment: (text) => { ctx.commitments.push({ text }); log('SYS', `Commitment: ${text}`); },
       onCallOn: () => {},
       onEndSession: () => { log('SYS', 'Session ended.'); },
@@ -115,6 +115,7 @@ async function runSimulation(persona: Persona) {
 
   for (const userMsg of persona.messages) {
     messages.push({ role: 'user', content: userMsg, memberName: persona.name });
+    ctx.turnsInPhase = (ctx.turnsInPhase || 0) + 1;
     log(persona.name, userMsg);
 
     let sessionEnded = false;
@@ -130,6 +131,7 @@ async function runSimulation(persona: Persona) {
         },
         onPhaseChange: (newPhase, _message) => {
           phase = newPhase;
+          ctx.turnsInPhase = 0;
           log('SYS', `Phase → ${phase}`);
         },
         onCommitment: (text, _deadline) => {

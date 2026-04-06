@@ -4,10 +4,13 @@ import { useSessionStore } from '@/stores/session-store';
 import { PHASE_ORDER, PHASE_LABELS } from '@/lib/council/phases';
 
 export default function PhaseBar() {
-  const { currentSession, advancePhase, isLoading } = useSessionStore();
-  if (!currentSession) return null;
+  const phase = useSessionStore(s => s.currentSession?.phase);
+  const advancePhase = useSessionStore(s => s.advancePhase);
+  const isLoading = useSessionStore(s => s.isLoading);
 
-  const currentIdx = PHASE_ORDER.indexOf(currentSession.phase);
+  if (!phase) return null;
+
+  const currentIdx = PHASE_ORDER.indexOf(phase);
   const visiblePhases = PHASE_ORDER.filter(p => p !== 'done');
 
   return (
@@ -20,15 +23,15 @@ export default function PhaseBar() {
       background: 'var(--surface)',
       fontSize: '0.75rem',
     }}>
-      {visiblePhases.map((phase, i) => {
-        const idx = PHASE_ORDER.indexOf(phase);
-        const isCurrent = phase === currentSession.phase;
+      {visiblePhases.map((p) => {
+        const idx = PHASE_ORDER.indexOf(p);
+        const isCurrent = p === phase;
         const isPast = idx < currentIdx;
         const isNext = idx === currentIdx + 1;
 
         return (
           <button
-            key={phase}
+            key={p}
             onClick={() => {
               if (isNext && !isLoading) advancePhase();
             }}
@@ -55,18 +58,17 @@ export default function PhaseBar() {
                 : isPast
                   ? 'var(--accent)'
                   : 'var(--muted)',
-              opacity: isNext ? 1 : undefined,
             }}
-            title={isNext ? `Advance to ${PHASE_LABELS[phase]}` : PHASE_LABELS[phase]}
+            title={isNext ? `Advance to ${PHASE_LABELS[p]}` : PHASE_LABELS[p]}
           >
-            {isPast ? '\u2713 ' : ''}{PHASE_LABELS[phase]}
+            {isPast ? '\u2713 ' : ''}{PHASE_LABELS[p]}
             {isNext && !isLoading && (
               <span style={{ marginLeft: '4px', opacity: 0.6 }}>&rarr;</span>
             )}
           </button>
         );
       })}
-      {currentSession.phase === 'done' && (
+      {phase === 'done' && (
         <div style={{
           flex: 1,
           padding: '0.375rem 0.5rem',

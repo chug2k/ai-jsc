@@ -18,6 +18,9 @@ const learnArticles = [
   "how-to-write-a-two-pager",
   "job-search-for-senior-professionals",
   "job-search-council-vs-career-coach",
+  "ai-job-search-council-vs-solo-search",
+  "job-search-accountability-tools-compared",
+  "ai-career-coach-vs-job-search-council",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

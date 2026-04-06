@@ -87,6 +87,21 @@ const guides = [
     title: 'Job Search Council vs Career Coach',
     description: 'An honest comparison: real councils, career coaches, and AI-powered councils — what each does best and when to use them.',
   },
+  {
+    href: '/learn/ai-job-search-council-vs-solo-search',
+    title: 'AI Job Search Council vs Searching Alone',
+    description: 'Most people search alone and take far longer. Here\'s what changes when you add structure and accountability.',
+  },
+  {
+    href: '/learn/job-search-accountability-tools-compared',
+    title: 'Job Search Accountability Tools Compared',
+    description: 'Spreadsheets, apps, partners, and councils — what actually keeps you on track during a job search?',
+  },
+  {
+    href: '/learn/ai-career-coach-vs-job-search-council',
+    title: 'AI Career Coach vs Job Search Council',
+    description: 'AI tools optimize tasks. Councils guide the journey. Here\'s when to use each — and how to use both.',
+  },
 ];
 
 export default function LearnIndex() {

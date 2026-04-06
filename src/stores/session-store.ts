@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ARCHETYPES, REAL_PEOPLE, FOUNDERS_CIRCLE } from '@/lib/council/roster';
+import { getNextPhase } from '@/lib/council/phases';
 import { track } from '@/lib/posthog';
 
 // @ts-nocheck — roster files are untyped JS ports
@@ -289,7 +290,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   advancePhase: () => {
-    const { getNextPhase } = require('@/lib/council/phases');
     const { currentSession } = get();
     if (!currentSession || currentSession.phase === 'done') return;
     const next = getNextPhase(currentSession.phase);

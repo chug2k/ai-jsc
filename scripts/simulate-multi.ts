@@ -19,7 +19,6 @@ import { callOpenAI } from '../src/lib/council/openai';
 import { generateSessionSummary } from '../src/lib/council/summarize';
 import { getSoul } from '../src/lib/council/souls';
 import { defaultIdentity, type AgentIdentity } from '../src/lib/council/identities';
-import { PHASE_MAX_TURNS, getNextPhase } from '../src/lib/council/phases';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 if (!OPENAI_API_KEY) { console.error('Missing OPENAI_API_KEY'); process.exit(1); }
@@ -59,7 +58,7 @@ async function runSession(
     sessionNumber: session.sessionNumber,
     priorSessions,
     turnsInPhase: 0,
-  } as { userName: string; searchStatus: string; userContext: string; commitments: { text: string }[]; sessionNumber: number; priorSessions: { number: number; summary: string }[]; turnsInPhase: number };
+  };
 
   let phase = 'checkin';
   const messages: AgentMessage[] = [];

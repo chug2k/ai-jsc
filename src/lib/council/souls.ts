@@ -1,18 +1,16 @@
 /**
- * Soul loader — reads and caches soul markdown files from disk.
+ * Soul loader — reads soul markdown files.
  *
  * Souls define an agent's immutable personality: voice, lens, rules, anti-patterns.
- * They live as .md files in src/lib/council/souls/ and are loaded once at startup.
+ * They live as .md files in src/lib/council/souls/.
+ *
+ * On the server (API routes, simulation), loads from disk via fs.
+ * On the client (session store), souls are embedded inline as a fallback.
  */
-
-import * as fs from 'fs';
-import * as path from 'path';
-
-const SOULS_DIR = path.join(process.cwd(), 'src', 'lib', 'council', 'souls');
 
 const cache = new Map<string, string>();
 
-/** Map from soul ID to filename (handles hyphenated filenames) */
+/** Map from soul ID to filename */
 const SOUL_FILES: Record<string, string> = {
   facilitator: 'facilitator.md',
   strategist: 'strategist.md',
@@ -22,29 +20,37 @@ const SOUL_FILES: Record<string, string> = {
   therapist: 'witness.md',
   interview_coach: 'interview-coach.md',
   insider: 'insider.md',
-  // Legacy (still loadable for existing configs)
+  // Legacy
   founder: 'founder.md',
   network: 'connector.md',
 };
 
+function loadFromDisk(soulId: string): string {
+  try {
+    // Dynamic require to avoid bundler pulling fs into client
+    const fs = require('fs');
+    const path = require('path');
+    const soulsDir = path.join(process.cwd(), 'src', 'lib', 'council', 'souls');
+    const filename = SOUL_FILES[soulId];
+    if (!filename) return '';
+    return fs.readFileSync(path.join(soulsDir, filename), 'utf-8');
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Get the soul markdown content for a given soul ID.
- * Returns empty string if not found (graceful fallback for custom/famous agents).
+ * Returns empty string if not found.
  */
 export function getSoul(soulId: string): string {
   if (cache.has(soulId)) return cache.get(soulId)!;
 
-  const filename = SOUL_FILES[soulId];
-  if (!filename) return '';
-
-  try {
-    const content = fs.readFileSync(path.join(SOULS_DIR, filename), 'utf-8');
+  const content = loadFromDisk(soulId);
+  if (content) {
     cache.set(soulId, content);
-    return content;
-  } catch {
-    console.warn(`[souls] Could not load soul file for "${soulId}"`);
-    return '';
   }
+  return content;
 }
 
 /** Get all available soul IDs. */

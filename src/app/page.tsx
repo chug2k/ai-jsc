@@ -5,6 +5,8 @@ import FaqItem from '@/components/ui/FaqItem';
 import { getPlans, type PlanData } from '@/lib/plans';
 import PricingButton from '@/components/ui/PricingButton';
 import CouncilDemo from '@/components/landing/CouncilDemo';
+import HeroAnimation from '@/components/landing/HeroAnimation';
+import HowItWorksAnimation from '@/components/landing/HowItWorksAnimation';
 import MobileNav from '@/components/landing/MobileNav';
 
 export const metadata: Metadata = {
@@ -114,6 +116,7 @@ export default async function LandingPage() {
             <p className={styles.subtitle}>
               The proven Job Search Council methodology &mdash; a structured 10-session curriculum with accountability, perspective, and support &mdash; available on your schedule, guided by AI.
             </p>
+            <HeroAnimation />
             <div className={styles['hero-ctas']}>
               <a href="/app" className={`${styles.btn} ${styles['btn-lg']} ${styles['btn-hero-primary']}`}>Start Your First Session Free</a>
               <a href="#how" className={`${styles.btn} ${styles['btn-lg']} ${styles['btn-hero-ghost']}`}>See How It Works</a>
@@ -338,6 +341,8 @@ export default async function LandingPage() {
             <span className={styles['phase-tag']}>✍️ Commitments</span>
             <span className={styles['phase-tag']}>✌️ Check-Out</span>
           </div>
+
+          <HowItWorksAnimation />
 
           <div className={styles.steps}>
             <div className={styles.step}>

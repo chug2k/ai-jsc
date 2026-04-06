@@ -51,7 +51,7 @@ async function runSession(
   if (!memberIds.includes('facilitator')) memberIds = ['facilitator', ...memberIds];
   const identities: AgentIdentity[] = memberIds.map(id => defaultIdentity(id));
 
-  const ctx: Record<string, unknown> = {
+  const ctx = {
     userName: persona.name,
     searchStatus: persona.searchStatus,
     userContext: persona.userContext,
@@ -59,7 +59,7 @@ async function runSession(
     sessionNumber: session.sessionNumber,
     priorSessions,
     turnsInPhase: 0,
-  };
+  } as { userName: string; searchStatus: string; userContext: string; commitments: { text: string }[]; sessionNumber: number; priorSessions: { number: number; summary: string }[]; turnsInPhase: number };
 
   let phase = 'checkin';
   const messages: AgentMessage[] = [];

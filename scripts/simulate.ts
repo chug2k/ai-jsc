@@ -53,6 +53,7 @@ async function runSimulation(persona: Persona) {
     userContext: persona.userContext,
     commitments: (persona.commitments || []).map(t => ({ text: t })),
     priorSessions: persona.priorSessions || [],
+    turnsInPhase: 0,
     sessionNumber: persona.sessionNumber,
   };
 

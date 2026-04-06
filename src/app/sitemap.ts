@@ -17,6 +17,7 @@ const learnArticles = [
   "job-search-after-layoff",
   "how-to-write-a-two-pager",
   "job-search-for-senior-professionals",
+  "job-search-council-vs-career-coach",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

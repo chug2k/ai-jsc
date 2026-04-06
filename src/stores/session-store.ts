@@ -359,6 +359,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       commitments: state.commitments.filter(c => !c.done).map(c => ({ text: c.text })),
       sessionNumber: currentSession.sessionNumber,
       priorSessions,
+      turnsInPhase: currentSession.turnsInPhase || 0,
     };
 
     // Build agents from council members using soul + identity
@@ -469,28 +470,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       });
     } catch (err) {
       console.error('AI call failed:', err);
-    }
-
-    // Check if we've exceeded max turns in current phase — force advance
-    const postState = get();
-    if (postState.currentSession && postState.currentSession.phase !== 'done') {
-      const { PHASE_MAX_TURNS, getNextPhase } = await import('@/lib/council/phases');
-      const maxTurns = PHASE_MAX_TURNS[postState.currentSession.phase];
-      if (maxTurns && postState.currentSession.turnsInPhase >= maxTurns) {
-        const next = getNextPhase(postState.currentSession.phase);
-        if (next) {
-          console.log(`[phase] Forcing ${postState.currentSession.phase} -> ${next} (${postState.currentSession.turnsInPhase} turns)`);
-          set((s) => ({
-            currentSession: s.currentSession ? { ...s.currentSession, phase: next, turnsInPhase: 0 } : null,
-          }));
-          if (postState.currentSession.dbId) {
-            api('/api/sessions', {
-              method: 'PATCH',
-              body: JSON.stringify({ id: postState.currentSession.dbId, phase: next }),
-            }).catch(console.warn);
-          }
-        }
-      }
     }
 
     set({ isLoading: false });

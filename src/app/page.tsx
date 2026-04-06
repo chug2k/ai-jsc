@@ -1,16 +1,46 @@
+import { Metadata } from 'next';
 import Image from 'next/image';
 import styles from './landing.module.css';
 import FaqItem from '@/components/ui/FaqItem';
 import { getPlans, type PlanData } from '@/lib/plans';
 import PricingButton from '@/components/ui/PricingButton';
 
+export const metadata: Metadata = {
+  title: 'jobsearch.quest — AI-Powered Job Search Council | Never Search Alone',
+  description: 'Stop job searching alone. The proven Job Search Council methodology — a structured 10-session curriculum with accountability, perspective, and support — guided by AI, on your schedule.',
+  alternates: { canonical: 'https://jobsearch.quest' },
+  openGraph: {
+    title: 'jobsearch.quest — AI-Powered Job Search Council',
+    description: 'The proven Job Search Council methodology — a structured 10-session curriculum with accountability, perspective, and support — guided by AI, on your schedule.',
+    type: 'website',
+    url: 'https://jobsearch.quest',
+    images: [{ url: 'https://jobsearch.quest/img/hero.jpg', width: 1200, height: 630 }],
+  },
+};
+
 // Rebuild every 5 minutes to pick up plan changes from admin
 export const revalidate = 300;
 
 export default async function LandingPage() {
   const plans = await getPlans();
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'jobsearch.quest',
+    applicationCategory: 'BusinessApplication',
+    description: 'AI-powered Job Search Council based on the Never Search Alone methodology. A structured 10-session curriculum with accountability, perspective, and support — on your schedule.',
+    url: 'https://jobsearch.quest',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+      description: 'First session free',
+    },
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
       {/* ═══════ NAV ═══════ */}
       <nav className={styles.nav}>
         <div className={styles.container}>

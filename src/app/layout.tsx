@@ -31,10 +31,29 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'jobsearch.quest',
+  url: 'https://jobsearch.quest',
+  description: 'AI-powered Job Search Council based on the Never Search Alone methodology. A structured 10-session curriculum with accountability, perspective, and support.',
+  sameAs: [],
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'jobsearch.quest',
+  url: 'https://jobsearch.quest',
+  description: 'Stop job searching alone. The proven Job Search Council methodology — guided by AI, on your schedule.',
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${montserrat.variable} ${roboto.variable} ${ptMono.variable}`}>
       <body className="bg-[#FAFAF8] text-[#111827] font-[family-name:var(--font-roboto)] antialiased">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
         <PostHogProvider>
           {children}
         </PostHogProvider>

@@ -82,6 +82,11 @@ const guides = [
     title: 'Job Search for Senior Professionals',
     description: 'Fewer openings, longer timelines, higher stakes — the playbook for directors, VPs, and executives.',
   },
+  {
+    href: '/learn/job-search-council-vs-career-coach',
+    title: 'Job Search Council vs Career Coach',
+    description: 'An honest comparison: real councils, career coaches, and AI-powered councils — what each does best and when to use them.',
+  },
 ];
 
 export default function LearnIndex() {

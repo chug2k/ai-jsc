@@ -51,13 +51,14 @@ async function runSession(
   if (!memberIds.includes('facilitator')) memberIds = ['facilitator', ...memberIds];
   const identities: AgentIdentity[] = memberIds.map(id => defaultIdentity(id));
 
-  const ctx = {
+  const ctx: Record<string, unknown> = {
     userName: persona.name,
     searchStatus: persona.searchStatus,
     userContext: persona.userContext,
     commitments: priorCommitments,
     sessionNumber: session.sessionNumber,
     priorSessions,
+    turnsInPhase: 0,
   };
 
   let phase = 'checkin';
@@ -106,13 +107,14 @@ async function runSession(
     messages.push({ role: 'user', content: userMsg, memberName: persona.name });
     log(persona.name, userMsg);
     turnsInPhase++;
+    ctx.turnsInPhase = turnsInPhase;
 
     let ended = false;
     await runReactionLoop({
       agents: buildAgents(), messages: [...messages], llm,
       callbacks: {
         onMessage: msg => { messages.push(msg); log(msg.memberName || '?', msg.content); },
-        onPhaseChange: p => { phase = p; turnsInPhase = 0; log('SYS', `Phase -> ${phase}`); },
+        onPhaseChange: p => { phase = p; turnsInPhase = 0; ctx.turnsInPhase = 0; log('SYS', `Phase -> ${phase}`); },
         onCommitment: t => {
           if (!newCommitments.some(c => c.text === t)) { newCommitments.push({ text: t }); log('SYS', `Commitment: ${t}`); }
         },
@@ -120,18 +122,6 @@ async function runSession(
       },
     });
     if (ended) break;
-
-    // Force phase advance if turns exceeded
-    const maxTurns = PHASE_MAX_TURNS[phase];
-    if (maxTurns && turnsInPhase >= maxTurns && phase !== 'done') {
-      const next = getNextPhase(phase);
-      if (next) {
-        log('SYS', `Phase -> ${next} (forced after ${turnsInPhase} turns)`);
-        phase = next;
-        turnsInPhase = 0;
-      }
-    }
-
     console.log('');
   }
 

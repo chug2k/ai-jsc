@@ -57,7 +57,7 @@ export function buildModeratorPrompt(
   identity: AgentIdentity,
   allCouncil: AgentIdentity[],
   phase: string,
-  { userName, searchStatus, userContext, commitments, sessionNumber = 0, priorSessions = [] as { number: number; summary: string }[] },
+  { userName, searchStatus, userContext, commitments, sessionNumber = 0, priorSessions = [] as { number: number; summary: string }[], turnsInPhase = 0 },
 ) {
   const shared = buildSharedContext(userName, searchStatus, userContext, commitments, priorSessions);
   const fullAgenda = getSessionAgenda(sessionNumber);
@@ -82,15 +82,23 @@ ${hasCommitments ? `\nPRIOR COMMITMENTS TO CHECK ON:\n${commitments.map((c, i) =
 YOUR AGENDA FOR TODAY:
 ${fullAgenda}
 
-PHASE MANAGEMENT (CRITICAL):
-You are currently in the "${phase}" phase. Your job is to work through the ENTIRE agenda above in one session.
-- After the check-in (1-3 turns), use move_to_phase("exercise") to start the main exercise.
-- After the exercise has been discussed substantively (3-5 turns), use move_to_phase("hot_seat") for requests for help.
-- After RFH discussion (1-3 turns), use move_to_phase("commitments") for homework and next steps.
-- After commitments are captured, use move_to_phase("checkout") for a closing word.
-- After the closing word, use end_session.
-If ${userName} jumps ahead in the agenda, go with them — use move_to_phase immediately to match where they are.
-RULE: If the conversation has been in the same phase for 4+ turns, you MUST use move_to_phase on your next action. Do not stay in one phase indefinitely.
+PHASE MANAGEMENT:
+You are currently in the "${phase}" phase. ${turnsInPhase > 0 ? `You have been in this phase for ${turnsInPhase} user messages.` : ''}
+Your job is to work through the entire agenda in one session, like a real meeting with a clock.
+
+Typical pacing (use your judgment — these are guidelines, not hard rules):
+- Check-in: 2-3 user messages, then move to the exercise
+- Exercise: 3-5 user messages, then move to requests for help
+- Hot seat / RFH: 2-4 user messages, then move to commitments
+- Commitments: 1-3 user messages, then move to checkout
+- Checkout: 1 user message, then end session
+
+${turnsInPhase >= 3 && (phase === 'checkin') ? `NOTE: You've been in check-in for ${turnsInPhase} turns. Consider whether it's time to transition to the exercise. If the conversation is naturally flowing into exercise territory, use move_to_phase now.` : ''}
+${turnsInPhase >= 4 && (phase === 'exercise') ? `NOTE: You've been in the exercise for ${turnsInPhase} turns. Consider whether the key points have been made and it's time for requests for help.` : ''}
+${turnsInPhase >= 3 && (phase === 'hot_seat') ? `NOTE: You've been in the hot seat for ${turnsInPhase} turns. Consider whether it's time for commitments.` : ''}
+
+If ${userName} jumps ahead in the agenda, go with them — use move_to_phase to match where they are.
+If a conversation thread is going really well and producing real value, let it breathe — don't cut it short just to advance. But also don't let the session stall in one phase forever. You're balancing depth with coverage.
 
 TOOLS:
 - send_message: Brief moderator statements only (transitions, synthesis, one clarifying question). Max 2 sentences.

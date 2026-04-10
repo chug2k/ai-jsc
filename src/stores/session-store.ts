@@ -133,14 +133,71 @@ async function api(path: string, options?: RequestInit) {
   return res.json();
 }
 
-/** Call /api/chat. Model, tools, and options can be overridden per-call. */
-async function chatApi(system: string, messages: unknown[], model?: string, tools?: unknown[], options?: { reasoningEffort?: string }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const devModel = (useSessionStore.getState() as any)._devModel as string | undefined;
-  return api('/api/chat', {
+/** Stream council session via SSE from /api/chat/council */
+async function streamCouncil(
+  payload: {
+    sessionId: string | null;
+    message: string;
+    memberIds: string[];
+    phase: string;
+    sessionNumber: number;
+    turnsInPhase: number;
+    replyToMember?: string;
+    isInit: boolean;
+  },
+  handlers: {
+    onMessage: (msg: { role: string; content: string; memberName?: string | null }) => void;
+    onPhaseChange: (phase: string, message: string) => void;
+    onCommitment: (text: string, deadline?: string) => void;
+    onCallOn: (memberName: string, prompt: string) => void;
+    onEndSession: (message: string) => void;
+    onError: (message: string) => void;
+  },
+) {
+  const res = await fetch('/api/chat/council', {
     method: 'POST',
-    body: JSON.stringify({ system, messages, model: devModel || model, ...(tools ? { tools } : {}), ...(options?.reasoningEffort ? { reasoningEffort: options.reasoningEffort } : {}) }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
   });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `API error: ${res.status}`);
+  }
+
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error('No response body');
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    let currentEvent = '';
+    for (const line of lines) {
+      if (line.startsWith('event: ')) {
+        currentEvent = line.slice(7);
+      } else if (line.startsWith('data: ') && currentEvent) {
+        const data = JSON.parse(line.slice(6));
+        switch (currentEvent) {
+          case 'message': handlers.onMessage(data); break;
+          case 'phase_change': handlers.onPhaseChange(data.phase, data.message); break;
+          case 'commitment': handlers.onCommitment(data.text, data.deadline); break;
+          case 'call_on': handlers.onCallOn(data.memberName, data.prompt); break;
+          case 'end_session': handlers.onEndSession(data.message); break;
+          case 'error': handlers.onError(data.message); break;
+          case 'done': break;
+        }
+        currentEvent = '';
+      }
+    }
+  }
 }
 
 export const useSessionStore = create<SessionState>((set, get) => ({
@@ -317,7 +374,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const isInit = text === '__INIT__';
     const userMsg = isInit ? 'Begin the JSC session.' : text;
 
-    // Add user message to local state + increment turn counter
+    // Add user message to local state for instant UI feedback (DB persist is now server-side)
     if (!isInit) {
       const userMessage: Message = { role: 'user', content: text, replyTo: replyTo || null };
       set((s) => ({
@@ -327,12 +384,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           turnsInPhase: (s.currentSession.turnsInPhase || 0) + 1,
         } : null,
       }));
-      if (currentSession.dbId) {
-        api('/api/messages', {
-          method: 'POST',
-          body: JSON.stringify({ sessionId: currentSession.dbId, role: 'user', content: text, phase }),
-        }).catch(console.warn);
-      }
     } else {
       set((s) => ({
         currentSession: s.currentSession ? {
@@ -342,106 +393,49 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       }));
     }
 
-    const { buildModeratorPrompt, buildReactiveMemberPrompt, buildFilterPrompt } = await import('@/lib/council/prompts');
-    const { runReactionLoop } = await import('@/lib/council/engine');
-    const { getSoul } = await import('@/lib/council/souls');
-    const { defaultIdentity } = await import('@/lib/council/identities');
-
-    // Build prior session summaries from past sessions
-    const priorSessions = state.pastSessions
-      .filter(s => s.summary && s.phase === 'done')
-      .map((s, i) => ({ number: i, summary: s.summary! }));
-
-    const ctx = {
-      userName: user?.name || 'Friend',
-      searchStatus: user?.search_status || 'slow',
-      userContext: user?.context || '',
-      commitments: state.commitments.filter(c => !c.done).map(c => ({ text: c.text })),
-      sessionNumber: currentSession.sessionNumber,
-      priorSessions,
-      turnsInPhase: currentSession.turnsInPhase || 0,
-    };
-
-    // Build agents from council members using soul + identity
-    const currentPhase = get().currentSession?.phase || 'checkin';
-    const identities = members.map(member => defaultIdentity(member.id));
-    const agents = members.map((member, i) => {
-      const identity = identities[i];
-      const soul = getSoul(member.id);
-      return {
-        id: member.id,
-        name: member.name,
-        isModerator: member.id === 'facilitator',
-        model: member.id === 'facilitator' ? 'gpt-5.4' : 'gpt-5.4-mini',
-        filterModel: 'gpt-5.4-nano',
-        reasoningEffort: identity.reasoning_effort,
-        buildSystemPrompt: () =>
-          member.id === 'facilitator'
-            ? buildModeratorPrompt(soul, identity, identities, currentPhase, ctx)
-            : buildReactiveMemberPrompt(soul, identity, identities, currentPhase, ctx),
-        buildFilterPrompt: () =>
-          buildFilterPrompt(identity, identities, currentPhase, { userName: ctx.userName }),
-      };
-    });
-
     try {
       const replyToMemberId = replyTo?.memberName
         ? members.find(m => m.name === replyTo.memberName)?.id
         : undefined;
 
-      const appendMessage = (msg: Message) => {
-        set((s) => ({
-          currentSession: s.currentSession ? {
-            ...s.currentSession,
-            messages: [...s.currentSession.messages, msg],
-          } : null,
-        }));
-        if (currentSession.dbId) {
-          api('/api/messages', {
-            method: 'POST',
-            body: JSON.stringify({
-              sessionId: currentSession.dbId,
-              role: msg.role,
-              content: msg.content,
-              memberName: msg.memberName,
-              phase: get().currentSession?.phase,
-            }),
-          }).catch(console.warn);
-        }
-      };
-
-      await runReactionLoop({
-        agents,
-        messages: get().currentSession?.messages.slice(-30) || [],
-        moderatorOnly: isInit,
-        replyToMember: replyToMemberId,
-        callbacks: {
-          onMessage: appendMessage,
+      await streamCouncil(
+        {
+          sessionId: currentSession.dbId,
+          message: userMsg,
+          memberIds,
+          phase,
+          sessionNumber: currentSession.sessionNumber,
+          turnsInPhase: currentSession.turnsInPhase || 0,
+          replyToMember: replyToMemberId,
+          isInit,
+        },
+        {
+          onMessage: (msg) => {
+            const message: Message = { role: msg.role as 'user' | 'assistant', content: msg.content, memberName: msg.memberName };
+            set((s) => ({
+              currentSession: s.currentSession ? {
+                ...s.currentSession,
+                messages: [...s.currentSession.messages, message],
+              } : null,
+            }));
+          },
           onPhaseChange: (newPhase, _message) => {
             track('phase_advanced', { from: get().currentSession?.phase, to: newPhase });
             set((s) => ({
               currentSession: s.currentSession ? { ...s.currentSession, phase: newPhase, turnsInPhase: 0 } : null,
             }));
+          },
+          onCommitment: (text, deadline) => {
             if (currentSession.dbId) {
-              api('/api/sessions', {
-                method: 'PATCH',
-                body: JSON.stringify({ id: currentSession.dbId, phase: newPhase }),
+              api('/api/commitments', {
+                method: 'POST',
+                body: JSON.stringify({ texts: [`${text}${deadline ? ` (by ${deadline})` : ''}`], sessionId: currentSession.dbId }),
+              }).then((newCommitments) => {
+                set((s) => ({ commitments: [...newCommitments, ...s.commitments] }));
               }).catch(console.warn);
             }
           },
-          onCommitment: (text, deadline) => {
-            api('/api/commitments', {
-              method: 'POST',
-              body: JSON.stringify({ texts: [`${text}${deadline ? ` (by ${deadline})` : ''}`], sessionId: currentSession.dbId }),
-            }).then((newCommitments) => {
-              set((s) => ({ commitments: [...newCommitments, ...s.commitments] }));
-            }).catch(console.warn);
-          },
           onCallOn: (memberName, _prompt) => {
-            // The call_on action already sent a message. The called member
-            // will see their name in the latest message and respond naturally
-            // in the next evaluation round. No extra logic needed — the engine
-            // handles it via the existing mention detection in prompts.
             console.log(`[engine] Maude called on ${memberName}`);
           },
           onEndSession: (_message) => {
@@ -449,11 +443,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
               currentSession: s.currentSession ? { ...s.currentSession, phase: 'done' } : null,
             }));
             if (currentSession.dbId) {
-              api('/api/sessions', {
-                method: 'PATCH',
-                body: JSON.stringify({ id: currentSession.dbId, phase: 'done' }),
-              }).catch(console.warn);
-              // Fire-and-forget: generate session summary in background
               api('/api/sessions/summarize', {
                 method: 'POST',
                 body: JSON.stringify({ sessionId: currentSession.dbId }),
@@ -462,14 +451,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
               }).catch(console.warn);
             }
           },
+          onError: (message) => {
+            console.error('[council] Server error:', message);
+          },
         },
-        llm: async (system, messages, model, tools, options) => {
-          const result = await chatApi(system, messages, model, tools, options);
-          return result;
-        },
-      });
+      );
     } catch (err) {
-      console.error('AI call failed:', err);
+      console.error('Council stream failed:', err);
     }
 
     set({ isLoading: false });

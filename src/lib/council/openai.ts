@@ -46,7 +46,7 @@ export async function callOpenAI(
   const start = Date.now();
 
   // Build input items from message history
-  const input = messages.slice(-30).map((m) => {
+  const input = messages.slice(-60).map((m) => {
     let content = m.content;
     if (m.replyTo) {
       content = `[replying to ${m.replyTo.memberName || 'User'}: "${m.replyTo.content.substring(0, 80)}"]\n${content}`;

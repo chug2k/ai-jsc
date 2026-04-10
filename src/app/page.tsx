@@ -4,18 +4,20 @@ import styles from './landing.module.css';
 import FaqItem from '@/components/ui/FaqItem';
 import { getPlans, type PlanData } from '@/lib/plans';
 import PricingButton from '@/components/ui/PricingButton';
-import CouncilDemo from '@/components/landing/CouncilDemo';
 import HeroAnimation from '@/components/landing/HeroAnimation';
 import HowItWorksAnimation from '@/components/landing/HowItWorksAnimation';
 import MobileNav from '@/components/landing/MobileNav';
+import SessionPreview from '@/components/landing/SessionPreview';
+import ComparisonSection from '@/components/landing/ComparisonSection';
+import { HERO_DEMO, RAY_DEMO, DEREK_DEMO, SOFIA_DEMO } from '@/components/landing/demo-data';
 
 export const metadata: Metadata = {
-  title: 'jobsearch.quest — AI-Powered Job Search Council | Never Search Alone',
-  description: 'Stop job searching alone. The proven Job Search Council methodology — a structured 10-session curriculum with accountability, perspective, and support — guided by AI, on your schedule.',
+  title: 'jobsearch.quest — The Job Search Council You\'ll Actually Use',
+  description: 'The job search council you\'ll actually use. The proven Never Search Alone methodology, guided by AI, on your schedule. Start your first session free.',
   alternates: { canonical: 'https://jobsearch.quest' },
   openGraph: {
-    title: 'jobsearch.quest — AI-Powered Job Search Council',
-    description: 'The proven Job Search Council methodology — a structured 10-session curriculum with accountability, perspective, and support — guided by AI, on your schedule.',
+    title: 'jobsearch.quest — The Job Search Council You\'ll Actually Use',
+    description: 'The proven Never Search Alone methodology. No recruiting, no scheduling. Start your first session free.',
     type: 'website',
     url: 'https://jobsearch.quest',
     images: [{ url: 'https://jobsearch.quest/img/hero.jpg', width: 1200, height: 630 }],
@@ -32,7 +34,7 @@ export default async function LandingPage() {
     '@type': 'SoftwareApplication',
     name: 'jobsearch.quest',
     applicationCategory: 'BusinessApplication',
-    description: 'AI-powered Job Search Council based on the Never Search Alone methodology. A structured 10-session curriculum with accountability, perspective, and support — on your schedule.',
+    description: 'The job search council you\'ll actually use. The proven Never Search Alone methodology, guided by AI, on your schedule. Start your first session free.',
     url: 'https://jobsearch.quest',
     offers: {
       '@type': 'Offer',
@@ -49,7 +51,7 @@ export default async function LandingPage() {
       {
         '@type': 'Question',
         name: 'What is a Job Search Council?',
-        acceptedAnswer: { '@type': 'Answer', text: 'A Job Search Council (JSC) is a small accountability group of 4-6 people who meet weekly to support each other\'s job search. Developed by Phyl Terry and documented in Never Search Alone, over 5,000 real JSCs have been launched. jobsearch.quest brings this methodology to AI so you can run a session anytime.' },
+        acceptedAnswer: { '@type': 'Answer', text: 'A Job Search Council (JSC) is a small accountability group of 4-6 people who meet weekly to support each other\'s job search. Developed by Phyl Terry and documented in Never Search Alone, over 5,000 real JSCs have been launched. jobsearch.quest is the council you can start tonight — the proven methodology with zero activation energy.' },
       },
       {
         '@type': 'Question',
@@ -88,6 +90,7 @@ export default async function LandingPage() {
         <div className={styles.container}>
           <a href="#" className={styles['nav-mark']}>jobsearch.quest</a>
           <div className={styles['nav-links']}>
+            <a href="#compare">Compare</a>
             <a href="#how">How it works</a>
             <a href="#council">Council</a>
             <a href="#pricing">Pricing</a>
@@ -112,59 +115,16 @@ export default async function LandingPage() {
         <div className={styles['hero-overlay']}>
           <div className={styles['hero-content']}>
             <div className={styles['section-label']}>Based on the Never Search Alone methodology</div>
-            <h1 className={styles.display}>Stop job searching alone.</h1>
+            <h1 className={styles.display}>The job search council you&apos;ll actually use.</h1>
             <p className={styles.subtitle}>
-              The proven Job Search Council methodology &mdash; a structured 10-session curriculum with accountability, perspective, and support &mdash; available on your schedule, guided by AI.
+              The proven Never Search Alone methodology. No recruiting. No scheduling. No 10-week commitment. Just structured support, on your schedule.
             </p>
             <HeroAnimation />
             <div className={styles['hero-ctas']}>
               <a href="/app" className={`${styles.btn} ${styles['btn-lg']} ${styles['btn-hero-primary']}`}>Start Your First Session Free</a>
               <a href="#how" className={`${styles.btn} ${styles['btn-lg']} ${styles['btn-hero-ghost']}`}>See How It Works</a>
             </div>
-            <p className={styles.note}>5,000+ real JSCs launched through Never Search Alone. This is the AI-powered edition.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════ LIVE DEMO ═══════ */}
-      <section className={styles.section} style={{ paddingTop: '48px', paddingBottom: '48px' }}>
-        <div className={styles.container} style={{ textAlign: 'center' }}>
-          <div className={styles['section-label']}>See it in action</div>
-          <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '24px' }}>A council session, live</h2>
-          <CouncilDemo />
-        </div>
-      </section>
-
-      {/* ═══════ WHAT IS IT ═══════ */}
-      <section className={styles.section}>
-        <div className={styles.container}>
-          <div className={styles['section-label']}>What is jobsearch.quest?</div>
-          <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '16px' }}>An AI-powered Job Search Council you can start in minutes</h2>
-          <p style={{ fontSize: '16px', lineHeight: 1.75, color: 'var(--text)', marginBottom: '16px' }}>
-            <strong>jobsearch.quest</strong> is an AI-powered <a href="/learn/what-is-a-job-search-council" style={{ color: 'inherit', textDecoration: 'underline' }}>Job Search Council</a> based on the <a href="/learn/never-search-alone-methodology" style={{ color: 'inherit', textDecoration: 'underline' }}>Never Search Alone methodology</a> by Phyl Terry. It guides you through a structured 10-session curriculum &mdash; from defining your must-haves to evaluating job offers &mdash; with AI council members who challenge your thinking, hold you accountable, and push you toward the right role.
-          </p>
-          <p style={{ fontSize: '16px', lineHeight: 1.75, color: 'var(--text)', marginBottom: '16px' }}>
-            A real Job Search Council with real people is the gold standard. But most people can&apos;t find 4&ndash;5 peers to meet weekly. jobsearch.quest makes the methodology accessible right now &mdash; no scheduling, no coordination, no waiting. Start a session at midnight or 6am. Your council is always ready.
-          </p>
-          <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap', marginTop: '24px' }}>
-            <div style={{ flex: 1, minWidth: '200px' }}>
-              <p className={styles.mono} style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>The curriculum</p>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-                10 sessions covering the <a href="/learn/how-to-write-a-two-pager" style={{ color: 'inherit', textDecoration: 'underline' }}>Mnookin Two-Pager</a>, <a href="/learn/candidate-market-fit" style={{ color: 'inherit', textDecoration: 'underline' }}>Candidate-Market Fit</a>, <a href="/learn/networking-for-job-seekers" style={{ color: 'inherit', textDecoration: 'underline' }}>Listening Tour</a>, <a href="/learn/interview-preparation-guide" style={{ color: 'inherit', textDecoration: 'underline' }}>interview prep</a>, and <a href="/learn/job-offer-negotiation" style={{ color: 'inherit', textDecoration: 'underline' }}>offer negotiation</a>.
-              </p>
-            </div>
-            <div style={{ flex: 1, minWidth: '200px' }}>
-              <p className={styles.mono} style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>The council</p>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-                15+ AI council members with distinct perspectives &mdash; from strategic thinkers to devil&apos;s advocates. They don&apos;t agree with each other.
-              </p>
-            </div>
-            <div style={{ flex: 1, minWidth: '200px' }}>
-              <p className={styles.mono} style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>The accountability</p>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-                Weekly <a href="/learn/job-search-accountability" style={{ color: 'inherit', textDecoration: 'underline' }}>commitments</a> tracked across sessions. Your council remembers what you said you&apos;d do &mdash; and asks about it.
-              </p>
-            </div>
+            <p className={styles.note}>Based on the Never Search Alone methodology by Phyl Terry. 5,000+ real Job Search Councils launched. This is the version you can start tonight.</p>
           </div>
         </div>
       </section>
@@ -174,7 +134,7 @@ export default async function LandingPage() {
         <div className={styles.container}>
           <div className={styles['section-label']}>The problem</div>
           <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '4px' }}>Searching alone is a losing strategy</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Solo seekers are slower, less selective, and more likely to take the wrong offer.</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Solo seekers are slower, less selective, and more likely to take the wrong offer. That&apos;s why the Never Search Alone methodology exists &mdash; and why <a href="/learn/job-search-accountability" style={{ color: 'inherit', textDecoration: 'underline' }}>job search accountability</a> changes everything.</p>
           <div className={styles['problem-grid']}>
             <div className={styles['problem-card']}>
               <div className={styles.stat}>73%</div>
@@ -190,6 +150,50 @@ export default async function LandingPage() {
               <div className={styles.stat}>1 in 3</div>
               <h3>Quit within 6 months</h3>
               <p>Taking the first offer from <a href="/learn/job-search-burnout" style={{ color: 'inherit', textDecoration: 'underline' }}>exhaustion</a> leads to regret. A council keeps you honest about what you actually want.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════ WHY NOT CHATGPT ═══════ */}
+      <section className={styles.section} id="compare">
+        <div className={styles.container}>
+          <div className={styles['section-label']}>Why not just use ChatGPT?</div>
+          <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '4px' }}>One voice vs. a whole council</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>ChatGPT gives you tips. A Job Search Council gives you perspectives, structure, and accountability.</p>
+          <ComparisonSection />
+        </div>
+      </section>
+
+      {/* ═══════ WHAT IS IT ═══════ */}
+      <section className={styles.section}>
+        <div className={styles.container}>
+          <div className={styles['section-label']}>What is jobsearch.quest?</div>
+          <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '16px' }}>You read the book. You know JSCs work. Now you need one.</h2>
+          <p style={{ fontSize: '16px', lineHeight: 1.75, color: 'var(--text)', marginBottom: '16px' }}>
+            <strong>jobsearch.quest</strong> is an AI-powered <a href="/learn/what-is-a-job-search-council" style={{ color: 'inherit', textDecoration: 'underline' }}>Job Search Council</a> that runs the full <a href="/learn/never-search-alone-methodology" style={{ color: 'inherit', textDecoration: 'underline' }}>Never Search Alone</a> 10-session curriculum &mdash; the Mnookin Two-Pager, Listening Tour, Candidate-Market Fit, all of it &mdash; with AI council members who challenge your thinking, hold you accountable, and push you toward the right role.
+          </p>
+          <p style={{ fontSize: '16px', lineHeight: 1.75, color: 'var(--text)', marginBottom: '16px' }}>
+            A real Job Search Council with real people is the gold standard. But finding 4&ndash;5 peers who are actively searching, aligning schedules, and getting everyone to show up every week &mdash; most people never get past that step. jobsearch.quest is the council you can <a href="/learn/ai-job-search-council-vs-solo-search" style={{ color: 'inherit', textDecoration: 'underline' }}>start tonight</a>.
+          </p>
+          <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap', marginTop: '24px' }}>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <p className={styles.mono} style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>The curriculum</p>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                10 sessions covering the <a href="/learn/how-to-write-a-two-pager" style={{ color: 'inherit', textDecoration: 'underline' }}>Mnookin Two-Pager</a>, <a href="/learn/candidate-market-fit" style={{ color: 'inherit', textDecoration: 'underline' }}>Candidate-Market Fit</a>, <a href="/learn/networking-for-job-seekers" style={{ color: 'inherit', textDecoration: 'underline' }}>Listening Tour</a>, <a href="/learn/interview-preparation-guide" style={{ color: 'inherit', textDecoration: 'underline' }}>interview prep</a>, and <a href="/learn/job-offer-negotiation" style={{ color: 'inherit', textDecoration: 'underline' }}>offer negotiation</a>.
+              </p>
+            </div>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <p className={styles.mono} style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>The council</p>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                10 AI council members with distinct perspectives &mdash; from strategic thinkers to devil&apos;s advocates. They don&apos;t agree with each other.
+              </p>
+            </div>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <p className={styles.mono} style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>The accountability</p>
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                Weekly <a href="/learn/job-search-accountability" style={{ color: 'inherit', textDecoration: 'underline' }}>commitments</a> tracked across sessions. Your council remembers what you said you&apos;d do &mdash; and asks about it.
+              </p>
             </div>
           </div>
         </div>
@@ -232,97 +236,10 @@ export default async function LandingPage() {
           <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '4px' }}>Hear what your council sounds like</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px' }}>Real output from real sessions. Support, accountability, and honest challenge.</p>
 
-          {/* Convo 1: Accountability + seeing through excuses */}
-          <div style={{ marginBottom: '40px' }}>
-            <div className={styles['convo-scenario']}>
-              <div className={styles['convo-scenario-label']}>Session 1 &middot; Check-In</div>
-              <h3>Ray has been saying he&apos;ll explore climate tech for a year. His council won&apos;t let that slide.</h3>
-            </div>
-            <div className={styles['convo-thread']}>
-              <div className={`${styles.msg} ${styles['msg-user']}`}>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Ray</div>
-                  <div className={styles['msg-text']}>I think I&apos;ve been using my family as an excuse not to act. Like, &ldquo;I can&apos;t take risks because of them&rdquo; &mdash; but maybe the real risk is spending another decade somewhere that&apos;s slowly killing my motivation.</div>
-                </div>
-                <div className={styles['msg-avatar']}>R</div>
-              </div>
-              <div className={styles.msg}>
-                <div className={styles['msg-avatar']} style={{ background: '#ef444422', border: '1px solid #ef444444' }}>&#x1F608;</div>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: '#ef4444' }}>Rina <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Assumption Checker</span></div>
-                  <div className={styles['msg-text']}>It may not be family holding you back so much as the story that &ldquo;good fathers don&apos;t change.&rdquo; Avoidance can masquerade as responsibility. If you never test a path forward, you may be teaching caution, but also teaching resignation.</div>
-                </div>
-              </div>
-              <div className={styles.msg}>
-                <div className={styles['msg-avatar']} style={{ background: '#f59e0b22', border: '1px solid #f59e0b44' }}>&#x2699;&#xFE0F;</div>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: '#f59e0b' }}>June <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Action Partner</span></div>
-                  <div className={styles['msg-text']}>Your wife doesn&apos;t want you to stay stuck &mdash; she wants a plan with numbers. Pull three months of essential spending tonight. That&apos;s the first input for a bridge plan she can actually react to.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Convo 2: Emotional support + not being alone */}
-          <div style={{ marginBottom: '40px' }}>
-            <div className={styles['convo-scenario']}>
-              <div className={styles['convo-scenario-label']}>Session 0 &middot; Trust-Building</div>
-              <h3>Derek got fired from his first job. He&apos;s ashamed to tell his parents.</h3>
-            </div>
-            <div className={styles['convo-thread']}>
-              <div className={`${styles.msg} ${styles['msg-user']}`}>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Derek</div>
-                  <div className={styles['msg-text']}>The worst part is telling my parents. They came here from Korea with nothing. They worked 80-hour weeks so I could go to college. And I got fired from my first real job.</div>
-                </div>
-                <div className={styles['msg-avatar']}>D</div>
-              </div>
-              <div className={styles.msg}>
-                <div className={styles['msg-avatar']} style={{ background: '#e879f922', border: '1px solid #e879f944' }}>&#x1FA9E;</div>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: '#e879f9' }}>Sam <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Emotional Compass</span></div>
-                  <div className={styles['msg-text']}>The loss here isn&apos;t just the job &mdash; it&apos;s the shock of realizing the rules you lived by didn&apos;t protect you in this setting.</div>
-                </div>
-              </div>
-              <div className={styles.msg}>
-                <div className={styles['msg-avatar']} style={{ background: '#f9731622', border: '1px solid #f9731644' }}>&#x1F3AF;</div>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: '#f97316' }}>Kai <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Interview Coach</span></div>
-                  <div className={styles['msg-text']}>You can tell your parents: &ldquo;Your sacrifices matter to me, and this is painful, but I&apos;m treating it as feedback and building a plan.&rdquo; That honors their sacrifice without inviting a shame spiral.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Convo 3: Honest challenge + progress */}
-          <div>
-            <div className={styles['convo-scenario']}>
-              <div className={styles['convo-scenario-label']}>Session 4 &middot; Gratitude House</div>
-              <h3>Sofia has been avoiding calling the one person who could actually help.</h3>
-            </div>
-            <div className={styles['convo-thread']}>
-              <div className={`${styles.msg} ${styles['msg-user']}`}>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: 'var(--text-tertiary)', textAlign: 'right' }}>Sofia</div>
-                  <div className={styles['msg-text']}>I need to talk to Diane. I&apos;ve been avoiding it because I think she&apos;ll push me and I&apos;m not ready to be pushed. But maybe that&apos;s exactly why I should call her.</div>
-                </div>
-                <div className={styles['msg-avatar']}>S</div>
-              </div>
-              <div className={styles.msg}>
-                <div className={styles['msg-avatar']} style={{ background: '#818cf822', border: '1px solid #818cf844' }}>&#x1F5FA;&#xFE0F;</div>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: '#818cf8' }}>Eli <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Career Arc Advisor</span></div>
-                  <div className={styles['msg-text']}>The mentors who unsettle us most are usually the ones closest to the truth we already sense. The task is not to let her push you, but to let her help you name the shape of the next chapter.</div>
-                </div>
-              </div>
-              <div className={styles.msg}>
-                <div className={styles['msg-avatar']} style={{ background: '#ef444422', border: '1px solid #ef444444' }}>&#x1F608;</div>
-                <div className={styles['msg-body']}>
-                  <div className={styles['msg-name']} style={{ color: '#ef4444' }}>Rina <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '11px' }}>Assumption Checker</span></div>
-                  <div className={styles['msg-text']}>&ldquo;She&apos;ll push me&rdquo; can become a reason to keep the door half-open without ever testing the conversation. Call Diane with one specific ask: where did she see your work have structural leverage? Don&apos;t ask her to solve your whole next move in one call.</div>
-                </div>
-              </div>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: 640, margin: '0 auto' }}>
+            <SessionPreview {...RAY_DEMO} />
+            <SessionPreview {...DEREK_DEMO} />
+            <SessionPreview {...SOFIA_DEMO} />
           </div>
         </div>
       </section>
@@ -331,8 +248,8 @@ export default async function LandingPage() {
       <section className={styles.section} id="how">
         <div className={styles.container}>
           <div className={styles['section-label']}>How it works</div>
-          <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '4px' }}>A proven 10-session curriculum, guided by AI</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Based on the real moderator agendas and exercises from <em>Never Search Alone</em> by Phyl Terry.</p>
+          <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '4px' }}>Start a council session in minutes, not weeks</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>The same 10-session curriculum from <em>Never Search Alone</em>. Same exercises. Same accountability. Zero activation energy.</p>
 
           <div className={styles.phases}>
             <span className={styles['phase-tag']}>👋 Check-In</span>
@@ -377,7 +294,7 @@ export default async function LandingPage() {
       <section className={styles.section} id="council" style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
         <div className={styles.container}>
           <div className={styles['section-label']}>Your council</div>
-          <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '4px' }}>15+ perspectives. Build the council you need.</h2>
+          <h2 className={styles.display} style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '4px' }}>10 perspectives. Build the council you need.</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>Purpose-built archetypes plus fictional voices inspired by real thinkers. Each sees your situation from a different angle.</p>
 
           <p className={styles.mono} style={{ fontSize: '11px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>Archetypes</p>
@@ -566,8 +483,8 @@ export default async function LandingPage() {
       {/* ═══════ CTA ═══════ */}
       <section className={`${styles.section} ${styles['cta-banner']}`}>
         <div className={styles.container}>
-          <h2 className={styles.display}>Your council is ready.</h2>
-          <p>First session is free. Sign in with Google to get started.</p>
+          <h2 className={styles.display}>Your Job Search Council is ready.</h2>
+          <p>You don&apos;t need to find members. You don&apos;t need to align schedules. First session is free.</p>
           <a href="/app" className={`${styles.btn} ${styles['btn-primary']} ${styles['btn-lg']}`}>Start Your First Session</a>
         </div>
       </section>

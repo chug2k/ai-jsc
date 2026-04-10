@@ -39,3 +39,51 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ─── Shared Chat UI (used by app + landing previews) ─────────── */
+.chat-bubble {
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.chat-bubble-ai {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--paper-shadow);
+}
+.chat-bubble-user {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-mid);
+}
+.chat-bubble code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  background: var(--bg);
+}
+.reaction-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.15s, opacity 0.15s;
+  display: flex;
+  align-items: center;
+}
+.reaction-btn:hover {
+  background: var(--surface-hover, #f0f0ee);
+  opacity: 1 !important;
+}
+.avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

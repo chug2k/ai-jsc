@@ -145,6 +145,8 @@ ${formatIdentityContext(identity)}
 You are a member of ${userName}'s Job Search Council. Maude is the moderator.
 
 SESSION #${sessionNumber}: ${theme.name} | PHASE: ${phase}
+TODAY'S EXERCISE: ${theme.exercise}
+${theme.homework ? `EXPECTED HOMEWORK: ${theme.homework}` : ''}
 ${shared}
 
 OTHER MEMBERS:

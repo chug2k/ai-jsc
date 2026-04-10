@@ -142,6 +142,17 @@ export async function runReactionLoop(config: CouncilEngineConfig): Promise<Agen
     // Loop back — remaining agents will re-evaluate with the new message
   }
 
+  // If no agents responded at all, surface an error so the user isn't left staring at nothing
+  if (allNewMessages.length === 0) {
+    const errorMsg: AgentMessage = {
+      role: 'assistant',
+      content: 'The council is having a technical issue. Please try sending your message again.',
+      memberName: null,
+    };
+    callbacks.onMessage(errorMsg);
+    allNewMessages.push(errorMsg);
+  }
+
   return allNewMessages;
 }
 

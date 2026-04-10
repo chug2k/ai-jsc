@@ -31,10 +31,28 @@ interface ChatBubbleProps {
   messageId?: string;
   onReply?: (index: number) => void;
   onScrollTo?: (index: number) => void;
+  /** When set, render with these members instead of the store (landing/demo use). */
+  demoMembers?: Member[];
+  /** When set, use this name for the user avatar instead of the store user. */
+  demoUserName?: string;
+  /** Hide hover-revealed reaction + reply controls (landing/demo use). */
+  hideControls?: boolean;
 }
 
-export default function ChatBubble({ message, index, messageId, onReply, onScrollTo }: ChatBubbleProps) {
-  const { customMembers, user } = useSessionStore();
+export default function ChatBubble({
+  message,
+  index,
+  messageId,
+  onReply,
+  onScrollTo,
+  demoMembers,
+  demoUserName,
+  hideControls,
+}: ChatBubbleProps) {
+  const storeCustomMembers = useSessionStore(s => s.customMembers);
+  const storeUserName = useSessionStore(s => s.user?.name);
+  const customMembers = demoMembers ? [] : storeCustomMembers;
+  const userName = demoUserName ?? storeUserName;
   const [reaction, setReaction] = useState<'up' | 'down' | null>(null);
   const [reacting, setReacting] = useState(false);
 
@@ -52,7 +70,7 @@ export default function ChatBubble({ message, index, messageId, onReply, onScrol
     } catch { /* silent fail */ }
     setReacting(false);
   };
-  const members = allMembers(customMembers);
+  const members = demoMembers ?? allMembers(customMembers);
 
   let member: Member | undefined;
   let displayText = message.content;
@@ -69,7 +87,7 @@ export default function ChatBubble({ message, index, messageId, onReply, onScrol
   }
 
   if (message.role === 'user') {
-    const initial = (user?.name || 'You')[0].toUpperCase();
+    const initial = (userName || 'You')[0].toUpperCase();
     const replyMember = message.replyTo?.memberName
       ? members.find(m => m.name === message.replyTo!.memberName)
       : null;
@@ -120,7 +138,7 @@ export default function ChatBubble({ message, index, messageId, onReply, onScrol
             <div className="flex items-center gap-2 mb-1">
               <span className="text-xs font-semibold" style={{ color }}>{member.name}</span>
               <span className="text-xs" style={{ color: 'var(--muted)' }}>{member.role}</span>
-              {onReply && (
+              {onReply && !hideControls && (
                 <button
                   onClick={() => onReply(index)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -138,6 +156,7 @@ export default function ChatBubble({ message, index, messageId, onReply, onScrol
           <div className="chat-bubble chat-bubble-ai"
             style={{ borderLeft: `3px solid ${color}` }}
             dangerouslySetInnerHTML={{ __html: fmt(displayText, members) }} />
+          {!hideControls && (
           <div className="flex gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => handleReaction('up')}
@@ -162,6 +181,7 @@ export default function ChatBubble({ message, index, messageId, onReply, onScrol
               <ThumbDown filled={reaction === 'down'} />
             </button>
           </div>
+          )}
         </div>
       </div>
     </div>

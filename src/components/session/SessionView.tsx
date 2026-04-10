@@ -42,6 +42,14 @@ function SessionAgendaBanner({ sessionNumber }: { sessionNumber: number }) {
         <p style={{ color: 'var(--muted)', fontSize: '0.75rem', lineHeight: 1.5, margin: 0 }}>
           {theme.description}
         </p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', lineHeight: 1.5, margin: '0.5rem 0 0 0', fontStyle: 'italic' }}>
+          Exercise: {theme.exercise}
+        </p>
+        {theme.homework && (
+          <p style={{ color: 'var(--text-tertiary)', fontSize: '0.6875rem', lineHeight: 1.5, margin: '0.25rem 0 0 0' }}>
+            Homework: {theme.homework}
+          </p>
+        )}
       </div>
     </div>
   );

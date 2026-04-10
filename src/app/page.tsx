@@ -115,7 +115,7 @@ export default async function LandingPage() {
         <div className={styles['hero-overlay']}>
           <div className={styles['hero-content']}>
             <div className={styles['section-label']}>Based on the Never Search Alone methodology</div>
-            <h1 className={styles.display}>The job search council you&apos;ll actually use.</h1>
+            <h1 className={styles.display}>The job search <span style={{ textDecoration: 'line-through', opacity: 0.4 }}>council</span> support team you&apos;ll actually use.</h1>
             <p className={styles.subtitle}>
               The proven Never Search Alone methodology. No recruiting. No scheduling. No 10-week commitment. Just structured support, on your schedule.
             </p>

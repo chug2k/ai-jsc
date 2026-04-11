@@ -18,7 +18,7 @@ export default function Header() {
       <nav className="flex items-center gap-1 sm:gap-2">
         {view === 'session' && (
           <button onClick={() => setView('council')} className="btn btn-subtle text-xs px-2 py-1.5 sm:px-3">
-            Council
+            Team
           </button>
         )}
         {view !== 'session' && !currentSession && (

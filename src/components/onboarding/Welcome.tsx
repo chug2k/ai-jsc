@@ -55,7 +55,7 @@ export default function Welcome() {
             Hey {firstName}.
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: '1rem' }}>
-            Your council is ready.
+            Your support team is ready.
           </p>
         </div>
 
@@ -119,7 +119,7 @@ export default function Welcome() {
               }}
             />
             <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', marginTop: '0.375rem' }}>
-              Helps the council understand your background. Optional.
+              Helps your advisors understand your background. Optional.
             </p>
           </div>
         )}
@@ -163,7 +163,7 @@ export default function Welcome() {
               }}
             />
             <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', marginTop: '0.375rem' }}>
-              This helps the council give you better, more specific advice.
+              This helps your advisors give you better, more specific advice.
             </p>
           </div>
         ) : null}
@@ -187,7 +187,7 @@ export default function Welcome() {
             opacity: launching ? 0.7 : 1,
           }}
         >
-          {launching ? 'Setting up...' : 'Meet Your Council →'}
+          {launching ? 'Setting up...' : 'Meet Your Team →'}
         </button>
 
         {!status && (

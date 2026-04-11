@@ -3,23 +3,23 @@
 import { useSessionStore } from '@/stores/session-store';
 
 const SESSIONS = [
-  { num: 0, name: 'Trust-Building', desc: 'Get to know your council. Share your story, your emotional landscape, and what brought you here. No homework, no pressure.' },
+  { num: 0, name: 'Trust-Building', desc: 'Get to know your team. Share your story, your emotional landscape, and what brought you here. No homework, no pressure.' },
   { num: 1, name: 'Your Story & Goals', desc: 'Extended introduction — your career so far, what you\'re looking for, your timeframe. Establish what you\'re working toward.' },
   { num: 2, name: 'Must-Nots & Must-Haves', desc: 'The Mnookin Two-Pager exercises. What do you hate doing? What don\'t you want? Then invert: what do you love, and what are your must-haves?' },
-  { num: 3, name: 'Mnookin Two-Pager Review', desc: 'Present your Two-Pager to the council. What resonates? What\'s missing? What needs sharpening?' },
+  { num: 3, name: 'Mnookin Two-Pager Review', desc: 'Present your Two-Pager to your team. What resonates? What\'s missing? What needs sharpening?' },
   { num: 4, name: 'Gratitude House', desc: 'Reflect on who has helped your career. Write thank-you notes. Build your contact list for the Listening Tour.' },
   { num: 5, name: 'Listening Tour', desc: 'Report back on conversations with your network. What surprised you? What challenging feedback did you get?' },
   { num: 6, name: 'Listening Tour (continued)', desc: 'More conversations, more insights. What patterns are emerging? How is the picture coming together?' },
   { num: 7, name: 'Candidate-Market Fit', desc: 'Draft your 1-sentence job search strategy. Where your aspirations meet market reality.' },
   { num: 8, name: 'LinkedIn/Resume Rehab', desc: 'Review your LinkedIn and resume against your Candidate-Market Fit. Are they sending the right signal?' },
-  { num: 9, name: 'Networking', desc: 'Share networking plans, set up your Megibow Dashboard, create your target company list. The hardest part — but you have a council.' },
+  { num: 9, name: 'Networking', desc: 'Share networking plans, set up your Megibow Dashboard, create your target company list. The hardest part — but you have support.' },
   { num: 10, name: 'Interview Prep', desc: 'Practice interviews, draft your Job Mission with OKRs. Walk in with confidence and a clear narrative.' },
 ];
 
 const MEETING_STRUCTURE = [
   { emoji: '👋', name: 'Check-In', desc: 'Personal prompt, emotional pulse (1-10 scale), professional updates, and a check on prior commitments.' },
   { emoji: '📋', name: 'Exercise', desc: 'The main activity for this session — varies by where you are in the curriculum.' },
-  { emoji: '🎁', name: 'Hot Seat / Requests for Help', desc: 'Bring a specific issue for the council to weigh in on. A decision, a dilemma, whatever you need.' },
+  { emoji: '🎁', name: 'Hot Seat / Requests for Help', desc: 'Bring a specific issue for your team to weigh in on. A decision, a dilemma, whatever you need.' },
   { emoji: '✍️', name: 'Commitments', desc: 'What will you do before the next session? Specific, with a deadline and a clear done-state.' },
   { emoji: '✌️', name: 'Check-Out', desc: 'One word that captures how you\'re leaving today.' },
 ];
@@ -42,7 +42,7 @@ export default function LearnView() {
             A <strong>Job Search Council (JSC)</strong> is a small accountability group that meets regularly, follows a structured agenda, and holds each other accountable. Developed by <strong>Phyl Terry</strong> over 25 years of coaching leaders.
           </p>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>
-            The core insight: job searching alone is miserable, slow, and biased. A council gives you outside perspective, accountability, and structural discipline. This AI version replaces the human peer group with AI council members — each with a distinct voice and perspective.
+            The core insight: job searching alone is miserable, slow, and biased. A council gives you outside perspective, accountability, and structural discipline. This app brings the methodology to AI — structured support from advisors with distinct voices, rather than a peer group. Not a replacement for a real JSC, but the version you can start tonight.
           </p>
         </div>
 
@@ -116,7 +116,7 @@ export default function LearnView() {
         </div>
 
         <button onClick={() => setView('council')} className="btn btn-primary btn-lg w-full mb-2">
-          Build My Council →
+          Build My Team →
         </button>
       </div>
     </div>

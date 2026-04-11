@@ -38,10 +38,10 @@ export default function CouncilBuilder() {
     <div className="flex-1 overflow-y-auto p-6 flex flex-col">
       <div className="max-w-2xl mx-auto w-full">
 
-        {/* Selected council */}
+        {/* Selected team */}
         <section className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Your Council</h2>
+            <h2 className="text-lg font-semibold">Your Team</h2>
             <button onClick={() => setView('learn')} className="btn btn-subtle">How does JSC work? →</button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
@@ -61,7 +61,7 @@ export default function CouncilBuilder() {
             )}
           </div>
           <button onClick={() => store.startSession()} className="btn btn-primary btn-lg w-full">
-            {hasUnfinished ? 'Resume Session →' : 'Start Council Session →'}
+            {hasUnfinished ? 'Resume Session →' : 'Start Session →'}
           </button>
           {error && (
             <p className="text-center text-xs mt-2 px-3 py-2 rounded-lg" style={{ color: 'var(--danger)', background: '#ef444411', border: '1px solid #ef444433' }}>
@@ -79,7 +79,7 @@ export default function CouncilBuilder() {
             className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
             <span style={{ color: 'var(--muted)' }}>
-              {customizeOpen ? 'Collapse' : 'Customize council (add / swap members)'}
+              {customizeOpen ? 'Collapse' : 'Customize your team (add / swap advisors)'}
             </span>
             <span style={{ color: 'var(--muted)' }}>{customizeOpen ? '▲' : '▼'}</span>
           </button>

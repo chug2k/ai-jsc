@@ -83,7 +83,7 @@ export default function SessionFeedback() {
         <div className="card" style={{ padding: '2rem', textAlign: 'center' }}>
           <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Thank you</div>
           <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>
-            Your feedback helps improve the council experience.
+            Your feedback helps improve the experience.
           </p>
         </div>
       </div>

@@ -13,9 +13,9 @@ export default function Sidebar() {
     <aside className="sidebar w-56 flex-shrink-0 hidden sm:flex flex-col border-r overflow-y-auto"
       style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
 
-      {/* Council */}
+      {/* Team */}
       <div className="p-3 border-b" style={{ borderColor: 'var(--border)' }}>
-        <div className="section-label mb-2">COUNCIL</div>
+        <div className="section-label mb-2">YOUR TEAM</div>
         <div className="space-y-1.5">
           {members.map(m => m && (
             <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded text-xs"

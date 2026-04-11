@@ -26,7 +26,7 @@ function SignInForm() {
           jobsearch.quest
         </h1>
         <p className="text-sm mb-8" style={{ color: '#6B7280' }}>
-          Sign in to start your council session.
+          Sign in to start your first session.
         </p>
 
         <button

@@ -103,17 +103,76 @@ then `$B js "document.querySelector('button[aria-label=\"Send\"]').click()"` to 
 
 Do NOT use form.submit() or form.requestSubmit() — there is no form element.
 
+## API-Level Testing (bypasses browse timeout)
+
+For SSE streaming, phase changes, and commitments, test the API directly with curl.
+This bypasses the browse server timeout entirely.
+
+### Get auth cookie
+```bash
+COOKIE=$(curl -s -D - http://localhost:3001/api/auth/dev-login 2>&1 | \
+  grep -i 'set-cookie:' | head -1 | sed 's/.*set-cookie: //i' | cut -d';' -f1)
+```
+
+### Verify auth
+```bash
+curl -s http://localhost:3001/api/user -b "$COOKIE" | python3 -m json.tool | head -10
+```
+
+### Test SSE council endpoint (full AI response)
+```bash
+SESSION_ID="<from /api/sessions>"
+curl -s -N http://localhost:3001/api/chat/council \
+  -b "$COOKIE" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"sessionId\": \"$SESSION_ID\",
+    \"message\": \"I feel stuck at my current job.\",
+    \"memberIds\": [\"facilitator\", \"strategist\", \"operator\"],
+    \"phase\": \"checkin\",
+    \"sessionNumber\": 0,
+    \"turnsInPhase\": 1,
+    \"isInit\": false
+  }" | head -40
+```
+
+**Check for these SSE events:**
+- `event: message` — AI advisor responded (verify memberName, content quality)
+- `event: phase_change` — Maude advanced the session (verify phase name)
+- `event: commitment` — Maude extracted a commitment (verify text + deadline)
+- `event: call_on` — Maude called on a specific member
+- `event: done` — stream complete
+- `event: error` — something went wrong (check message)
+
+### Test commitments extraction
+Send a message in the commitments phase with explicit commitment language:
+```bash
+curl -s -N http://localhost:3001/api/chat/council \
+  -b "$COOKIE" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"sessionId\": \"$SESSION_ID\",
+    \"message\": \"I commit to calling two people this week and updating my resume by Friday.\",
+    \"memberIds\": [\"facilitator\", \"strategist\", \"operator\"],
+    \"phase\": \"commitments\",
+    \"sessionNumber\": 0,
+    \"turnsInPhase\": 1,
+    \"isInit\": false
+  }" | head -20
+```
+
+Expect: `event: commitment` with extracted text and deadline.
+
 ## Known Limitations
 
-1. **Browse server ~5s idle timeout.** AI responses take 3-10 seconds.
-   You may not see the full response. The loading dots prove the pipeline works.
+1. **Browse server ~5s idle timeout.** Use browser for UI verification (layout,
+   copy, buttons). Use curl for API verification (SSE, AI responses, phase changes).
 
 2. **Session accumulates messages.** Each test run resumes the same session.
-   For a clean test, the test user needs a new session (delete old ones via DB).
+   Create new sessions via `POST /api/sessions` (respects plan limits).
 
-3. **No streaming verification.** Can't verify SSE streams render incrementally
-   because the browse server may restart mid-stream. Verify streaming by checking
-   the network tab or server logs instead.
+3. **Free plan limit: 3 council members.** The test user is on the free plan.
+   POST /api/sessions with >3 memberIds will fail.
 
 ## What to Verify (Checklist)
 

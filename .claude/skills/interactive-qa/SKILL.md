@@ -10,139 +10,133 @@ Use when you need to test pages behind auth (session views, dashboards, user set
 
 ## Prerequisites
 
-1. **Dev server must be running.** Check with `curl -s -o /dev/null -w '%{http_code}' http://localhost:3001`.
-   If not running: `PORT=3001 npx next dev --turbopack &` and wait for "Ready".
+1. **Dev server running on port 3001.** Check: `curl -s -o /dev/null -w '%{http_code}' http://localhost:3001`
+   If not: `PORT=3001 npx next dev --turbopack &` — wait for "Ready".
 
-2. **Dev login endpoint must exist** at `/api/auth/dev-login`.
-   This endpoint (src/app/api/auth/dev-login/route.ts) uses the Supabase service role
-   to create and sign in a test user. Only works in NODE_ENV=development.
-   Test user: qa-test@jobsearch.quest
+2. **Dev login endpoint** at `/api/auth/dev-login` (src/app/api/auth/dev-login/route.ts).
+   Creates test user `qa-test@jobsearch.quest` via Supabase service role. Dev-only.
 
-## Critical Rule: Cookie Persistence
+## Critical Rule: Single Bash Call
 
-**The gstack browse binary (`$B`) starts a fresh browser context on every invocation.**
-Cookies set in one `$B` command are LOST by the next `$B` command.
+**The gstack browse binary (`$B`) starts a fresh browser on every Bash tool invocation.**
+ALL browse commands for one test flow MUST be in a SINGLE Bash tool call.
 
-**ALWAYS chain browse commands in a SINGLE Bash call:**
+The browse server also has a ~5 second idle timeout. If you `sleep` for more than
+~4 seconds without a `$B` command, the server dies and all state (cookies, page, DOM) is lost.
 
+**Keep-alive pattern:** Poll with `$B js` every 1-2 seconds instead of long sleeps:
 ```bash
-B=~/.claude/skills/gstack/browse/dist/browse
+# WRONG: server dies during long sleep
+sleep 15 && $B screenshot out.png
 
-# CORRECT: one Bash call, all commands chained
-$B goto "http://localhost:3001/api/auth/dev-login" && \
-sleep 2 && \
-$B goto "http://localhost:3001/app" && \
-sleep 5 && \
-$B snapshot -i -a -o /tmp/app.png
-
-# WRONG: separate Bash calls lose cookies
-$B goto "http://localhost:3001/api/auth/dev-login"  # sets cookie
-# ... cookie is GONE by next call ...
-$B goto "http://localhost:3001/app"  # redirects to signin
+# RIGHT: poll to keep alive
+sleep 2 && $B js "'alive'" && sleep 2 && $B js "'alive'" && $B screenshot out.png
 ```
 
-## Testing Flow
+## Standard Test Flow
 
-### Step 1: Auth + Navigate (single Bash call)
+### 1. Auth + Navigate + Verify Team Builder
 
 ```bash
 B=~/.claude/skills/gstack/browse/dist/browse
 $B goto "http://localhost:3001/api/auth/dev-login" && \
-sleep 2 && \
+sleep 1 && \
 $B goto "http://localhost:3001/app" && \
-sleep 6 && \
-$B snapshot -i -a -o .gstack/qa-reports/screenshots/app-authed.png && \
-$B console --errors
+sleep 4 && \
+$B snapshot -i -a -o .gstack/qa-reports/screenshots/team-builder.png
 ```
 
-The 6-second sleep after /app is critical. The app loads user data, council config,
-sessions, and commitments in parallel (see session-store.ts:init). First-time users
-also see the Welcome onboarding flow which renders after init completes.
+**Check:** "Your Team" heading (not "Your Council"), member cards, "Start Session" button.
 
-### Step 2: Interact with the app
-
-Chain interactions in a single Bash call to maintain state:
+### 2. Start/Resume Session + Verify Session View
 
 ```bash
 B=~/.claude/skills/gstack/browse/dist/browse
-# Example: click Start Session and wait for AI response
-$B js "document.querySelectorAll('button').forEach(b => { if(b.textContent.includes('Start Session')) b.click() })" && \
-sleep 12 && \
-$B snapshot -i -a -o .gstack/qa-reports/screenshots/session.png && \
-$B console --errors
+$B goto "http://localhost:3001/api/auth/dev-login" && \
+sleep 1 && \
+$B goto "http://localhost:3001/app" && \
+sleep 4 && \
+$B js "document.querySelectorAll('button').forEach(b => {
+  if(b.textContent.includes('Resume') || b.textContent.includes('Start Session')) b.click()
+}); 'clicked'" && \
+sleep 2 && \
+$B snapshot -i -a -o .gstack/qa-reports/screenshots/session-view.png && \
+$B js "document.body.innerText.substring(0, 400)"
 ```
 
-The 12-second sleep after starting a session accounts for:
-- Session creation API call (~1s)
-- __INIT__ message sent to council engine (~1s)
-- Nano filter calls for all agents in parallel (~500ms)
-- Full inference for responding agents (~3-8s per agent)
-- Multiple reaction loop rounds
+**Check:** PhaseBar shows progress line + "N of 5" (NOT clickable tabs).
+SessionAgendaBanner shows exercise description + homework. Sidebar: "YOUR TEAM".
 
-### Step 3: Send a message
+### 3. Send Message + Observe AI Response
 
 ```bash
 B=~/.claude/skills/gstack/browse/dist/browse
-$B js "
-  const input = document.querySelector('textarea, input[type=text]');
-  if (input) {
-    input.value = 'I am exploring a career change from engineering to product management.';
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    const form = input.closest('form');
-    if (form) form.dispatchEvent(new Event('submit', { bubbles: true }));
-    else {
-      const btn = document.querySelector('button[type=submit], button:last-of-type');
-      if (btn) btn.click();
-    }
-  }
-  'sent';
-" && \
-sleep 15 && \
-$B snapshot -i -a -o .gstack/qa-reports/screenshots/response.png
+$B goto "http://localhost:3001/api/auth/dev-login" && \
+sleep 1 && \
+$B goto "http://localhost:3001/app" && \
+sleep 4 && \
+$B js "document.querySelectorAll('button').forEach(b => {
+  if(b.textContent.includes('Resume') || b.textContent.includes('Start Session')) b.click()
+}); 'clicked'" && \
+sleep 2 && \
+$B fill "textarea" "I am exploring a career change and feeling uncertain about next steps." && \
+$B js "document.querySelector('button[aria-label=\"Send\"]').click(); 'sent'" && \
+sleep 1 && $B js "'1s bubbles:'+document.querySelectorAll('.chat-bubble').length+' loading:'+!!document.querySelector('.loading-dot')" && \
+sleep 1 && $B js "'2s bubbles:'+document.querySelectorAll('.chat-bubble').length" && \
+sleep 1 && $B js "'3s bubbles:'+document.querySelectorAll('.chat-bubble').length" && \
+$B screenshot .gstack/qa-reports/screenshots/ai-response.png && \
+$B console --errors
 ```
 
-## What to Check
+**Check:** Bubble count increases after send. Loading dots appear. No console errors.
+Note: AI response takes 3-10 seconds. The browse server may timeout before full response
+renders. Confirm loading state shows (dots visible) — that proves the SSE pipeline works.
 
-### Welcome/Onboarding (first-time users)
-- "Your support team is ready." (NOT "Your council is ready.")
-- Search status selector renders 4 options
-- LinkedIn headline input appears after status selected
-- "Meet Your Team →" button (NOT "Meet Your Council")
+## How ChatInput Works
 
-### CouncilBuilder (team selection)
-- "Your Team" heading (NOT "Your Council")
-- Member cards show name + role
-- "Start Session →" button (NOT "Start Council Session")
-- "Customize your team (add / swap advisors)" toggle
+The chat textarea has NO parent `<form>`. Submit happens via:
+- **Enter key** (non-shift) triggers `handleSend()` in ChatInput.tsx:118
+- **Click the "↑" button** (aria-label="Send") triggers `handleSend()` via onClick
+
+Use `$B fill "textarea" "message"` to set text (handles React state),
+then `$B js "document.querySelector('button[aria-label=\"Send\"]').click()"` to send.
+
+Do NOT use form.submit() or form.requestSubmit() — there is no form element.
+
+## Known Limitations
+
+1. **Browse server ~5s idle timeout.** AI responses take 3-10 seconds.
+   You may not see the full response. The loading dots prove the pipeline works.
+
+2. **Session accumulates messages.** Each test run resumes the same session.
+   For a clean test, the test user needs a new session (delete old ones via DB).
+
+3. **No streaming verification.** Can't verify SSE streams render incrementally
+   because the browse server may restart mid-stream. Verify streaming by checking
+   the network tab or server logs instead.
+
+## What to Verify (Checklist)
+
+### Onboarding (Welcome.tsx)
+- [ ] "Your support team is ready." (NOT "council")
+- [ ] "Meet Your Team →" button
+- [ ] "Helps your advisors understand..." helper text
+
+### Team Builder (CouncilBuilder.tsx)
+- [ ] "Your Team" heading
+- [ ] "Start Session →" button (NOT "Start Council Session")
+- [ ] "Customize your team (add / swap advisors)" toggle
 
 ### Session View
-- PhaseBar shows as progress indicator (text + line), NOT clickable tabs
-- SessionAgendaBanner shows exercise description + homework
-- Chat bubbles render with member colors and avatars
-- Loading dots appear while AI is responding
-- Messages appear incrementally via SSE (not all at once)
+- [ ] PhaseBar: progress line + "N of 5" (NOT clickable tabs)
+- [ ] SessionAgendaBanner: exercise description + homework visible
+- [ ] Sidebar: "YOUR TEAM" label
+- [ ] Chat bubbles render with member colors
+- [ ] Loading dots appear during AI processing
+- [ ] No console errors
 
-### Sidebar
-- "YOUR TEAM" label (NOT "COUNCIL")
-- Member roster with colors
-- Commitments section
+### Header
+- [ ] "Team" nav button (NOT "Council")
 
-### Error States
-- If OpenAI is down/rate-limited: "The council is having a technical issue" message
-  (NOT silent failure)
-
-## Supabase Cookie Format
-
-The dev-login endpoint sets a cookie named `sb-{projectRef}-auth-token` where
-projectRef is extracted from NEXT_PUBLIC_SUPABASE_URL. The cookie value is a
-JSON object with access_token, refresh_token, expires_at, etc.
-
-The Supabase SSR middleware reads this cookie on every request to authenticate.
-
-## New Test User Setup
-
-The dev-login endpoint auto-creates the test user on first use:
-- Email: qa-test@jobsearch.quest
-- Name: QA Tester
-- Plan: free (auto-assigned)
-- The jsc_users row is auto-created by the /api/user GET endpoint on first access.
+### Sign-in Page
+- [ ] "Sign in to start your first session." (NOT "council session")

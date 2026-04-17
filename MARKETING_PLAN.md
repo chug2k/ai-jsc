@@ -161,7 +161,8 @@ routine**.
     - `OPENAI_API_KEY=sk-...` (for generated creative images — optional
       but recommended; if omitted, the skill falls back to the branded
       OG card for every post)
-    - `OPENAI_IMAGE_MODEL=gpt-image-1` (optional override)
+    - `OPENAI_IMAGE_MODEL=gpt-image-1.5` (optional override; default is
+      the latest released model)
   - **Network access:** **Custom** → check "Also include default list of
     common package managers" → add these lines under Allowed domains:
     ```

@@ -23,7 +23,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 
-const MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
+const MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1.5';
 const ENDPOINT = 'https://api.openai.com/v1/images/generations';
 const PUBLIC_BASE = process.env.PUBLIC_BASE_URL || 'https://jobsearch.quest';
 

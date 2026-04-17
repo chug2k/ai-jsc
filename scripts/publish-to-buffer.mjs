@@ -1,26 +1,30 @@
 #!/usr/bin/env node
 /**
- * Publish new marketing artifacts to Buffer.
+ * Publish one marketing artifact to Buffer.
  *
- * Invoked by .github/workflows/marketing-publish.yml after the marketing
- * agent commits to main. Reads files added in the latest commit under
- * content/marketing/, parses YAML frontmatter, and queues the text to the
- * channel matching the routine type.
+ * Invoked by the /marketing-run skill after drafting a short_post or
+ * linkedin_post. The skill captures stdout and records the Buffer post
+ * id (or error) in the artifact's frontmatter before committing.
+ *
+ * Usage:
+ *   node scripts/publish-to-buffer.mjs <path-to-artifact.md>
+ *   node scripts/publish-to-buffer.mjs <path> --dry-run
  *
  * Env:
  *   BUFFER_ACCESS_TOKEN         — required. Personal access token from
  *                                 https://publish.buffer.com/account/apps
- *   BUFFER_TWITTER_CHANNEL_ID   — required for short_post routines
- *   BUFFER_LINKEDIN_CHANNEL_ID  — required for linkedin_post routines
- *   CHANGED_FILES               — required. Newline-separated list of files
- *                                 added in the triggering commit. The
- *                                 workflow computes this via git diff.
- *   DRY_RUN                     — optional. "1" skips the Buffer call.
+ *   BUFFER_TWITTER_CHANNEL_ID   — required for short_post
+ *   BUFFER_LINKEDIN_CHANNEL_ID  — required for linkedin_post
+ *
+ * Output (stdout): single JSON line describing the result:
+ *   { "ok": true, "channel": "twitter", "post_id": "...", "due_at": "..." }
+ *   { "ok": false, "channel": "twitter", "error": "..." }
+ *   { "ok": true, "skipped": "not a publishable routine" }
  *
  * Exit codes:
- *   0 — all eligible posts published (or no eligible posts)
- *   1 — configuration error (missing env)
- *   2 — at least one Buffer call failed
+ *   0 — success OR skipped OR dry-run
+ *   1 — config error (missing env, bad args, unreadable file)
+ *   2 — Buffer call failed
  */
 
 import { readFileSync } from 'node:fs';
@@ -28,9 +32,14 @@ import { readFileSync } from 'node:fs';
 const BUFFER_ENDPOINT = 'https://api.buffer.com';
 
 const ROUTINE_TO_CHANNEL = {
-  short_post: process.env.BUFFER_TWITTER_CHANNEL_ID,
-  linkedin_post: process.env.BUFFER_LINKEDIN_CHANNEL_ID,
+  short_post: { envVar: 'BUFFER_TWITTER_CHANNEL_ID', label: 'twitter' },
+  linkedin_post: { envVar: 'BUFFER_LINKEDIN_CHANNEL_ID', label: 'linkedin' },
 };
+
+function die(msg, code = 1) {
+  console.log(JSON.stringify({ ok: false, error: msg }));
+  process.exit(code);
+}
 
 function parseFrontmatter(raw) {
   const match = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -70,86 +79,63 @@ async function createBufferPost({ token, channelId, text }) {
       },
     }),
   });
-
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(`Buffer HTTP ${res.status}: ${JSON.stringify(json)}`);
-  }
-  if (json.errors) {
-    throw new Error(`Buffer GraphQL errors: ${JSON.stringify(json.errors)}`);
-  }
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${JSON.stringify(json)}`);
+  if (json.errors) throw new Error(`GraphQL: ${JSON.stringify(json.errors)}`);
   const result = json.data?.createPost;
-  if (result?.__typename === 'MutationError') {
-    throw new Error(`Buffer mutation error: ${result.message}`);
-  }
+  if (result?.__typename === 'MutationError') throw new Error(result.message);
   return result?.post ?? null;
 }
 
 async function main() {
-  const token = process.env.BUFFER_ACCESS_TOKEN;
-  const changed = (process.env.CHANGED_FILES || '').split('\n').map((s) => s.trim()).filter(Boolean);
-  const dryRun = process.env.DRY_RUN === '1';
+  const args = process.argv.slice(2);
+  const dryRun = args.includes('--dry-run');
+  const filePath = args.find((a) => !a.startsWith('--'));
 
-  if (!dryRun && !token) {
-    console.error('[publish] BUFFER_ACCESS_TOKEN missing');
-    process.exit(1);
-  }
+  if (!filePath) die('Usage: node scripts/publish-to-buffer.mjs <path> [--dry-run]');
 
-  const eligible = changed.filter((f) => /^content\/marketing\/\d{4}-\d{2}-\d{2}-[a-z_]+\.md$/.test(f));
-  if (eligible.length === 0) {
-    console.log('[publish] no eligible files in this commit — nothing to publish');
+  let raw;
+  try { raw = readFileSync(filePath, 'utf8'); }
+  catch (err) { die(`cannot read ${filePath}: ${err.message}`); }
+
+  const { meta, body } = parseFrontmatter(raw);
+  const routine = meta.routine;
+
+  if (!(routine in ROUTINE_TO_CHANNEL)) {
+    console.log(JSON.stringify({ ok: true, skipped: `routine ${routine || '?'} is not a publishable post` }));
     return;
   }
 
-  let failures = 0;
+  const { envVar, label } = ROUTINE_TO_CHANNEL[routine];
+  const channelId = process.env[envVar];
+  if (!channelId) die(`env var ${envVar} is not set`);
 
-  for (const file of eligible) {
-    const raw = readFileSync(file, 'utf8');
-    const { meta, body } = parseFrontmatter(raw);
-    const routine = meta.routine;
+  const text = body.trim();
+  if (!text) die('artifact body is empty');
 
-    if (!(routine in ROUTINE_TO_CHANNEL)) {
-      console.log(`[publish] skip ${file} — routine ${routine} is not a publishable post`);
-      continue;
-    }
-
-    const channelId = ROUTINE_TO_CHANNEL[routine];
-    if (!channelId) {
-      console.error(`[publish] skip ${file} — channel id env var for ${routine} is not set`);
-      failures++;
-      continue;
-    }
-
-    // The body is the post text. Strip any trailing whitespace.
-    const text = body.trim();
-    if (!text) {
-      console.error(`[publish] skip ${file} — empty body`);
-      failures++;
-      continue;
-    }
-
-    console.log(`[publish] ${file} → ${routine} (${text.length} chars)`);
-    if (dryRun) {
-      console.log('[publish]   DRY_RUN=1, skipping Buffer call');
-      continue;
-    }
-
-    try {
-      const post = await createBufferPost({ token, channelId, text });
-      console.log(`[publish]   queued: id=${post?.id ?? '?'} dueAt=${post?.dueAt ?? '?'}`);
-    } catch (err) {
-      console.error(`[publish]   failed: ${err.message}`);
-      failures++;
-    }
+  if (dryRun) {
+    console.log(JSON.stringify({ ok: true, channel: label, dry_run: true, chars: text.length }));
+    return;
   }
 
-  if (failures > 0) {
-    console.error(`[publish] ${failures} failure(s)`);
+  const token = process.env.BUFFER_ACCESS_TOKEN;
+  if (!token) die('env var BUFFER_ACCESS_TOKEN is not set');
+
+  try {
+    const post = await createBufferPost({ token, channelId, text });
+    console.log(JSON.stringify({
+      ok: true,
+      channel: label,
+      post_id: post?.id ?? null,
+      due_at: post?.dueAt ?? null,
+    }));
+  } catch (err) {
+    console.log(JSON.stringify({ ok: false, channel: label, error: err.message }));
     process.exit(2);
   }
 }
 
 main().catch((err) => {
-  console.error('[publish] unexpected error:', err);
+  console.log(JSON.stringify({ ok: false, error: `unexpected: ${err.message}` }));
   process.exit(2);
 });

@@ -9,20 +9,22 @@ PostHog attribution data.
 1. **Daily content routine** (Claude Code routine, Anthropic-side schedule)
    invokes `/marketing-run`. The skill picks today's routine from the
    schedule below, drafts one artifact with a UTM-tagged link back to
-   jobsearch.quest, and commits it to `content/marketing/` on `main`.
-2. **GitHub Action** (`.github/workflows/marketing-publish.yml`) sees the
-   new file on push to `main` and queues `short_post` / `linkedin_post`
-   artifacts to Buffer, which fans out to X and LinkedIn on its schedule.
-3. **Daily metrics routine** (second Claude Code routine) invokes
+   jobsearch.quest, and — for `short_post` / `linkedin_post` — runs
+   `scripts/publish-to-buffer.mjs` to queue the post to Buffer. Buffer
+   fans out to X and LinkedIn on its own queue schedule. The artifact's
+   Buffer post id (or error) goes into the file's frontmatter, then
+   everything commits to `main`.
+2. **Daily metrics routine** (second Claude Code routine) invokes
    `/marketing-metrics`. It queries PostHog for pageviews and conversions
    per utm_campaign, writes `content/marketing/METRICS.md`, and commits.
-4. **Weekly self-evolution**: on Saturday, `weekly_review` reads
+3. **Weekly self-evolution**: on Saturday, `weekly_review` reads
    METRICS.md and makes one bounded edit to this file (swap days,
    sharpen a voice rule, or update an audience). On Sunday,
    `next_week_plan` rewrites the "Upcoming angles" section.
 
-No human review step. No DB. Content, memory, metrics, and the plan
-itself all live in this repo.
+No human review step. No DB. No GitHub Actions. The Claude Code routine
+is the only moving part; content, memory, metrics, and the plan itself
+all live in this repo.
 
 ## Weekly schedule
 
@@ -87,21 +89,15 @@ uses the person-level property to attribute the conversion event
      -d '{"query":"query { account { organizations { id channels { id service name } } } }"}'
    ```
    You'll see one channel object per connected account with an `id` and
-   `service` (e.g. `twitter`, `linkedin`).
-4. Add three GitHub Secrets at
-   `https://github.com/chug2k/ai-jsc/settings/secrets/actions`:
-   - `BUFFER_ACCESS_TOKEN` — the token from step 2
-   - `BUFFER_TWITTER_CHANNEL_ID` — your X channel id
-   - `BUFFER_LINKEDIN_CHANNEL_ID` — your LinkedIn channel id
+   `service` (e.g. `twitter`, `linkedin`). Save the `id`s.
 
-That's it — the workflow in `.github/workflows/marketing-publish.yml`
-runs automatically on every push to `main` that touches
-`content/marketing/*.md`.
+The Buffer token + channel IDs get wired into the content routine's
+environment in step 3 below, not into GitHub.
 
-To test manually:
+To test the publish script locally against a committed artifact:
 ```bash
-DRY_RUN=1 CHANGED_FILES="content/marketing/2026-04-14-short_post.md" \
-  node scripts/publish-to-buffer.mjs
+BUFFER_ACCESS_TOKEN=... BUFFER_TWITTER_CHANNEL_ID=... \
+  node scripts/publish-to-buffer.mjs content/marketing/2026-04-14-short_post.md --dry-run
 ```
 
 ### 2. PostHog (for attribution-driven learning)
@@ -126,14 +122,27 @@ routine**.
 - **Prompt:**
   ```
   Run the /marketing-run skill for today. Follow the instructions in
-  that skill exactly. Commit the artifact to main (not a branch), update
-  content/marketing/INDEX.md and LEARNINGS.md, and — on weekly_review or
-  next_week_plan — edit MARKETING_PLAN.md per the skill's rules.
+  that skill exactly. For short_post and linkedin_post, the skill will
+  publish to Buffer via scripts/publish-to-buffer.mjs before committing.
+  Commit the artifact to main, update INDEX.md and LEARNINGS.md, and —
+  on weekly_review or next_week_plan — edit MARKETING_PLAN.md per the
+  skill's rules.
   ```
 - **Repository:** `chug2k/ai-jsc`
 - **Enable "Allow unrestricted branch pushes"** (so the skill can commit
   to `main`).
-- **Environment:** Default. No env vars needed.
+- **Environment:** create a custom environment with:
+  - **Env vars:**
+    - `BUFFER_ACCESS_TOKEN=...` (from Buffer setup step 2)
+    - `BUFFER_TWITTER_CHANNEL_ID=...`
+    - `BUFFER_LINKEDIN_CHANNEL_ID=...`
+  - **Network access:** **Custom** → check "Also include default list of
+    common package managers" → add one line under Allowed domains:
+    ```
+    api.buffer.com
+    ```
+    (Buffer's API host isn't on the default Trusted allowlist; without
+    this, the publish script can't reach it.)
 - **Trigger:** Schedule → Daily, ~08:00 your local time.
 - **Connectors:** none required.
 
@@ -150,11 +159,19 @@ Same creation flow, second routine.
   ```
 - **Repository:** `chug2k/ai-jsc`
 - **Enable "Allow unrestricted branch pushes"**.
-- **Environment:** custom environment with these env vars:
-  - `POSTHOG_API_KEY=phx_...`
-  - `POSTHOG_PROJECT_ID=12345`
-  - `POSTHOG_API_HOST=https://us.i.posthog.com` (or your region)
-  - `POSTHOG_CONVERSION_EVENT=session_started` (optional override)
+- **Environment:** create a custom environment with:
+  - **Env vars:**
+    - `POSTHOG_API_KEY=phx_...`
+    - `POSTHOG_PROJECT_ID=12345`
+    - `POSTHOG_API_HOST=https://us.i.posthog.com` (or your region)
+    - `POSTHOG_CONVERSION_EVENT=session_started` (optional override)
+  - **Network access:** **Custom** → check "Also include default list of
+    common package managers" → add one line:
+    ```
+    us.i.posthog.com
+    ```
+    (Or your EU/custom PostHog host. The default allowlist doesn't
+    include PostHog.)
 - **Trigger:** Schedule → Daily, ~07:30 your local time (before the
   content routine, so `weekly_review` on Saturday sees today's numbers).
 - **Connectors:** none required.
@@ -193,7 +210,8 @@ explicit invocation.
 - **What shipped:** `content/marketing/INDEX.md`
 - **What's landing:** `content/marketing/METRICS.md`
 - **What the agent is thinking:** `content/marketing/LEARNINGS.md`
-- **Pulling a post back:** Buffer post IDs are in the GitHub Action
-  logs. Delete from Buffer's queue or from the platform directly.
+- **Pulling a post back:** each artifact's frontmatter has a
+  `published.buffer.post_id`. Delete from Buffer's queue (or directly
+  on the platform if it already went out).
 - **Pausing:** toggle **Repeats** off on either routine at
   [claude.ai/code/routines](https://claude.ai/code/routines).

@@ -3,7 +3,7 @@ name: marketing-run
 description: Run today's marketing routine for jobsearch.quest, publish the artifact, and evolve the plan. Use when the user says /marketing-run, when invoked by the daily marketing Claude Code routine, or when the user asks to publish a marketing artifact for today. Picks today's routine from MARKETING_PLAN.md by UTC day-of-week, drafts one artifact, publishes it (via connected MCP connectors if available), commits to main, updates content/marketing/INDEX.md + LEARNINGS.md, and — on weekly routines — edits MARKETING_PLAN.md to reflect what the data shows.
 disable-model-invocation: true
 argument-hint: [routine-name]
-allowed-tools: Read Grep Glob Write Edit Bash(git *) Bash(date *) Bash(ls *)
+allowed-tools: Read Grep Glob Write Edit Bash(git *) Bash(date *) Bash(ls *) Bash(node *)
 ---
 
 # Marketing run
@@ -131,50 +131,87 @@ weeks while the agent is learning what works.
   is empty), and name one failure pattern across the week (e.g. "hooks
   got vague Thursday onward", "every blog_draft led with a question").
   Starts with `## Weekly review — <YYYY-MM-DD>`. **Also edit
-  MARKETING_PLAN.md** — see step 7.
+  MARKETING_PLAN.md** — see step 6.
 
 - **next_week_plan** — propose one concrete angle per daily content
   routine for the coming week. 1-2 sentences each, avoid recent
   duplicates. Starts with `## Next week plan — <YYYY-MM-DD>`. **Also edit
   MARKETING_PLAN.md's "Upcoming angles" section** — see step 7.
 
-### 5. (Publishing is automatic)
+### 5. Write the artifact file (draft), then publish to Buffer
 
-You do NOT call any external platform API from this skill. Publishing is
-handled downstream: when you push to `main` in step 8, the
-`.github/workflows/marketing-publish.yml` workflow detects new files
-under `content/marketing/` and queues `short_post` / `linkedin_post`
-artifacts to Buffer. From there Buffer posts to X and LinkedIn on its
-own schedule.
+Do steps 5a → 5b before committing. The publish result gets baked into
+the frontmatter in 5c so the committed file is an honest record of what
+actually went out.
 
-Your responsibility ends at committing a clean, well-formed artifact
-with the correct frontmatter. If the Buffer workflow is misconfigured
-(missing channel id, expired token), the GitHub Action will fail and the
-operator will see it — do not try to work around it from here.
+#### 5a. Write the draft file
 
-### 6. Write the artifact file
-
-File: `content/marketing/<YYYY-MM-DD>-<routine>.md`. The file stem IS the
-slug used for utm_campaign attribution — do not deviate. Prepend YAML
-frontmatter:
+File path: `content/marketing/<YYYY-MM-DD>-<routine>.md`. The file stem
+IS the `utm_campaign` slug — do not deviate. Write these frontmatter
+fields with a TEMPORARY `published: pending` placeholder:
 
 ```markdown
 ---
 routine: <routine>
 date: <YYYY-MM-DD>
-audience: <primary audience, or specific override>
-angle: <the one-sentence angle you committed to in step 3>
+audience: <primary audience or override>
+angle: <one-sentence angle from step 3>
 slug: <YYYY-MM-DD>-<routine>
+published: pending
 ---
 
-<artifact content exactly as it will be posted, including the UTM-tagged URL>
+<artifact body, verbatim as it will be posted, including any UTM URL>
 ```
 
-For `short_post` and `linkedin_post`, the body is the post text
-verbatim — what you write here is what Buffer will queue. No
-surrounding commentary, no "draft:" labels.
+#### 5b. Publish to Buffer (short_post / linkedin_post only)
 
-### 7. Update INDEX, LEARNINGS, and (on weekly routines) the plan
+For `short_post` and `linkedin_post`, call the publish script:
+
+```bash
+node scripts/publish-to-buffer.mjs content/marketing/<YYYY-MM-DD>-<routine>.md
+```
+
+The script reads the file, extracts the body, and queues it to Buffer's
+automatic queue for the channel matching the routine. It prints exactly
+one JSON line to stdout. Three shapes:
+
+- `{ "ok": true, "channel": "...", "post_id": "...", "due_at": "..." }`
+  — queued successfully.
+- `{ "ok": true, "skipped": "..." }` — not a publishable routine (you
+  shouldn't see this for short_post/linkedin_post).
+- `{ "ok": false, "channel": "...", "error": "..." }` — Buffer rejected
+  the call. The artifact still commits; record the error and move on.
+
+For all other routines (landing_audit, competitor_scan, blog_draft,
+weekly_review, next_week_plan), skip the publish step entirely. Those
+artifacts live in the repo only.
+
+#### 5c. Update frontmatter with the result
+
+Replace `published: pending` with a structured block reflecting what
+happened in 5b:
+
+```yaml
+# On success:
+published:
+  buffer:
+    post_id: <id from stdout>
+    due_at: <due_at from stdout>
+
+# On Buffer failure:
+published:
+  buffer:
+    error: <error message from stdout>
+
+# For non-publishable routines:
+published:
+  repo_only: true
+```
+
+If the publish failed, also mention it in the LEARNINGS.md entry in
+step 6 (under "Risk") so the next run notices.
+
+### 6. Update INDEX, LEARNINGS, and (on weekly routines) the plan
 
 **Always update `content/marketing/INDEX.md`**: append one row to the table,
 or create the table if it doesn't exist. Schema:
@@ -205,7 +242,7 @@ add/replace an "Upcoming angles" section (create it if missing) that lists
 the 6 suggested angles as a markdown list keyed by routine name. Future
 runs read this section when deciding the angle in step 3.
 
-### 8. Commit and push to main
+### 7. Commit and push to main
 
 The routine must have **"Allow unrestricted branch pushes"** enabled for
 this repository (see MARKETING_PLAN.md setup notes). Stay on `main`. Stage
@@ -237,17 +274,17 @@ If the push is rejected because someone else committed, rebase and retry:
 git pull --rebase origin main && git push origin main
 ```
 
-### 9. End with a two-line summary
+### 8. End with a two-line summary
 
 ```
 routine: <routine>
-slug: <YYYY-MM-DD>-<routine> (Buffer workflow handles external publish)
+slug: <YYYY-MM-DD>-<routine> — published: <buffer post id | error | repo_only>
 ```
 
 ## Safety rails
 
 - **Never amend or force-push.** Always a new commit on `main`.
-- **Never stage broadly.** Only the files listed in step 8.
+- **Never stage broadly.** Only the files listed in step 7.
 - **Never rewrite `MARKETING_PLAN.md` wholesale.** Weekly routines make one
   bounded change per run.
 - **Never invent a connector response.** If no URL came back, don't claim

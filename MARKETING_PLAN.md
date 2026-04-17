@@ -1,44 +1,49 @@
 # Marketing Plan — jobsearch.quest
 
-The automated marketing agent runs as a **Claude Code routine**
-([docs](https://code.claude.com/docs/en/routines)). Each day the routine
-opens a cloud session against this repo and invokes `/marketing-run`
-(`.claude/skills/marketing-run/SKILL.md`), which:
+An **automated, self-evolving** marketing agent for jobsearch.quest. It runs
+as two Claude Code routines, publishes through Buffer, and learns from real
+PostHog attribution data.
 
-1. Picks today's routine by UTC day-of-week from the schedule below.
-2. Drafts one artifact in the voice described here.
-3. **Publishes** to any attached MCP connector that fits (Twitter, LinkedIn,
-   CMS, etc.) and commits the artifact to `content/marketing/` on `main`.
-4. Updates `content/marketing/INDEX.md` and appends to
-   `content/marketing/LEARNINGS.md` so the next run has memory.
-5. On `weekly_review` and `next_week_plan`, **edits this file** — the plan
-   evolves week over week based on what shipped.
+## How it works (end to end)
 
-There is no human review queue. Commits go straight to `main`.
+1. **Daily content routine** (Claude Code routine, Anthropic-side schedule)
+   invokes `/marketing-run`. The skill picks today's routine from the
+   schedule below, drafts one artifact with a UTM-tagged link back to
+   jobsearch.quest, and commits it to `content/marketing/` on `main`.
+2. **GitHub Action** (`.github/workflows/marketing-publish.yml`) sees the
+   new file on push to `main` and queues `short_post` / `linkedin_post`
+   artifacts to Buffer, which fans out to X and LinkedIn on its schedule.
+3. **Daily metrics routine** (second Claude Code routine) invokes
+   `/marketing-metrics`. It queries PostHog for pageviews and conversions
+   per utm_campaign, writes `content/marketing/METRICS.md`, and commits.
+4. **Weekly self-evolution**: on Saturday, `weekly_review` reads
+   METRICS.md and makes one bounded edit to this file (swap days,
+   sharpen a voice rule, or update an audience). On Sunday,
+   `next_week_plan` rewrites the "Upcoming angles" section.
+
+No human review step. No DB. Content, memory, metrics, and the plan
+itself all live in this repo.
 
 ## Weekly schedule
 
-The skill reads this table on every run. Edit it here; the next run picks
-up the change.
-
 | UTC day   | Routine            | Goal |
 |-----------|--------------------|------|
-| Monday    | `short_post`       | One X/Twitter post seeded with a concrete NSA concept |
-| Tuesday   | `linkedin_post`    | One LinkedIn post for mid-career professionals |
-| Wednesday | `landing_audit`    | 3-principle audit of landing copy with concrete edits |
-| Thursday  | `competitor_scan`  | 1-page positioning note vs. 3 adjacent categories |
-| Friday    | `blog_draft`       | 700-900 word post on one NSA exercise or concept |
-| Saturday  | `weekly_review`    | Score the week's outputs, edit this plan |
-| Sunday    | `next_week_plan`   | Propose next week's angles, append them below |
+| Monday    | `short_post`       | One X post, attributed |
+| Tuesday   | `linkedin_post`    | One LinkedIn post, attributed |
+| Wednesday | `landing_audit`    | 3-principle audit of landing copy |
+| Thursday  | `competitor_scan`  | Positioning note vs. 3 adjacent categories |
+| Friday    | `blog_draft`       | 700-900 word post on an NSA concept |
+| Saturday  | `weekly_review`    | Score the week using METRICS.md, evolve the plan |
+| Sunday    | `next_week_plan`   | Propose next week's angles, append below |
 
-## Voice rules (hard constraints)
+## Voice rules
 
 - Specific, concrete, warm. Never hypey.
 - No buzzwords ("leverage", "unlock", "revolutionize", "game-changer").
 - No emojis. No exclamation points except inside quotes.
-- Never invent testimonials, statistics, user counts, or features that are
-  not in `PROJECT.md` or `DESIGN.md`.
-- Reference the Never Search Alone methodology accurately.
+- Never invent testimonials, stats, user counts, or features not in
+  `PROJECT.md` / `DESIGN.md`.
+- Reference Never Search Alone methodology accurately.
 - Return only the artifact — no preambles, no meta.
 
 ## Audiences
@@ -52,74 +57,143 @@ up the change.
 <!-- next_week_plan rewrites this section every Sunday -->
 _No plan yet — the first `next_week_plan` run will populate this._
 
-## Self-evolution
+## Attribution
 
-The plan is not static. Two routines edit this file:
+Every external post includes exactly one link to jobsearch.quest with a
+`utm_campaign` tag matching the artifact's file stem:
 
-- **`weekly_review` (Saturdays)** makes at most one bounded change per run:
-  swap two days in the schedule, sharpen a single voice rule, or update
-  one audience line. Edited lines carry a
-  `<!-- evolved YYYY-MM-DD by weekly_review -->` comment.
-- **`next_week_plan` (Sundays)** rewrites the "Upcoming angles" section
-  with 6 concrete angles for the coming week.
+```
+https://jobsearch.quest/?utm_campaign=<YYYY-MM-DD>-<routine>
+```
 
-Every run also writes to `content/marketing/LEARNINGS.md` — an
-append-only log of angle, novelty, risk, and a hypothesis for next time.
-The agent reads the last ~20 entries before each draft, so decisions
-compound.
+PostHog's default config captures `utm_campaign` on the `$pageview` event
+and stores `$initial_utm_campaign` on the person. `/marketing-metrics`
+uses the person-level property to attribute the conversion event
+(default `session_started`) back to the post that brought the user in.
 
-If the plan ever drifts somewhere you don't want, edit this file by hand
-and the next run picks it up — your edits override the agent's.
+## One-time setup
 
-## Setting up the routine (one-time)
+### 1. Buffer (for X + LinkedIn publishing)
 
-Configured in Anthropic's web UI, not in this repo.
-
-1. Go to [claude.ai/code/routines](https://claude.ai/code/routines) → **New
-   routine**.
-2. **Name:** `jobsearch.quest marketing`
-3. **Prompt (paste verbatim):**
+1. Sign up at [buffer.com](https://buffer.com), connect your X and
+   LinkedIn accounts as channels.
+2. Generate a personal access token at
+   [publish.buffer.com/account/apps](https://publish.buffer.com/account/apps).
+3. Fetch your channel IDs with this query (replace `$TOKEN`):
+   ```bash
+   curl -X POST https://api.buffer.com \
+     -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"query":"query { account { organizations { id channels { id service name } } } }"}'
    ```
-   Run the /marketing-run skill for today. Follow the instructions in that
-   skill exactly. Publish the artifact to any attached connector that fits,
-   commit to main (not a branch), update content/marketing/INDEX.md and
-   LEARNINGS.md, and — on weekly_review or next_week_plan — edit
-   MARKETING_PLAN.md per the skill's rules.
-   ```
-4. **Repository:** `chug2k/ai-jsc`.
-5. **Enable "Allow unrestricted branch pushes"** for this repository.
-   Required — otherwise the skill can only push to `claude/*` branches and
-   can't commit directly to `main`.
-6. **Environment:** Default is fine. No env vars needed unless a connector
-   requires one.
-7. **Trigger:** Schedule → **Daily** at a sensible hour in your local zone.
-8. **Connectors:** attach the ones you want to publish to (Twitter/X,
-   LinkedIn, your CMS). The skill uses whatever's attached and silently
-   skips the rest. If no connectors are attached, the commit to `main` is
-   the only publication — content lives in the repo until you wire up a
-   destination.
-9. Click **Create** → **Run now** to smoke-test.
+   You'll see one channel object per connected account with an `id` and
+   `service` (e.g. `twitter`, `linkedin`).
+4. Add three GitHub Secrets at
+   `https://github.com/chug2k/ai-jsc/settings/secrets/actions`:
+   - `BUFFER_ACCESS_TOKEN` — the token from step 2
+   - `BUFFER_TWITTER_CHANNEL_ID` — your X channel id
+   - `BUFFER_LINKEDIN_CHANNEL_ID` — your LinkedIn channel id
+
+That's it — the workflow in `.github/workflows/marketing-publish.yml`
+runs automatically on every push to `main` that touches
+`content/marketing/*.md`.
+
+To test manually:
+```bash
+DRY_RUN=1 CHANGED_FILES="content/marketing/2026-04-14-short_post.md" \
+  node scripts/publish-to-buffer.mjs
+```
+
+### 2. PostHog (for attribution-driven learning)
+
+1. At [us.posthog.com](https://us.posthog.com) → **Settings → Personal
+   API keys** → create a key with `query:read` scope. Copy it (shown
+   once).
+2. Note your project id (under **Settings → Project**, numeric).
+3. Confirm your activation event. The current default is
+   `session_started` (matches `src/stores/session-store.ts`). If you
+   want a different event (e.g. a paid-plan upgrade), note its exact
+   name.
+
+### 3. Claude Code routines (two of them)
+
+#### Content routine
+
+At [claude.ai/code/routines](https://claude.ai/code/routines) → **New
+routine**.
+
+- **Name:** `jobsearch.quest marketing — content`
+- **Prompt:**
+  ```
+  Run the /marketing-run skill for today. Follow the instructions in
+  that skill exactly. Commit the artifact to main (not a branch), update
+  content/marketing/INDEX.md and LEARNINGS.md, and — on weekly_review or
+  next_week_plan — edit MARKETING_PLAN.md per the skill's rules.
+  ```
+- **Repository:** `chug2k/ai-jsc`
+- **Enable "Allow unrestricted branch pushes"** (so the skill can commit
+  to `main`).
+- **Environment:** Default. No env vars needed.
+- **Trigger:** Schedule → Daily, ~08:00 your local time.
+- **Connectors:** none required.
+
+#### Metrics routine
+
+Same creation flow, second routine.
+
+- **Name:** `jobsearch.quest marketing — metrics`
+- **Prompt:**
+  ```
+  Run the /marketing-metrics skill. Pull PostHog attribution for every
+  campaign in INDEX.md, rewrite content/marketing/METRICS.md, and commit
+  to main. Do not touch anything else.
+  ```
+- **Repository:** `chug2k/ai-jsc`
+- **Enable "Allow unrestricted branch pushes"**.
+- **Environment:** custom environment with these env vars:
+  - `POSTHOG_API_KEY=phx_...`
+  - `POSTHOG_PROJECT_ID=12345`
+  - `POSTHOG_API_HOST=https://us.i.posthog.com` (or your region)
+  - `POSTHOG_CONVERSION_EVENT=session_started` (optional override)
+- **Trigger:** Schedule → Daily, ~07:30 your local time (before the
+  content routine, so `weekly_review` on Saturday sees today's numbers).
+- **Connectors:** none required.
+
+## How the agent evolves
+
+- **Every run** (content routine) writes to `LEARNINGS.md` — append-only
+  memory: angle tried, novelty, risk, one hypothesis for next time.
+- **Every day** (metrics routine) refreshes `METRICS.md` — views,
+  conversions, scored rank per campaign.
+- **Every Saturday** (`weekly_review`) edits this plan: one bounded
+  change based on what the numbers + learnings show (swap two schedule
+  days, sharpen a voice rule, or update an audience line). Edited lines
+  get a `<!-- evolved YYYY-MM-DD -->` comment.
+- **Every Sunday** (`next_week_plan`) rewrites the "Upcoming angles"
+  section above with 6 concrete angles weekday routines will use.
+
+Your hand edits to this file always win — the agent's changes are
+bounded and traceable; yours are authoritative.
 
 ## Manual invocation
 
-From a Claude Code session in this repo:
+From any Claude Code session in this repo:
 
 ```
-/marketing-run                  # picks today's routine
-/marketing-run blog_draft       # runs a specific routine
+/marketing-run                  # today's content routine
+/marketing-run blog_draft       # a specific content routine
+/marketing-metrics              # refresh metrics
 ```
 
-The skill has `disable-model-invocation: true` so it only runs on an
-explicit request.
+Both skills have `disable-model-invocation: true` so they only run on
+explicit invocation.
 
 ## Operations
 
-- **Reviewing what shipped:** `content/marketing/INDEX.md` is the running
-  log of every artifact, with dates, angles, and destinations.
-- **Auditing the agent's thinking:** `content/marketing/LEARNINGS.md` has
-  one entry per run — what it tried, what was novel, what to try next.
-- **Pulling a post back:** if something went out that shouldn't have, the
-  `published` block in each file's frontmatter lists destinations and URLs
-  so you know what to delete on each platform.
-- **Pausing the agent:** toggle **Repeats** off on the routine at
+- **What shipped:** `content/marketing/INDEX.md`
+- **What's landing:** `content/marketing/METRICS.md`
+- **What the agent is thinking:** `content/marketing/LEARNINGS.md`
+- **Pulling a post back:** Buffer post IDs are in the GitHub Action
+  logs. Delete from Buffer's queue or from the platform directly.
+- **Pausing:** toggle **Repeats** off on either routine at
   [claude.ai/code/routines](https://claude.ai/code/routines).

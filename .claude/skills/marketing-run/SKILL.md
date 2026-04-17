@@ -31,8 +31,11 @@ Read in parallel:
   hard constraints for this session.
 - `content/marketing/LEARNINGS.md` — last 20 entries. This is your memory.
 - `content/marketing/INDEX.md` — what you've already shipped.
+- `content/marketing/METRICS.md` — PostHog attribution per campaign. This
+  is how you learn from real numbers. If the file says "No data yet",
+  just note that and rely on LEARNINGS for now.
 - The 7 most recent files under `content/marketing/*.md` (excluding
-  README/INDEX/LEARNINGS).
+  README/INDEX/LEARNINGS/METRICS).
 - `PROJECT.md` and `DESIGN.md` — product truth. Do not invent features,
   stats, users, or testimonials beyond what's in these.
 
@@ -48,7 +51,7 @@ Map the UTC weekday name to the row in MARKETING_PLAN.md's schedule table.
 
 ### 3. Decide the angle
 
-Using the learnings file, the index, and the 7 most recent outputs, pick a
+Using LEARNINGS, INDEX, METRICS, and the 7 most recent outputs, pick a
 concrete angle you have NOT used recently. Reject:
 
 - Any topic covered in the last 7 outputs.
@@ -56,8 +59,14 @@ concrete angle you have NOT used recently. Reject:
 - Any angle that LEARNINGS.md flagged as "underperforming" or "tried,
   skip next N runs".
 
-Write down (in your thinking, not the artifact) the one-sentence angle you're
-committing to before drafting.
+If METRICS.md has real data, **bias toward patterns that converted**. If a
+prior `short_post` with an angle about Gratitude House led to 2x the
+converts of other posts, lean that direction again (different specifics,
+same thematic territory). If everything is roughly flat, fall back to
+novelty over optimization.
+
+Write down (in your thinking, not the artifact) the one-sentence angle
+you're committing to before drafting.
 
 ### 4. Draft the artifact
 
@@ -70,15 +79,32 @@ Output only the artifact — no preamble, no "Here is…", no meta.
 
 #### Routine formats
 
-- **short_post** — one X/Twitter post, ≤ 270 characters, no hashtags, no
-  emojis. Lead with a concrete observation. Reference one NSA concept
-  (Mnookin Two-Pager, Gratitude House, Listening Tour, Hot Seat,
-  Must-Nots vs Must-Haves, Candidate-Market Fit). Soft nod to
-  jobsearch.quest, not a hard CTA.
+For **any post that ships to an external platform** (`short_post`,
+`linkedin_post`), include exactly ONE attributed link back to the product:
+
+```
+https://jobsearch.quest/?utm_campaign=<slug>
+```
+
+where `<slug>` is `<YYYY-MM-DD>-<routine>` — the file stem. This is how
+the `/marketing-metrics` routine attributes traffic and conversions back
+to this specific post. Do not add `utm_source` / `utm_medium` — Buffer and
+the platforms overwrite those. Only `utm_campaign` is stable.
+
+Keep the link natural. If the post can stand without the URL, that's
+better — but attribution matters more than aesthetics for the first few
+weeks while the agent is learning what works.
+
+- **short_post** — one X/Twitter post, ≤ 270 characters including the
+  URL, no hashtags, no emojis. Lead with a concrete observation.
+  Reference one NSA concept (Mnookin Two-Pager, Gratitude House,
+  Listening Tour, Hot Seat, Must-Nots vs Must-Haves, Candidate-Market
+  Fit). The URL at the end is acceptable.
 
 - **linkedin_post** — one LinkedIn post, 150-220 words, 4-8 short
   paragraphs with blank lines between. First line is a standalone hook.
-  Closing question or soft CTA. Optional ≤ 3 hashtags on the final line.
+  Include the attributed URL in the closing CTA paragraph. Optional ≤ 3
+  hashtags on the final line.
 
 - **landing_audit** — audit landing copy (from PROJECT.md) against three
   principles: (1) first 5 seconds promises a specific outcome, (2) proof
@@ -96,10 +122,15 @@ Output only the artifact — no preamble, no "Here is…", no meta.
   real job-seeker pain. Explain the exercise concretely. Acknowledge why
   the council amplifies it.
 
-- **weekly_review** — review the last 7 files in `content/marketing/`.
-  Score each 1-5 on specificity, voice fit, likely resonance; one-sentence
-  reason per score. Name the top 1-2 and the failure pattern across the
-  week. Starts with `## Weekly review — <YYYY-MM-DD>`. **Also edit
+- **weekly_review** — review the last 7 files in `content/marketing/` AND
+  read `content/marketing/METRICS.md`. For each file, score:
+    - **Numbers** (if data available): views, converts, rate from METRICS.md
+    - **Specificity**, **voice fit**, **likely resonance** (1-5 each)
+    - One-sentence reason
+  Name the top 1-2 by actual converts (or by qualitative score if METRICS
+  is empty), and name one failure pattern across the week (e.g. "hooks
+  got vague Thursday onward", "every blog_draft led with a question").
+  Starts with `## Weekly review — <YYYY-MM-DD>`. **Also edit
   MARKETING_PLAN.md** — see step 7.
 
 - **next_week_plan** — propose one concrete angle per daily content
@@ -107,24 +138,25 @@ Output only the artifact — no preamble, no "Here is…", no meta.
   duplicates. Starts with `## Next week plan — <YYYY-MM-DD>`. **Also edit
   MARKETING_PLAN.md's "Upcoming angles" section** — see step 7.
 
-### 5. Publish to connected destinations
+### 5. (Publishing is automatic)
 
-Before touching git, publish to any MCP connectors attached to this routine
-that fit the artifact:
+You do NOT call any external platform API from this skill. Publishing is
+handled downstream: when you push to `main` in step 8, the
+`.github/workflows/marketing-publish.yml` workflow detects new files
+under `content/marketing/` and queues `short_post` / `linkedin_post`
+artifacts to Buffer. From there Buffer posts to X and LinkedIn on its
+own schedule.
 
-- `short_post` → if a Twitter / X connector is available, post it.
-- `linkedin_post` → if a LinkedIn connector is available, post it.
-- `blog_draft` → if a CMS / Ghost / Substack connector is available, post
-  as draft or publish per the connector's default.
-- Other routines are internal — no external post.
-
-For each successful post, capture the destination name and the returned URL.
-If a connector is not attached, skip silently — the repo commit below is
-the fallback publication. Do NOT fail the run for missing connectors.
+Your responsibility ends at committing a clean, well-formed artifact
+with the correct frontmatter. If the Buffer workflow is misconfigured
+(missing channel id, expired token), the GitHub Action will fail and the
+operator will see it — do not try to work around it from here.
 
 ### 6. Write the artifact file
 
-File: `content/marketing/<YYYY-MM-DD>-<routine>.md`. Prepend YAML frontmatter:
+File: `content/marketing/<YYYY-MM-DD>-<routine>.md`. The file stem IS the
+slug used for utm_campaign attribution — do not deviate. Prepend YAML
+frontmatter:
 
 ```markdown
 ---
@@ -132,14 +164,15 @@ routine: <routine>
 date: <YYYY-MM-DD>
 audience: <primary audience, or specific override>
 angle: <the one-sentence angle you committed to in step 3>
-published:
-  - destination: repo
-    url: https://github.com/chug2k/ai-jsc/blob/main/content/marketing/<file>.md
-  # plus one entry per connector destination that succeeded in step 5
+slug: <YYYY-MM-DD>-<routine>
 ---
 
-<artifact content>
+<artifact content exactly as it will be posted, including the UTM-tagged URL>
 ```
+
+For `short_post` and `linkedin_post`, the body is the post text
+verbatim — what you write here is what Buffer will queue. No
+surrounding commentary, no "draft:" labels.
 
 ### 7. Update INDEX, LEARNINGS, and (on weekly routines) the plan
 
@@ -189,7 +222,6 @@ Commit message format:
 ```
 marketing(<routine>): <YYYY-MM-DD> — <angle summary>
 
-Published to: repo[, <other destinations>]
 Session: https://claude.ai/code/${CLAUDE_CODE_REMOTE_SESSION_ID}
 ```
 
@@ -209,7 +241,7 @@ git pull --rebase origin main && git push origin main
 
 ```
 routine: <routine>
-published: repo[, <other destinations>]
+slug: <YYYY-MM-DD>-<routine> (Buffer workflow handles external publish)
 ```
 
 ## Safety rails

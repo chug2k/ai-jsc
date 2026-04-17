@@ -148,7 +148,8 @@ actually went out.
 
 File path: `content/marketing/<YYYY-MM-DD>-<routine>.md`. The file stem
 IS the `utm_campaign` slug — do not deviate. Write these frontmatter
-fields with a TEMPORARY `published: pending` placeholder:
+fields with TEMPORARY placeholders for image + publish (they get
+updated in 5b and 5c):
 
 ```markdown
 ---
@@ -157,13 +158,62 @@ date: <YYYY-MM-DD>
 audience: <primary audience or override>
 angle: <one-sentence angle from step 3>
 slug: <YYYY-MM-DD>-<routine>
+image: pending
 published: pending
 ---
 
 <artifact body, verbatim as it will be posted, including any UTM URL>
 ```
 
-#### 5b. Publish to Buffer (short_post / linkedin_post only)
+#### 5b. Decide image strategy
+
+Pick between two paths. The decision is yours, guided by the angle:
+
+- **`og_card`** — the default. Don't generate anything. The
+  `/api/og?slug=<slug>` route auto-renders a branded Satori card with
+  the date + routine. Good for posts whose hook is the text itself
+  (quotes, stats, surprise openers) or where a generic creative would
+  feel noisy.
+
+- **`generated`** — call OpenAI's image API to produce a specific
+  creative. Good for posts about a metaphor, a concrete visual concept,
+  or a feeling that imagery helps carry. Use sparingly — consistent
+  feel matters more than every post having a unique image.
+
+A rough rule: roughly 2-3 out of every 10 posts should be `generated`,
+and only when you can name a strong visual for it. If you can't state
+the image concept in a single sentence, use `og_card`.
+
+**If you chose `og_card`**: update frontmatter `image: og_card` and
+move on to 5c.
+
+**If you chose `generated`**: craft a prompt that matches jobsearch.quest's
+"Paper" design language (warm tones, editorial feel — see DESIGN.md).
+Prompts should describe a single, clear, calm visual — never instruct
+the image to include text or logos (those render poorly). Example:
+
+> A soft editorial illustration of an empty chair at a round table in
+> warm afternoon light, hand-drawn feel, muted earth tones, plenty of
+> white space. No text. Editorial magazine style.
+
+Then run:
+
+```bash
+node scripts/generate-image.mjs \
+  --slug <YYYY-MM-DD>-<routine> \
+  --prompt "<your prompt>"
+```
+
+The script writes `public/marketing/<slug>.png` and prints one JSON
+line. Parse stdout:
+
+- `{ "ok": true, "path": "...", "url": "..." }` → update frontmatter
+  `image: generated` with the `url` recorded under `image_url`.
+- `{ "ok": false, "error": "..." }` → update frontmatter
+  `image: og_card` (fallback) and note the failure in the LEARNINGS
+  entry later. Never fail the run for an image problem.
+
+#### 5c. Publish to Buffer (short_post / linkedin_post only)
 
 For `short_post` and `linkedin_post`, call the publish script:
 
@@ -186,10 +236,10 @@ For all other routines (landing_audit, competitor_scan, blog_draft,
 weekly_review, next_week_plan), skip the publish step entirely. Those
 artifacts live in the repo only.
 
-#### 5c. Update frontmatter with the result
+#### 5d. Update frontmatter with the publish result
 
 Replace `published: pending` with a structured block reflecting what
-happened in 5b:
+happened in 5c:
 
 ```yaml
 # On success:
@@ -250,6 +300,8 @@ only the files you touched:
 
 ```bash
 git add content/marketing/<YYYY-MM-DD>-<routine>.md content/marketing/INDEX.md content/marketing/LEARNINGS.md
+# if image: generated, also add the PNG:
+git add public/marketing/<YYYY-MM-DD>-<routine>.png
 # on weekly routines:
 git add MARKETING_PLAN.md
 ```

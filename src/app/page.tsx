@@ -11,7 +11,7 @@ import SessionPreview from '@/components/landing/SessionPreview';
 import ComparisonSection from '@/components/landing/ComparisonSection';
 import { HERO_DEMO, RAY_DEMO, DEREK_DEMO, SOFIA_DEMO } from '@/components/landing/demo-data';
 
-export const metadata: Metadata = {
+const BASE_METADATA: Metadata = {
   title: 'jobsearch.quest — Job Search Support Based on Never Search Alone',
   description: 'Structured job search support based on the Never Search Alone methodology. Multiple AI advisors, 10-session curriculum, accountability built in. Start free.',
   alternates: { canonical: 'https://jobsearch.quest' },
@@ -23,6 +23,35 @@ export const metadata: Metadata = {
     images: [{ url: 'https://jobsearch.quest/img/hero.jpg', width: 1200, height: 630 }],
   },
 };
+
+const DEFAULT_OG_IMAGE = 'https://jobsearch.quest/img/hero.jpg';
+
+// Swap og:image for a slug-specific card when the visitor arrived via a
+// marketing UTM link. The /api/og route serves either a creative from
+// public/marketing/<slug>.png or a branded Satori fallback.
+export async function generateMetadata(
+  { searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> },
+): Promise<Metadata> {
+  const sp = await searchParams;
+  const raw = Array.isArray(sp.utm_campaign) ? sp.utm_campaign[0] : sp.utm_campaign;
+  const campaign = typeof raw === 'string' ? raw.replace(/[^a-z0-9-_]/gi, '') : '';
+
+  const ogImage = campaign
+    ? `https://jobsearch.quest/api/og?slug=${campaign}`
+    : DEFAULT_OG_IMAGE;
+
+  return {
+    ...BASE_METADATA,
+    openGraph: {
+      ...BASE_METADATA.openGraph,
+      images: [{ url: ogImage, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      images: [ogImage],
+    },
+  };
+}
 
 // Rebuild every 5 minutes to pick up plan changes from admin
 export const revalidate = 300;

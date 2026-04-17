@@ -73,6 +73,28 @@ and stores `$initial_utm_campaign` on the person. `/marketing-metrics`
 uses the person-level property to attribute the conversion event
 (default `session_started`) back to the post that brought the user in.
 
+## Social previews (OG images)
+
+When Twitter / LinkedIn / Slack unfurl the UTM'd link, they scrape the
+page's `og:image` meta tag. `src/app/page.tsx` generates metadata per
+request: if `utm_campaign` is present, the page declares its og:image
+as `/api/og?slug=<slug>`.
+
+The OG route (`src/app/api/og/route.tsx`) then picks one of two images:
+
+- **`public/marketing/<slug>.png`** — if the file exists, the route
+  redirects to the static asset (served by Vercel's CDN). This is the
+  "creative" path, produced by `scripts/generate-image.mjs` via
+  OpenAI's image API.
+- **Branded Satori card** — the fallback. A clean
+  `jobsearch.quest / Never Search Alone / <date> · <routine>` card
+  rendered at request time. Always works, no third-party call.
+
+The `/marketing-run` skill decides per post whether to generate a
+creative (`image: generated`) or use the card (`image: og_card`). Rough
+default: 2-3 of every 10 posts generate, only when there's a strong
+visual concept.
+
 ## One-time setup
 
 ### 1. Buffer (for X + LinkedIn publishing)
@@ -136,13 +158,17 @@ routine**.
     - `BUFFER_ACCESS_TOKEN=...` (from Buffer setup step 2)
     - `BUFFER_TWITTER_CHANNEL_ID=...`
     - `BUFFER_LINKEDIN_CHANNEL_ID=...`
+    - `OPENAI_API_KEY=sk-...` (for generated creative images — optional
+      but recommended; if omitted, the skill falls back to the branded
+      OG card for every post)
+    - `OPENAI_IMAGE_MODEL=gpt-image-1` (optional override)
   - **Network access:** **Custom** → check "Also include default list of
-    common package managers" → add one line under Allowed domains:
+    common package managers" → add these lines under Allowed domains:
     ```
     api.buffer.com
+    api.openai.com
     ```
-    (Buffer's API host isn't on the default Trusted allowlist; without
-    this, the publish script can't reach it.)
+    (Neither host is on the default Trusted allowlist.)
 - **Trigger:** Schedule → Daily, ~08:00 your local time.
 - **Connectors:** none required.
 

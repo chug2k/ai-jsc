@@ -89,7 +89,7 @@ async function AdminStats() {
       </div>
 
       <p style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'var(--font-pt-mono)' }}>
-        Generated {now.toISOString()} · <a href="/api/admin/stats" style={{ color: '#3B82F6' }}>JSON endpoint →</a>
+        Generated {now.toISOString()} · <a href="/api/admin/stats" style={{ color: '#3B82F6' }}>JSON endpoint →</a> · <a href="/admin/marketing" style={{ color: '#3B82F6' }}>Marketing agent →</a>
       </p>
     </>
   );
